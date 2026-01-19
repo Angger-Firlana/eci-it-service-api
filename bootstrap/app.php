@@ -60,12 +60,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 500 - DB
         $exceptions->render(function (QueryException $e) {
-            return APIResponse::error(null, 500, 'Database Error');
+            return APIResponse::error(null, 500, 'Database Error : ' . $e->getMessage());
         });
 
         // 500 - fallback (WAJIB PALING BAWAH)
         $exceptions->render(function (Throwable $e) {
-            return APIResponse::error(null, 500, 'Internal Server Error');
+            return APIResponse::error(null, 500, 'Internal Server Error : ' . $e->getMessage());
         });
 
     })->create();

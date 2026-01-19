@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\DeviceTypeService;
+use App\Http\Requests\DeviceType\PutDeviceTypeRequest;
+use App\Http\Requests\DeviceType\PostDeviceTypeRequest;
+use App\Helpers\APIResponse;
 
 class DeviceTypeController extends Controller
 {
@@ -19,59 +22,38 @@ class DeviceTypeController extends Controller
     {
         $data = $this->deviceTypeService->getAll($request->search);
 
-        return response()->json([
-            'code' => 200,
-            'data' => $data
-        ]);
+        return APIResponse::success($data, 200, 'Device Type Found');
     }
 
     public function show(int $id)
     {
         $data = $this->deviceTypeService->getById($id);
 
-        return response()->json([
-            'code' => 200,
-            'data' => $data
-        ]);
+        return APIResponse::success($data, 200, 'Device Type Found');
     }
 
-    public function store(Request $request)
+    public function store(PostDeviceTypeRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100'
-        ]);
+        $validated = $request->validated();
 
         $data = $this->deviceTypeService->create($validated);
 
-        return response()->json([
-            'code' => 201,
-            'message' => 'Device Type Created',
-            'data' => $data
-        ], 201);
+        return APIResponse::success($data, 201, 'Device Type Created');
     }
 
-    public function update(Request $request, int $id)
+    public function update(PutDeviceTypeRequest $request, int $id)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100'
-        ]);
+        $validated = $request->validated();
 
         $data = $this->deviceTypeService->update($id, $validated);
 
-        return response()->json([
-            'code' => 200,
-            'message' => 'Device Type Updated',
-            'data' => $data
-        ]);
+        return APIResponse::success($data, 200, 'Device Type Updated');
     }
 
     public function destroy(int $id)
     {
         $this->deviceTypeService->delete($id);
 
-        return response()->json([
-            'code' => 200,
-            'message' => 'Device Type Deleted'
-        ]);
+        return APIResponse::success(null, 200, 'Device Type Deleted');
     }
 }
