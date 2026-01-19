@@ -1,12 +1,13 @@
 <?php
 
-use App\Helpers;
+namespace App\Helpers;
+
 use Illuminate\Support\Facades\Response;
 use Illuminate\Http\JsonResponse;
 
 class APIResponse
 {
-    public function success(
+    public static function success(
         mixed $data,
         int $code = 200,
         string $message = 'Success',
@@ -25,7 +26,7 @@ class APIResponse
         return response()->json($response, $code);
     }
 
-    public function error(
+    public static function error(
         mixed $errors = null,
         int $code = 500,
         string $message = 'Error',

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Hash;
 class AuthService
 {
     public function login(array $credentials): array{
-        $user = User::where('email', $credentials['email'])->first();
+        $user = User::where('email', $credentials['email'])->with('roles')->first();
 
         if(!$user || !Hash::check($credentials['password'], $user->password)){
             return ['success' => false, 'message' => 'Invalid credentials', 'code' => 401];
@@ -24,16 +24,23 @@ class AuthService
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'pin' => isset($data['pin']) ? Hash::make($data['pin']) : null,
+            'role_id' => $data['role_id'] ?? 3
         ]);
+
+        $user->load('roles');
 
         $token = $user->createToken('token_eci_service' . now()->timestamp)->plainTextToken;
 
         return ['success' => true, 'message' => 'Registration successful', 'data' => ['user' => $user, 'token' => $token], 'code' => 201];
     }
 
-    public function getDataUserByToken(string $token): ?User{
-        $tokenModel = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
-        return $tokenModel ? $tokenModel->tokenable : null;
+    public function getDataUserByToken(): ?array{
+        $user = auth()->user();
+        if(!$user){
+            return ['success' => false, 'message' => 'User not found', 'code' => 404];
+        }
+        $user->load('roles');
+        return ['success' => true, 'message' => 'User found', 'data' => $user, 'code' => 200];
     }
 
     public function logout(User $user): array{
