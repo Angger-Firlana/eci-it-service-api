@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 
 class APIResponse
 {
+    //this function use to frequently return succeess response
     public static function success(
         mixed $data,
         int $code = 200,
@@ -26,6 +27,7 @@ class APIResponse
         return response()->json($response, $code);
     }
 
+    //this function use to frequently return error response
     public static function error(
         mixed $errors = null,
         int $code = 500,
