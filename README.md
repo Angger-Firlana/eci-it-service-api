@@ -568,3 +568,5 @@ Deletes a device type by ID.
         "message": "No query results for model [App\\Models\\DeviceType] 100"
     }
     ```
+
+//test
