@@ -68,9 +68,12 @@ class VendorApproval extends Model
 		return $this->belongsTo(ApprovalPolicyStep::class);
 	}
 
-	public function user()
+	public function assigned_by()
 	{
 		return $this->belongsTo(User::class, 'assigned_by');
+	}
+	public function approver(){
+		return $this->belongsTo(User::class, 'approver_id');
 	}
 
 	public function service_request()

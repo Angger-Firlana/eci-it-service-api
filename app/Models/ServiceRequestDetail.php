@@ -48,4 +48,8 @@ class ServiceRequestDetail extends Model
 	{
 		return $this->belongsTo(ServiceRequest::class);
 	}
+	public function complaint_images()
+	{
+		return $this->hasMany(ComplaintImage::class, 'service_request_detail_id', 'id');
+	}
 }

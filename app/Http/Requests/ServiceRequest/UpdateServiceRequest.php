@@ -30,8 +30,9 @@ class UpdateServiceRequest extends FormRequest
             'estimated_date' => 'sometimes|date',
             'status_id'  => 'sometimes|exists:statuses,id',
             'details' => 'sometimes|array',
-            'details.*.device_id' =>  'required|exists:devices,id',
-            'details.*.complaint' => 'required|string',
+            'details.*.id' => 'sometimes|exists:service_request_details,id',
+            'details.*.device_id' =>  'sometimes|exists:devices,id',
+            'details.*.complaint' => 'sometimes|string',
             'details.*.complaint_images' => 'sometimes|array',
             'details.*.complaint_images.*' => 'sometimes|file|mimes:jpeg,png,jpg,gif,svg|max:2048',
 
@@ -51,11 +52,13 @@ class UpdateServiceRequest extends FormRequest
             'service_cancellation.canceled_by' => 'sometimes|exists:users,id',
 
             'vendor_approvals' => 'sometimes|array',
+            'vendor_approvals.*.id' => 'sometimes|exists:vendor_approvals,id',
+            'vendor_approvals.*.approval_policy_id' => 'sometimes|exists:approval_policies,id',
+            'vendor_approvals.*.approval_policy_step_id' => 'sometimes|exists:approval_policy_steps,id',
             'vendor_approvals.*.approver_id' => 'sometimes|exists:users,id',
             'vendor_approvals.*.assigned_by' => 'sometimes|exists:users,id',
             'vendor_approvals.*.approved_at' => 'sometimes|date',
-            'vendor_approvals.*.assigned_at' => 'sometimes|date',
-            'status_id' => 'sometimes|exists:statuses,id'
+            'vendor_approvals.*.status_id' => 'sometimes|exists:statuses,id'
         ];
     }
 }

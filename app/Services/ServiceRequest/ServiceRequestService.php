@@ -6,6 +6,7 @@ use App\Models\ServiceRequest;
 use App\Models\ServiceRequestDetail;
 use App\Models\Device;
 use App\Models\VendorApproval;
+use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\ServiceRequest\ServiceRequestApprovalService;
@@ -78,17 +79,26 @@ class ServiceRequestService
     public function getServiceRequestById(int $id): ServiceRequest
     {
         $serviceRequest = ServiceRequest::with([
-            'user', 
-            'admin', 
-            'service_type', 
-            'status', 
-            'details.device', 
-            'serviceLocation.vendor', 
-            'serviceCosts.costType', 
-            'serviceCancellation', 
-            'vendorApprovals.approver', 
-            'vendorApprovals.assignedBy'
+            'user:id,name,email', 
+            'admin:id,name,email', 
+            'service_type:id,name', 
+            'status:id,name', 
+            'service_request_details:id,service_request_id,device_id,complaint',
+            'service_request_details.device:id,device_model_id,serial_number',
+            'service_request_details.device.device_model:id,brand,model', 
+            'service_request_details.complaint_images',
+            'service_locations.vendor:id,name', 
+            'service_costs.cost_type:id,type', 
+            'service_cancellations:id,reason', 
+            'vendor_approvals:id,service_request_id,approver_id,assigned_by',
+            'vendor_approvals.approver:id,name,email', 
+            'vendor_approvals.assigned_by:id,name,email'
         ])->findOrFail($id);
+
+        $serviceRequest->makeHidden([
+            'created_at',
+            'updated_at'
+        ]);
 
         return $serviceRequest;
     }
@@ -145,12 +155,19 @@ class ServiceRequestService
             $serviceRequest = ServiceRequest::findOrFail($id);
             
             // Update main service request
+            $status = Status::findOrFail($data['status_id'] ?? $serviceRequest->status_id);
+            
+            if($status->entity_type_id != 1){
+                throw new \Exception('Status tidak valid');
+            }
+
             $updateData = [
                 'admin_id' => $data['admin_id'] ?? $serviceRequest->admin_id,
                 'service_type_id' => $data['service_type_id'] ?? $serviceRequest->service_type_id,
                 'estimated_date' => $data['estimated_date'] ?? $serviceRequest->estimated_date,
                 'status_id' => $data['status_id'] ?? $serviceRequest->status_id,
             ];
+            
             
             $serviceRequest->update(array_filter($updateData));
 
@@ -192,17 +209,17 @@ class ServiceRequestService
             DB::commit();
 
             return $serviceRequest->load([
-                    'user', 
-                    'admin', 
-                    'service_type', 
-                    'status', 
-                    'details.device', 
-                    'serviceLocation.vendor', 
-                    'serviceCosts.costType', 
-                    'serviceCancellation', 
-                    'vendorApprovals.approver', 
-                    'vendorApprovals.assignedBy'
-                ]);
+                'user', 
+                'admin', 
+                'service_type', 
+                'status', 
+                'service_request_details.device', 
+                'service_locations.vendor', 
+                'service_costs.cost_type', 
+                'service_cancellations', 
+                'vendor_approvals.approver', 
+                'vendor_approvals.assigned_by'
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -214,8 +231,7 @@ class ServiceRequestService
         try {
             $serviceRequest = ServiceRequest::findOrFail($id);
             
-            // Check if service request can be deleted (e.g., not completed or has active relationships)
-            if ($serviceRequest->status_id == 3) { // Assuming 3 is completed status
+            if ($serviceRequest->status_id == 3) { 
                 throw new \Exception('Cannot delete completed service request');
             }
 

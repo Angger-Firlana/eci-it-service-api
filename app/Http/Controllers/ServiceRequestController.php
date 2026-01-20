@@ -32,7 +32,7 @@ class ServiceRequestController extends Controller
     }
 
     public function update(UpdateServiceRequest $request, $id){
-        $serviceRequests = $this->serviceRequestService->updateServiceRequest($request->validated(), $id);
+        $serviceRequests = $this->serviceRequestService->updateServiceRequest($id, $request->validated());
         return APIResponse::success($serviceRequests);
     }
 

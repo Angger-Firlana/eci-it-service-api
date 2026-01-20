@@ -64,6 +64,11 @@ class ServiceRequest extends Model
 		return $this->belongsTo(User::class);
 	}
 
+	public function admin()
+	{
+		return $this->belongsTo(User::class, 'admin_id', 'id');
+	}
+
 	public function service_type()
 	{
 		return $this->belongsTo(ServiceType::class);

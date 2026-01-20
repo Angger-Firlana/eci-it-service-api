@@ -7,6 +7,7 @@ use App\Http\Controllers\DeviceTypeController;
 use App\Http\Controllers\DeviceModelController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\ServiceRequestController;
+use App\Http\Controllers\ApprovalController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -52,6 +53,8 @@ Route::prefix('service-requests')->group(function(){
     Route::post('/', [ServiceRequestController::class, 'store']);
     Route::put('/{id}', [ServiceRequestController::class, 'update']);
     Route::delete('/{id}', [ServiceRequestController::class, 'destroy']);
+    Route::post('/approved/{id}', [ApprovalController::class, 'approveVendorRequest']);
+    Route::post('/rejected/{id}', [ApprovalController::class, 'rejectVendorRequest']);
 });
 
 

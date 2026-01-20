@@ -569,4 +569,374 @@ Deletes a device type by ID.
     }
     ```
 
-//test
+---
+
+## Device Endpoints
+
+Base URL: `/api/devices`
+
+### 1. Get All Devices
+
+Retrieves a list of all devices.
+
+-   **Endpoint:** `/`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": [
+            {
+                "id": 1,
+                "device_model_id": 1,
+                "serial_number": "SN12345",
+                "created_at": "2024-01-01T12:00:00.000000Z",
+                "updated_at": "2024-01-01T12:00:00.000000Z"
+            }
+        ],
+        "message": "Device Found"
+    }
+    ```
+
+### 2. Get Device by ID
+
+Retrieves a single device by its ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the device.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "device_model_id": 1,
+            "serial_number": "SN12345",
+            "created_at": "2024-01-01T12:00:00.000000Z",
+            "updated_at": "2024-01-01T12:00:00.000000Z"
+        },
+        "message": "Device Found"
+    }
+    ```
+
+### 3. Create New Device
+
+Creates a new device.
+
+-   **Endpoint:** `/`
+-   **Method:** `POST`
+-   **Authentication:** Bearer Token (Required)
+-   **Request:** `application/json`
+    ```json
+    {
+        "device_model_id": 1,
+        "serial_number": "SN12345"
+    }
+    ```
+-   **Validation Rules:**
+    *   `device_model_id`: `required`, `exists:device_models,id`
+    *   `serial_number`: `required`, `string`, `unique:devices,serial_number`
+
+-   **Success Response (201 Created):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "device_model_id": 1,
+            "serial_number": "SN12345",
+            "updated_at": "2024-01-01T12:10:00.000000Z",
+            "created_at": "2024-01-01T12:10:00.000000Z",
+            "id": 3
+        },
+        "message": "Device Create Successfully"
+    }
+    ```
+
+### 4. Update Device (PUT)
+
+Completely replaces an existing device by ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `PUT`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the device to update.
+-   **Request:** `application/json`
+    ```json
+    {
+        "device_model_id": 2,
+        "serial_number": "SN54321"
+    }
+    ```
+-   **Validation Rules:**
+    *   `device_model_id`: `sometimes`, `exists:device_models,id`
+    *   `serial_number`: `sometimes`, `string`, `unique:devices,serial_number`
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "device_model_id": 2,
+            "serial_number": "SN54321",
+            "created_at": "2024-01-01T12:00:00.000000Z",
+            "updated_at": "2024-01-01T12:15:00.000000Z"
+        },
+        "message": "Device Update Successfully"
+    }
+    ```
+
+### 5. Update Device (PATCH)
+
+Partially updates an existing device by ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `PATCH`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the device to update.
+-   **Request:** `application/json`
+    ```json
+    {
+        "serial_number": "SN54321B"
+    }
+    ```
+-   **Validation Rules:**
+    *   `device_model_id`: `sometimes`, `exists:device_models,id`
+    *   `serial_number`: `sometimes`, `string`, `unique:devices,serial_number`
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "device_model_id": 2,
+            "serial_number": "SN54321B",
+            "created_at": "2024-01-01T12:00:00.000000Z",
+            "updated_at": "2024-01-01T12:20:00.000000Z"
+        },
+        "message": "Device Patch Successfully"
+    }
+    ```
+
+### 6. Delete Device
+
+Deletes a device by ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `DELETE`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the device to delete.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": null,
+        "message": "Device Delete Successfully"
+    }
+    ```
+
+---
+
+## Service Request Endpoints
+
+Base URL: `/api/service-requests`
+
+### 1. Get All Service Requests
+
+Retrieves a list of all service requests.
+
+-   **Endpoint:** `/`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": [
+            {
+                "id": 1,
+                "admin_id": 1,
+                "user_id": 2,
+                "service_type_id": 1,
+                "request_date": "2024-01-20",
+                "status_id": 1,
+                "details": [
+                    {
+                        "id": 1,
+                        "service_request_id": 1,
+                        "device_id": 1,
+                        "complaint": "Screen is broken"
+                    }
+                ]
+            }
+        ],
+        "message": "Service Requests Found"
+    }
+    ```
+
+### 2. Get Service Request by ID
+
+Retrieves a single service request by its ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "admin_id": 1,
+            "user_id": 2,
+            "service_type_id": 1,
+            "request_date": "2024-01-20",
+            "status_id": 1,
+            "details": [
+                {
+                    "id": 1,
+                    "service_request_id": 1,
+                    "device_id": 1,
+                    "complaint": "Screen is broken"
+                }
+            ]
+        },
+        "message": "Service Request Found"
+    }
+    ```
+
+### 3. Create New Service Request
+
+Creates a new service request.
+
+-   **Endpoint:** `/`
+-   **Method:** `POST`
+-   **Authentication:** Bearer Token (Required)
+-   **Request:** `application/json`
+    ```json
+    {
+        "admin_id": 1,
+        "user_id": 2,
+        "service_type_id": 1,
+        "request_date": "2024-01-20",
+        "status_id": 1,
+        "details": [
+            {
+                "device_id": 1,
+                "complaint": "Screen is broken",
+                "complaint_images": []
+            }
+        ]
+    }
+    ```
+-   **Validation Rules:**
+    *   `admin_id`: `required`, `exists:users,id`
+    *   `user_id`: `sometimes`, `exists:users,id`
+    *   `service_type_id`: `sometimes`, `exists:service_types,id`
+    *   `request_date`: `required`, `date`
+    *   `status_id`: `required`, `exists:statuses,id`
+    *   `details`: `required`, `array`
+    *   `details.*.device_id`: `required`, `exists:devices,id`
+    *   `details.*.complaint`: `required`, `string`
+    *   `details.*.complaint_images`: `sometimes`, `array`
+    *   `details.*.complaint_images.*`: `sometimes`, `file`, `mimes:jpeg,png,jpg,gif,svg`, `max:2048`
+
+
+-   **Success Response (201 Created):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "admin_id": 1,
+            "user_id": 2,
+            "service_type_id": 1,
+            "request_date": "2024-01-20",
+            "status_id": 1,
+            "id": 1,
+            "details": [
+                {
+                    "service_request_id": 1,
+                    "device_id": 1,
+                    "complaint": "Screen is broken",
+                    "id": 1
+                }
+            ]
+        },
+        "message": "Service Request Created"
+    }
+    ```
+
+### 4. Update Service Request
+
+Updates an existing service request by ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `PUT`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request to update.
+-   **Request:** `application/json`
+    ```json
+    {
+        "status_id": 2
+    }
+    ```
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "admin_id": 1,
+            "user_id": 2,
+            "service_type_id": 1,
+            "request_date": "2024-01-20",
+            "status_id": 2,
+            "details": [
+                {
+                    "id": 1,
+                    "service_request_id": 1,
+                    "device_id": 1,
+                    "complaint": "Screen is broken"
+                }
+            ]
+        },
+        "message": "Service Request Updated"
+    }
+    ```
+
+### 5. Delete Service Request
+
+Deletes a service request by ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `DELETE`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request to delete.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": null,
+        "message": "Service Request Deleted"
+    }
+    ```
+

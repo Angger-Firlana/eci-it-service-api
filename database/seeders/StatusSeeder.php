@@ -17,10 +17,12 @@ class StatusSeeder extends Seeder
         $statuses = [
             // Service Request Statuses
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'PENDING', 'name' => 'Pending'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'APPROVED', 'name' => 'Approved'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'REJECTED', 'name' => 'Rejected'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_REVIEW', 'name' => 'In Review'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_PROGRESS', 'name' => 'In Progress'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'COMPLETED', 'name' => 'Completed'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'CANCELLED', 'name' => 'Cancelled'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'REJECTED', 'name' => 'Rejected'],
 
             // Vendor Approval Statuses
             ['entity_type_id' => $vendorApprovalEntityType->id, 'code' => 'PENDING', 'name' => 'Pending'],

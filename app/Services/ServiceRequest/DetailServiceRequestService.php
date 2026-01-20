@@ -4,6 +4,7 @@ namespace App\Services\ServiceRequest;
 
 use App\Models\ServiceRequestDetail;
 use Illuminate\Http\UploadedFile;
+use App\Models\ComplaintImage;
 use Illuminate\Support\Facades\Storage;
 
 class DetailServiceRequestService
@@ -18,18 +19,16 @@ class DetailServiceRequestService
 
         // Handle complaint images if any
         if (isset($data['complaint_images']) && is_array($data['complaint_images'])) {
-            $imagePaths = [];
             foreach ($data['complaint_images'] as $image) {
                 if ($image instanceof UploadedFile) {
                     $imagePath = $image->store('complaint-images', 'public');
-                    $imagePaths[] = $imagePath;
+                    ComplaintImage::create([
+                        'service_request_detail_id' => $serviceRequestDetail->id,
+                        'image_path' => $imagePath,
+                    ]);
                 }
             }
             
-            // Store image paths as JSON or handle separately based on your database structure
-            if (!empty($imagePaths)) {
-                $serviceRequestDetail->update(['complaint_images' => json_encode($imagePaths)]);
-            }
         }
 
         return $serviceRequestDetail->load('device');
@@ -48,18 +47,16 @@ class DetailServiceRequestService
 
         // Handle complaint images if any
         if (isset($data['complaint_images']) && is_array($data['complaint_images'])) {
-            $imagePaths = [];
             foreach ($data['complaint_images'] as $image) {
                 if ($image instanceof UploadedFile) {
                     $imagePath = $image->store('complaint-images', 'public');
-                    $imagePaths[] = $imagePath;
+                    ComplaintImage::updateOrCreate([
+                        'service_request_detail_id' => $serviceRequestDetail->id,
+                        'image_path' => $imagePath,
+                    ]); 
                 }
             }
             
-            // Store image paths as JSON or handle separately based on your database structure
-            if (!empty($imagePaths)) {
-                $serviceRequestDetail->update(['complaint_images' => json_encode($imagePaths)]);
-            }
         }
 
         return $serviceRequestDetail->load('device');

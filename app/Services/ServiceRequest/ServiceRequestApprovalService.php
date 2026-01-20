@@ -20,17 +20,19 @@ class ServiceRequestApprovalService
                 ],
                 [
                     'assigned_by' => $approvalData['assigned_by'] ?? auth()->id(),
-                    'assigned_at' => $approvalData['assigned_at'] ?? now(),
+                    'assigned_at' => now(),
                     'approved_at' => $approvalData['approved_at'] ?? null,
-                    'status' => $approvalData['status'] ?? 'pending',
+                    'status_id' => $approvalData['status_id'] ?? 6,
                     'notes' => $approvalData['notes'] ?? null,
+                    'approval_policy_id' => $approvalData['approval_policy_id'] ?? null,
+                    'approval_policy_step_id' => $approvalData['approval_policy_step_id'] ?? null,
                 ]
             );
         }
         
         DB::commit();
 
-        return $serviceRequest->vendorApprovals()->with(['approver', 'assignedBy'])->get();
+        return $serviceRequest->vendor_approvals()->with(['approver', 'assigned_by'])->get();
     }
 
     public function createVendorApproval(array $data, ServiceRequest $serviceRequest): VendorApproval
@@ -41,11 +43,13 @@ class ServiceRequestApprovalService
             'assigned_by' => $data['assigned_by'] ?? auth()->id(),
             'assigned_at' => now(),
             'approved_at' => $data['approved_at'] ?? null,
-            'status' => $data['status'] ?? 'pending',
+            'status_id' => $data['status_id'] ?? 8,
             'notes' => $data['notes'] ?? null,
+            'approval_policy_id' => $data['approval_policy_id'] ?? null,
+            'approval_policy_step_id' => $data['approval_policy_step_id'] ?? null,
         ]);
 
-        return $approval->load(['approver', 'assignedBy']);
+        return $approval->load(['approver', 'assigned_by']);
     }
 
     public function approveVendorRequest(int $approvalId, array $data): VendorApproval
@@ -54,14 +58,14 @@ class ServiceRequestApprovalService
         
         $approval->update([
             'approved_at' => now(),
-            'status' => 'approved',
+            'status_id' => 9,
             'notes' => $data['notes'] ?? $approval->notes,
         ]);
 
         // Update service request status if all approvals are done
-        $this->checkAndUpdateServiceRequestStatus($approval->serviceRequest);
+        $this->checkAndUpdateServiceRequestStatus($approval->service_request);
 
-        return $approval->load(['approver', 'assignedBy', 'serviceRequest']);
+        return $approval->load(['approver', 'assigned_by', 'service_request']);
     }
 
     public function rejectVendorRequest(int $approvalId, array $data): VendorApproval
@@ -70,14 +74,13 @@ class ServiceRequestApprovalService
         
         $approval->update([
             'approved_at' => now(),
-            'status' => 'rejected',
+            'status_id' => 10,
             'notes' => $data['notes'] ?? $approval->notes,
         ]);
 
-        // Update service request status to rejected
-        $approval->serviceRequest->update(['status_id' => 5]); // Assuming 5 is rejected status
+        $this->checkAndUpdateServiceRequestStatus($approval->service_request);
 
-        return $approval->load(['approver', 'assignedBy', 'serviceRequest']);
+        return $approval->load(['approver', 'assigned_by', 'service_request']);
     }
 
     public function deleteVendorApproval(int $id): void
@@ -88,7 +91,7 @@ class ServiceRequestApprovalService
 
     public function getApprovalById(int $id): VendorApproval
     {
-        $approval = VendorApproval::with(['approver', 'assignedBy', 'serviceRequest'])
+        $approval = VendorApproval::with(['approver', 'assigned_by', 'service_request'])
             ->findOrFail($id);
 
         return $approval;
@@ -96,7 +99,7 @@ class ServiceRequestApprovalService
 
     public function getApprovalsByServiceRequest(int $serviceRequestId): \Illuminate\Database\Eloquent\Collection
     {
-        $approvals = VendorApproval::with(['approver', 'assignedBy'])
+        $approvals = VendorApproval::with(['approver', 'assigned_by'])
             ->where('service_request_id', $serviceRequestId)
             ->get();
 
@@ -105,18 +108,18 @@ class ServiceRequestApprovalService
 
     private function checkAndUpdateServiceRequestStatus(ServiceRequest $serviceRequest): void
     {
-        $pendingApprovals = $serviceRequest->vendorApprovals()
-            ->where('status', 'pending')
+        $pendingApprovals = $serviceRequest->vendor_approvals()
+            ->where('status_id', 8)
             ->count();
         
-        $rejectedApprovals = $serviceRequest->vendorApprovals()
-            ->where('status', 'rejected')
+        $rejectedApprovals = $serviceRequest->vendor_approvals()
+            ->where('status_id', 10)
             ->count();
         
         if ($rejectedApprovals > 0) {
-            $serviceRequest->update(['status_id' => 5]); // Rejected
+            $serviceRequest->update(['status_id' => 3]); // Rejected
         } elseif ($pendingApprovals === 0) {
-            $serviceRequest->update(['status_id' => 2]); // In Progress
+            $serviceRequest->update(['status_id' => 5]); // In Progress
         }
     }
 }
