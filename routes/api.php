@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DeviceTypeController;
 use App\Http\Controllers\DeviceModelController;
+use App\Http\Controllers\DeviceController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -32,6 +33,16 @@ Route::prefix('device-model')->group(function(){
     Route::put('/{id}', [DeviceModelController::class, 'update']);
     Route::patch('/{id}', [DeviceModelController::class, 'patch']);
     Route::delete('/{id}', [DeviceModelController::class, 'destroy']);
+});
+
+Route::prefix('devices')->group(function(){
+    Route::get('/', [DeviceController::class, 'index']);
+    Route::get('/{id}', [DeviceController::class, 'show']);
+    Route::post('/', [DeviceController::class, 'store']);
+    Route::put('/{id}', [DeviceController::class, 'update']);
+    Route::patch('/{id}', [DeviceController::class, 'patch']);
+    Route::delete('/{id}', [DeviceController::class, 'destroy']);
+
 });
 
 
