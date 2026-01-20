@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class ConditionTypeDatum extends Model
+class ConditionTypeData extends Model
 {
 	protected $table = 'condition_type_data';
 

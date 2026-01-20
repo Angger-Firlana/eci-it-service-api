@@ -11,20 +11,20 @@ class DeviceService
     //
     public function getAllDevice(Request $request):Collection
     {
-        $devices = Device::with(['deviceModel:id,brand,name']);
+        $devices = Device::select(['id','device_model_id','serial_number'])->with(['device_model:id,brand,model']);
 
         if($request->has('serial-number')){
             $devices = $devices->where('serial_number', $request->input('serial-number'));
         }
 
         if($request->has('brand')){
-            $devices = $devices->whereHas('deviceModel', function($query) use ($request) {
+            $devices = $devices->whereHas('device_model', function($query) use ($request) {
                 $query->where('brand', $request->input('brand'));
             });
         }
 
         if($request->has('model')){
-            $devices = $devices->whereHas('deviceModel', function($query) use ($request) {
+            $devices = $devices->whereHas('device_model', function($query) use ($request) {
                 $query->where('name', 'like', '%' . $request->input('model') . '%');
             });
         }

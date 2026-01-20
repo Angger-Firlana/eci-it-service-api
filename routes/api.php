@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DeviceTypeController;
 use App\Http\Controllers\DeviceModelController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\ServiceRequestController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -43,6 +44,14 @@ Route::prefix('devices')->group(function(){
     Route::patch('/{id}', [DeviceController::class, 'patch']);
     Route::delete('/{id}', [DeviceController::class, 'destroy']);
 
+});
+
+Route::prefix('service-requests')->group(function(){
+    Route::get('/', [ServiceRequestController::class, 'index']);
+    Route::get('/{id}', [ServiceRequestController::class, 'show']);
+    Route::post('/', [ServiceRequestController::class, 'store']);
+    Route::put('/{id}', [ServiceRequestController::class, 'update']);
+    Route::delete('/{id}', [ServiceRequestController::class, 'destroy']);
 });
 
 
