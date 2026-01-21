@@ -12,6 +12,8 @@ use App\Http\Controllers\ServiceRequestCancellationController;
 use App\Http\Controllers\ServiceRequestCostController;
 use App\Http\Controllers\ServiceRequestLocationController;
 use App\Http\Controllers\ReferenceDataController;
+use App\Http\Controllers\ExportInvoiceController;
+use App\Http\Controllers\InvoiceController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -59,6 +61,7 @@ Route::prefix('service-requests')->group(function(){
     Route::put('/{id}', [ServiceRequestController::class, 'update']);
     Route::delete('/{id}', [ServiceRequestController::class, 'destroy']);
     Route::get('/{id}/allowed-transitions', [ServiceRequestController::class, 'allowedTransitions']);
+    Route::get('/{id}/download-invoice', [ExportInvoiceController::class, 'download']);
     
     // Sub-resourcesj
     Route::post('/{id}/cancellation', [ServiceRequestCancellationController::class, 'store']);
@@ -80,3 +83,11 @@ Route::prefix('references')->group(function() {
     Route::get('/statuses', [ReferenceDataController::class, 'getStatuses']);
     Route::get('/vendors', [ReferenceDataController::class, 'getVendors']);
 });
+
+Route::prefix('invoices')->group(function(){
+    Route::get('/', [InvoiceController::class, 'index']);
+    Route::get('/{id}', [InvoiceController::class, 'show']);
+    Route::get('/{id}/print', [InvoiceController::class, 'print']);
+});
+
+Route::get('/export-invoice/{id}', [ExportInvoiceController::class, 'download']);

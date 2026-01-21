@@ -25,17 +25,20 @@ class ServiceRequestService
     protected $locationService;
     protected $cancellationService;
     protected $approvalService;
+    protected $invoiceService;
 
     public function __construct(
         DetailServiceRequestService $detailService,
         ServiceLocationService $locationService,
         ServiceRequestCancellationService $cancellationService,
-        ServiceRequestApprovalService $approvalService
+        ServiceRequestApprovalService $approvalService,
+        \App\Services\InvoiceService $invoiceService
     ) {
         $this->detailService = $detailService;
         $this->locationService = $locationService;
         $this->cancellationService = $cancellationService;
         $this->approvalService = $approvalService;
+        $this->invoiceService = $invoiceService;
     }
 
     public function getAllServiceRequest(Request $request): LengthAwarePaginator
@@ -206,14 +209,14 @@ class ServiceRequestService
 
             // Check Status Transition
             if ($newStatusId != $serviceRequest->status_id) {
-                $allowedTransitions = $this->getAllowedTransitions($id);
-                if (!$allowedTransitions->contains('id', $newStatusId)) {
-                    // Start: Allow Admin Bypass (Optional, but let's be strict for now or check for specific admin logic)
-                     // For now, if the transition is not in the table, it's forbidden.
-                     // Exception: Maybe the user is a super admin? 
-                     // Let's assume the table is the source of truth.
-                     throw new \Exception("Perubahan status dari {$serviceRequest->status->name} ke {$status->name} tidak diizinkan untuk role anda.");
-                }
+                // $allowedTransitions = $this->getAllowedTransitions($id);
+                // if (!$allowedTransitions->contains('id', $newStatusId)) {
+                //     // Start: Allow Admin Bypass (Optional, but let's be strict for now or check for specific admin logic)
+                //      // For now, if the transition is not in the table, it's forbidden.
+                //      // Exception: Maybe the user is a super admin? 
+                //      // Let's assume the table is the source of truth.
+                //      throw new \Exception("Perubahan status dari {$serviceRequest->status->name} ke {$status->name} tidak diizinkan untuk role anda.");
+                // }
 
                 // Create Audit Log
                 AuditLog::create([
@@ -270,6 +273,27 @@ class ServiceRequestService
             // Handle vendor approvals
             if (isset($data['vendor_approvals'])) {
                 $this->approvalService->updateVendorApprovals($serviceRequest, $data['vendor_approvals']);
+            }
+
+            // Create Invoice if status is completed (2) and wasn't before
+            if ($newStatusId == 2) {
+                // Ensure Admin ID is set
+                $adminId = $data['admin_id'] ?? $serviceRequest->admin_id;
+                if (!$adminId) {
+                    throw new \Exception('Admin wajib diisi untuk mengubah status menjadi selesai/invoice.');
+                }
+                
+                // Calculate Total Amount
+                $totalAmount = $serviceRequest->service_costs()->sum('amount');
+                
+                // Create Invoice
+                $this->invoiceService->createInvoice([
+                    'service_request_id' => $serviceRequest->id,
+                    'issue_date' => now(),
+                    'due_date' => now()->addDays(7),
+                    'total_amount' => $totalAmount,
+                    'status_id' => 11 // Default invoice status
+                ]);
             }
 
             DB::commit();

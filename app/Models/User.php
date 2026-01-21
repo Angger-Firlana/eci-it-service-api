@@ -58,8 +58,14 @@ class User extends Authenticatable
 		'email_verified_at',
 		'password',
 		'pin',
-		'remember_token'
+		'remember_token',
+        'department_id'
 	];
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
 
 	public function audit_logs()
 	{
