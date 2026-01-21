@@ -1265,3 +1265,707 @@ Rejects a vendor request for a service request.
         "message": "Vendor request rejected successfully"
     }
     ```
+
+### 16. Get Service Request Details
+
+Retrieves all details for a specific service request.
+
+-   **Endpoint:** `/{id}/details`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": [
+            {
+                "id": 1,
+                "service_request_id": 1,
+                "device_id": 1,
+                "complaint": "Screen is broken",
+                "complaint_images": ["complaint-images/image1.jpg", "complaint-images/image2.png"],
+                "created_at": "2024-01-20T10:00:00.000000Z",
+                "updated_at": "2024-01-20T10:00:00.000000Z",
+                "device": {
+                    "id": 1,
+                    "device_model_id": 1,
+                    "serial_number": "SN12345",
+                    "device_model": {
+                        "id": 1,
+                        "brand": "Dell",
+                        "model": "Latitude 5420"
+                    }
+                }
+            }
+        ],
+        "message": "Service request details retrieved successfully",
+        "code": 200
+    }
+    ```
+
+### 17. Create Service Request Detail
+
+Adds a new detail to an existing service request.
+
+-   **Endpoint:** `/{id}/details`
+-   **Method:** `POST`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request.
+-   **Request:** `application/json`
+    ```json
+    {
+        "device_id": 1,
+        "complaint": "Keyboard not working",
+        "complaint_images": []
+    }
+    ```
+-   **Validation Rules:**
+    *   `device_id`: `required`, `exists:devices,id`
+    *   `complaint`: `required`, `string`
+    *   `complaint_images`: `sometimes`, `array`
+    *   `complaint_images.*`: `sometimes`, `file`, `mimes:jpeg,png,jpg,gif,svg`, `max:2048`
+
+-   **Success Response (201 Created):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 3,
+            "service_request_id": 1,
+            "device_id": 1,
+            "complaint": "Keyboard not working",
+            "complaint_images": [],
+            "created_at": "2024-01-20T10:15:00.000000Z",
+            "updated_at": "2024-01-20T10:15:00.000000Z",
+            "device": {
+                "id": 1,
+                "device_model_id": 1,
+                "serial_number": "SN12345"
+            }
+        },
+        "message": "Service request detail created successfully",
+        "code": 201
+    }
+    ```
+
+### 18. Update Service Request Detail
+
+Updates an existing service request detail.
+
+-   **Endpoint:** `/details/{detailId}`
+-   **Method:** `PUT`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `detailId` (integer, required): The ID of the service request detail.
+-   **Request:** `application/json`
+    ```json
+    {
+        "device_id": 2,
+        "complaint": "Screen flickering issue",
+        "complaint_images": []
+    }
+    ```
+-   **Validation Rules:**
+    *   `device_id`: `sometimes`, `exists:devices,id`
+    *   `complaint`: `sometimes`, `string`
+    *   `complaint_images`: `sometimes`, `array`
+    *   `complaint_images.*`: `sometimes`, `file`, `mimes:jpeg,png,jpg,gif,svg`, `max:2048`
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 3,
+            "service_request_id": 1,
+            "device_id": 2,
+            "complaint": "Screen flickering issue",
+            "complaint_images": ["complaint-images/new-image.jpg"],
+            "updated_at": "2024-01-20T10:20:00.000000Z",
+            "device": {
+                "id": 2,
+                "device_model_id": 2,
+                "serial_number": "SN54321"
+            }
+        },
+        "message": "Service request detail updated successfully",
+        "code": 200
+    }
+    ```
+
+### 19. Delete Service Request Detail
+
+Deletes a service request detail.
+
+-   **Endpoint:** `/details/{detailId}`
+-   **Method:** `DELETE`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `detailId` (integer, required): The ID of the service request detail to delete.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": null,
+        "message": "Service request detail deleted successfully",
+        "code": 200
+    }
+    ```
+
+---
+
+## Vendor Endpoints
+
+Base URL: `/api/vendors`
+
+### 1. Get All Vendors
+
+Retrieves a list of all vendors.
+
+-   **Endpoint:** `/`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Query Parameters:**
+    *   `search` (optional): A string to filter vendors by their `name`.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": [
+            {
+                "id": 1,
+                "name": "Tech Solutions Inc.",
+                "maps_url": "https://maps.google.com/?q=123+Tech+Street+Silicon+Valley+CA",
+                "description": "Leading technology solutions provider specializing in hardware and software services.",
+                "created_at": "2024-01-01T10:00:00.000000Z",
+                "updated_at": "2024-01-01T10:00:00.000000Z"
+            },
+            {
+                "id": 2,
+                "name": "Hardware Pro Services",
+                "maps_url": "https://maps.google.com/?q=456+Hardware+Ave+Tech+City+CA",
+                "description": "Professional hardware repair and maintenance services for all types of IT equipment.",
+                "created_at": "2024-01-01T10:05:00.000000Z",
+                "updated_at": "2024-01-01T10:05:00.000000Z"
+            }
+        ],
+        "message": "Vendors retrieved successfully",
+        "code": 200
+    }
+    ```
+
+### 2. Get Vendor by ID
+
+Retrieves a single vendor by its ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the vendor.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "name": "Tech Solutions Inc.",
+            "maps_url": "https://maps.google.com/?q=123+Tech+Street+Silicon+Valley+CA",
+            "description": "Leading technology solutions provider specializing in hardware and software services.",
+            "created_at": "2024-01-01T10:00:00.000000Z",
+            "updated_at": "2024-01-01T10:00:00.000000Z"
+        },
+        "message": "Vendor retrieved successfully",
+        "code": 200
+    }
+    ```
+
+### 3. Create New Vendor
+
+Creates a new vendor.
+
+-   **Endpoint:** `/`
+-   **Method:** `POST`
+-   **Authentication:** Bearer Token (Required)
+-   **Request:** `application/json`
+    ```json
+    {
+        "name": "New Tech Company",
+        "maps_url": "https://maps.google.com/?q=789+New+Tech+Blvd+Digital+Park+CA",
+        "description": "Specialized in network infrastructure and cloud services."
+    }
+    ```
+-   **Validation Rules:**
+    *   `name`: `required`, `string`, `unique:vendors,name`
+    *   `maps_url`: `sometimes`, `url`
+    *   `description`: `sometimes`, `string`
+
+-   **Success Response (201 Created):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 6,
+            "name": "New Tech Company",
+            "maps_url": "https://maps.google.com/?q=789+New+Tech+Blvd+Digital+Park+CA",
+            "description": "Specialized in network infrastructure and cloud services.",
+            "created_at": "2024-01-20T11:00:00.000000Z",
+            "updated_at": "2024-01-20T11:00:00.000000Z"
+        },
+        "message": "Vendor created successfully",
+        "code": 201
+    }
+    ```
+
+### 4. Update Vendor
+
+Updates an existing vendor by ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `PUT`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the vendor to update.
+-   **Request:** `application/json`
+    ```json
+    {
+        "name": "Updated Tech Company",
+        "maps_url": "https://maps.google.com/?q=456+Updated+Ave+Tech+City+CA",
+        "description": "Updated description for technology services provider."
+    }
+    ```
+-   **Validation Rules:**
+    *   `name`: `sometimes`, `string`, `unique:vendors,name,{id}`
+    *   `maps_url`: `sometimes`, `url`
+    *   `description`: `sometimes`, `string`
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "name": "Updated Tech Company",
+            "maps_url": "https://maps.google.com/?q=456+Updated+Ave+Tech+City+CA",
+            "description": "Updated description for technology services provider.",
+            "created_at": "2024-01-01T10:00:00.000000Z",
+            "updated_at": "2024-01-20T11:15:00.000000Z"
+        },
+        "message": "Vendor updated successfully",
+        "code": 200
+    }
+    ```
+
+### 5. Delete Vendor
+
+Deletes a vendor by ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `DELETE`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the vendor to delete.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": null,
+        "message": "Vendor deleted successfully",
+        "code": 200
+    }
+    ```
+
+---
+
+## Service Type Endpoints
+
+Base URL: `/api/service-types`
+
+### 1. Get All Service Types
+
+Retrieves a list of all service types.
+
+-   **Endpoint:** `/`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Query Parameters:**
+    *   `search` (optional): A string to filter service types by their `name`.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": [
+            {
+                "id": 1,
+                "name": "Hardware Repair",
+                "created_at": "2024-01-01T10:00:00.000000Z",
+                "updated_at": "2024-01-01T10:00:00.000000Z"
+            },
+            {
+                "id": 2,
+                "name": "Software Installation",
+                "created_at": "2024-01-01T10:05:00.000000Z",
+                "updated_at": "2024-01-01T10:05:00.000000Z"
+            }
+        ],
+        "message": "Service types retrieved successfully",
+        "code": 200
+    }
+    ```
+
+### 2. Get Service Type by ID
+
+Retrieves a single service type by its ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service type.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "name": "Hardware Repair",
+            "created_at": "2024-01-01T10:00:00.000000Z",
+            "updated_at": "2024-01-01T10:00:00.000000Z"
+        },
+        "message": "Service type retrieved successfully",
+        "code": 200
+    }
+    ```
+
+### 3. Create New Service Type
+
+Creates a new service type.
+
+-   **Endpoint:** `/`
+-   **Method:** `POST`
+-   **Authentication:** Bearer Token (Required)
+-   **Request:** `application/json`
+    ```json
+    {
+        "name": "Data Recovery Service"
+    }
+    ```
+-   **Validation Rules:**
+    *   `name`: `required`, `string`, `unique:service_types,name`
+
+-   **Success Response (201 Created):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 11,
+            "name": "Data Recovery Service",
+            "created_at": "2024-01-20T11:00:00.000000Z",
+            "updated_at": "2024-01-20T11:00:00.000000Z"
+        },
+        "message": "Service type created successfully",
+        "code": 201
+    }
+    ```
+
+### 4. Update Service Type
+
+Updates an existing service type by ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `PUT`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service type to update.
+-   **Request:** `application/json`
+    ```json
+    {
+        "name": "Advanced Hardware Repair"
+    }
+    ```
+-   **Validation Rules:**
+    *   `name`: `required`, `string`, `unique:service_types,name,{id}`
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "name": "Advanced Hardware Repair",
+            "created_at": "2024-01-01T10:00:00.000000Z",
+            "updated_at": "2024-01-20T11:15:00.000000Z"
+        },
+        "message": "Service type updated successfully",
+        "code": 200
+    }
+    ```
+
+### 5. Delete Service Type
+
+Deletes a service type by ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `DELETE`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service type to delete.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": null,
+        "message": "Service type deleted successfully",
+        "code": 200
+    }
+    ```
+
+---
+
+## Status Endpoints
+
+Base URL: `/api/statuses`
+
+### 1. Get All Statuses
+
+Retrieves a list of all statuses, optionally filtered by entity type.
+
+-   **Endpoint:** `/`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Query Parameters:**
+    *   `entity_type_id` (optional): Filter statuses by entity type ID.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": [
+            {
+                "id": 1,
+                "entity_type_id": 1,
+                "code": "PENDING",
+                "name": "Pending",
+                "created_at": "2024-01-01T10:00:00.000000Z",
+                "updated_at": "2024-01-01T10:00:00.000000Z",
+                "entity_type": {
+                    "id": 1,
+                    "name": "Service Request"
+                }
+            },
+            {
+                "id": 2,
+                "entity_type_id": 1,
+                "code": "IN_PROGRESS",
+                "name": "In Progress",
+                "created_at": "2024-01-01T10:05:00.000000Z",
+                "updated_at": "2024-01-01T10:05:00.000000Z",
+                "entity_type": {
+                    "id": 1,
+                    "name": "Service Request"
+                }
+            }
+        ],
+        "message": "Statuses retrieved successfully",
+        "code": 200
+    }
+    ```
+
+### 2. Get Status by ID
+
+Retrieves a single status by its ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the status.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "entity_type_id": 1,
+            "code": "PENDING",
+            "name": "Pending",
+            "created_at": "2024-01-01T10:00:00.000000Z",
+            "updated_at": "2024-01-01T10:00:00.000000Z",
+            "entity_type": {
+                "id": 1,
+                "name": "Service Request"
+            }
+        },
+        "message": "Status retrieved successfully",
+        "code": 200
+    }
+    ```
+
+---
+
+## Role Endpoints
+
+Base URL: `/api/roles`
+
+### 1. Get All Roles
+
+Retrieves a list of all roles.
+
+-   **Endpoint:** `/`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": [
+            {
+                "id": 1,
+                "name": "admin",
+                "created_at": "2024-01-01T10:00:00.000000Z",
+                "updated_at": "2024-01-01T10:00:00.000000Z"
+            },
+            {
+                "id": 2,
+                "name": "user",
+                "created_at": "2024-01-01T10:05:00.000000Z",
+                "updated_at": "2024-01-01T10:05:00.000000Z"
+            },
+            {
+                "id": 3,
+                "name": "technician",
+                "created_at": "2024-01-01T10:10:00.000000Z",
+                "updated_at": "2024-01-01T10:10:00.000000Z"
+            },
+            {
+                "id": 4,
+                "name": "superior",
+                "created_at": "2024-01-01T10:15:00.000000Z",
+                "updated_at": "2024-01-01T10:15:00.000000Z"
+            }
+        ],
+        "message": "Roles retrieved successfully",
+        "code": 200
+    }
+    ```
+
+### 2. Get Role by ID
+
+Retrieves a single role by its ID.
+
+-   **Endpoint:** `/{id}`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the role.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "name": "admin",
+            "created_at": "2024-01-01T10:00:00.000000Z",
+            "updated_at": "2024-01-01T10:00:00.000000Z"
+        },
+        "message": "Role retrieved successfully",
+        "code": 200
+    }
+    ```
+
+---
+
+## Error Response Format
+
+All API endpoints follow a consistent error response format:
+
+### Standard Error Response
+```json
+{
+    "success": false,
+    "message": "Error description",
+    "errors": {
+        "field_name": [
+            "Specific validation error message"
+        ]
+    },
+    "code": 400
+}
+```
+
+### Common HTTP Status Codes
+- **200 OK**: Request successful
+- **201 Created**: Resource created successfully
+- **400 Bad Request**: Invalid request data
+- **401 Unauthorized**: Authentication required or failed
+- **403 Forbidden**: Insufficient permissions
+- **404 Not Found**: Resource not found
+- **422 Unprocessable Entity**: Validation errors
+- **500 Internal Server Error**: Server error
+
+### Authentication Headers
+For protected endpoints, include the following header:
+```
+Authorization: Bearer YOUR_ACCESS_TOKEN_HERE
+```
+
+### Content Type
+All POST/PUT/PATCH requests should include:
+```
+Content-Type: application/json
+Accept: application/json
+```
+
+---
+
+## Usage Examples
+
+### Complete Service Request Creation Flow
+```bash
+# 1. Login to get token
+curl -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@eci-service.com",
+    "password": "admin123"
+  }'
+
+# 2. Create service request with details
+curl -X POST http://localhost:8000/api/service-requests \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "service_type_id": 1,
+    "details": [
+      {
+        "device_id": 1,
+        "complaint": "Laptop screen is broken"
+      }
+    ],
+    "service_location": {
+      "location_type": "internal"
+    }
+  }'
+```
+
+### Pagination
+For list endpoints that support pagination:
+```bash
+curl -X GET "http://localhost:8000/api/service-requests?per_page=10&page=2" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+This documentation covers all available endpoints in the ECI IT Service API with complete request/response examples and validation rules.
