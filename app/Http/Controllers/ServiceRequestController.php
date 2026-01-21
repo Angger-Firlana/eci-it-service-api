@@ -40,4 +40,14 @@ class ServiceRequestController extends Controller
         $serviceRequests = $this->serviceRequestService->deleteServiceRequest($id);
         return APIResponse::success($serviceRequests);
     }
+
+    public function allowedTransitions($id) {
+        $transitions = $this->serviceRequestService->getAllowedTransitions($id);
+        return APIResponse::success($transitions);
+    }
+
+    public function stats() {
+        $stats = $this->serviceRequestService->getStats();
+        return APIResponse::success($stats);
+    }
 }

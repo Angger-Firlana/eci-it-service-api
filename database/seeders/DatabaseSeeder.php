@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             EntityTypeSeeder::class,
             StatusSeeder::class,
+            StatusTransitionSeeder::class,
             DeviceTypeSeeder::class,
             DeviceModelSeeder::class,
             ServiceTypeSeeder::class,

@@ -8,6 +8,10 @@ use App\Http\Controllers\DeviceModelController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\ServiceRequestCancellationController;
+use App\Http\Controllers\ServiceRequestCostController;
+use App\Http\Controllers\ServiceRequestLocationController;
+use App\Http\Controllers\ReferenceDataController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -49,12 +53,30 @@ Route::prefix('devices')->group(function(){
 
 Route::prefix('service-requests')->group(function(){
     Route::get('/', [ServiceRequestController::class, 'index']);
+    Route::get('/stats', [ServiceRequestController::class, 'stats']);
     Route::get('/{id}', [ServiceRequestController::class, 'show']);
     Route::post('/', [ServiceRequestController::class, 'store']);
     Route::put('/{id}', [ServiceRequestController::class, 'update']);
     Route::delete('/{id}', [ServiceRequestController::class, 'destroy']);
+    Route::get('/{id}/allowed-transitions', [ServiceRequestController::class, 'allowedTransitions']);
+    
+    // Sub-resourcesj
+    Route::post('/{id}/cancellation', [ServiceRequestCancellationController::class, 'store']);
+    
+    Route::get('/{id}/costs', [ServiceRequestCostController::class, 'index']);
+    Route::post('/{id}/costs', [ServiceRequestCostController::class, 'store']);
+    Route::delete('/{id}/costs/{costId}', [ServiceRequestCostController::class, 'destroy']);
+
+    Route::post('/{id}/locations', [ServiceRequestLocationController::class, 'store']);
+    Route::put('/{id}/locations/{locationId}', [ServiceRequestLocationController::class, 'update']);
+
+    // Approval (Keep existing or aliased if needed)
     Route::post('/approved/{id}', [ApprovalController::class, 'approveVendorRequest']);
     Route::post('/rejected/{id}', [ApprovalController::class, 'rejectVendorRequest']);
 });
 
-
+Route::prefix('references')->group(function() {
+    Route::get('/service-types', [ReferenceDataController::class, 'getServiceTypes']);
+    Route::get('/statuses', [ReferenceDataController::class, 'getStatuses']);
+    Route::get('/vendors', [ReferenceDataController::class, 'getVendors']);
+});

@@ -13,6 +13,9 @@ use App\Services\ServiceRequest\ServiceRequestApprovalService;
 use App\Services\ServiceRequest\DetailServiceRequestService;
 use App\Services\ServiceRequest\ServiceLocationService;
 use App\Services\ServiceRequest\ServiceRequestCancellationService;
+use App\Models\StatusTransition;
+use App\Models\AuditLog;
+use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -148,6 +151,45 @@ class ServiceRequestService
         }
     }
 
+    public function getAllowedTransitions(int $serviceRequestId)
+    {
+        $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
+        $user = Auth::user();
+        
+        // If user is not authenticated, return empty
+        if (!$user) return collect([]);
+
+        $userRoles = $user->roles->pluck('id');
+
+        $transitions = StatusTransition::where('from_status_id', $serviceRequest->status_id)
+            ->whereHas('roles', function($q) use ($userRoles) {
+                $q->whereIn('roles.id', $userRoles);
+            })
+            ->with('status')
+            ->get();
+            
+        return $transitions->pluck('status');
+    }
+
+    public function getStats()
+    {
+        return [
+            'total' => ServiceRequest::count(),
+            'by_status' => ServiceRequest::select('status_id', DB::raw('count(*) as count'))
+                ->with('status:id,name,code')
+                ->groupBy('status_id')
+                ->get()
+                ->map(function($item) {
+                    return [
+                        'status' => $item->status->name,
+                        'code' => $item->status->code,
+                        'count' => $item->count
+                    ];
+                }),
+            'recent' => ServiceRequest::orderBy('created_at', 'desc')->take(5)->get()
+        ];
+    }
+
     public function updateServiceRequest(int $id, array $data): ServiceRequest
     {
         DB::beginTransaction();
@@ -155,10 +197,34 @@ class ServiceRequestService
             $serviceRequest = ServiceRequest::findOrFail($id);
             
             // Update main service request
-            $status = Status::findOrFail($data['status_id'] ?? $serviceRequest->status_id);
-            
+            $newStatusId = $data['status_id'] ?? $serviceRequest->status_id;
+            $status = Status::findOrFail($newStatusId);
+
             if($status->entity_type_id != 1){
                 throw new \Exception('Status tidak valid');
+            }
+
+            // Check Status Transition
+            if ($newStatusId != $serviceRequest->status_id) {
+                $allowedTransitions = $this->getAllowedTransitions($id);
+                if (!$allowedTransitions->contains('id', $newStatusId)) {
+                    // Start: Allow Admin Bypass (Optional, but let's be strict for now or check for specific admin logic)
+                     // For now, if the transition is not in the table, it's forbidden.
+                     // Exception: Maybe the user is a super admin? 
+                     // Let's assume the table is the source of truth.
+                     throw new \Exception("Perubahan status dari {$serviceRequest->status->name} ke {$status->name} tidak diizinkan untuk role anda.");
+                }
+
+                // Create Audit Log
+                AuditLog::create([
+                    'actor_id' => auth()->id() ?? $serviceRequest->user_id, // Fallback if no auth (e.g. seeding)
+                    'entity_id' => $serviceRequest->id,
+                    'entity_type_id' => 1, // ServiceRequest
+                    'action' => 'UPDATE_STATUS',
+                    'old_status_id' => $serviceRequest->status_id,
+                    'new_status_id' => $newStatusId,
+                    'created_at' => now()
+                ]);
             }
 
             $updateData = [

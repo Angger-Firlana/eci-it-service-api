@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\ServiceType;
+use App\Models\Status;
+use App\Models\Vendor;
+use App\Helpers\APIResponse;
+
+class ReferenceDataController extends Controller
+{
+    public function getServiceTypes()
+    {
+        $serviceTypes = ServiceType::select('id', 'name')->get();
+        return APIResponse::success($serviceTypes);
+    }
+
+    public function getStatuses(Request $request)
+    {
+        $query = Status::select('id', 'name', 'code', 'entity_type_id');
+        
+        if ($request->has('entity_type_id')) {
+            $query->where('entity_type_id', $request->entity_type_id);
+        }
+
+        $statuses = $query->get();
+        return APIResponse::success($statuses);
+    }
+
+    public function getVendors()
+    {
+        $vendors = Vendor::select('id', 'name', 'description')->get();
+        return APIResponse::success($vendors);
+    }
+}

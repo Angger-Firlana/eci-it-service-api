@@ -786,7 +786,29 @@ Retrieves a list of all service requests.
     }
     ```
 
-### 2. Get Service Request by ID
+### 2. Get Service Request Statistics
+
+Retrieves statistics about service requests.
+
+-   **Endpoint:** `/stats`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "total": 100,
+            "pending": 20,
+            "in_progress": 30,
+            "completed": 50
+        },
+        "message": "Service Request Stats Found"
+    }
+    ```
+
+### 3. Get Service Request by ID
 
 Retrieves a single service request by its ID.
 
@@ -820,7 +842,7 @@ Retrieves a single service request by its ID.
     }
     ```
 
-### 3. Create New Service Request
+### 4. Create New Service Request
 
 Creates a new service request.
 
@@ -881,7 +903,7 @@ Creates a new service request.
     }
     ```
 
-### 4. Update Service Request
+### 5. Update Service Request
 
 Updates an existing service request by ID.
 
@@ -896,6 +918,38 @@ Updates an existing service request by ID.
         "status_id": 2
     }
     ```
+-   **Validation Rules:**
+    *   `admin_id`: `sometimes`, `exists:users,id`
+    *   `user_id`: `sometimes`, `exists:users,id`
+    *   `service_type_id`: `sometimes`, `exists:users,id`
+    *   `request_date`: `sometimes`, `date`
+    *   `estimated_date`: `sometimes`, `date`
+    *   `status_id`: `sometimes`, `exists:statuses,id`
+    *   `details`: `sometimes`, `array`
+    *   `details.*.id`: `sometimes`, `exists:service_request_details,id`
+    *   `details.*.device_id`: `sometimes`, `exists:devices,id`
+    *   `details.*.complaint`: `sometimes`, `string`
+    *   `details.*.complaint_images`: `sometimes`, `array`
+    *   `details.*.complaint_images.*`: `sometimes`, `file`, `mimes:jpeg,png,jpg,gif,svg`, `max:2048`
+    *   `service_location`: `sometimes`, `array`
+    *   `service_location.location_type`: `sometimes`, `in:internal,external`
+    *   `service_location.vendor_id`: `sometimes`, `exists:vendors,id`
+    *   `service_location.is_active`: `sometimes`, `boolean`
+    *   `service_costs`: `sometimes`, `array`
+    *   `service_costs.*.cost_type_id`: `sometimes`, `exists:cost_types,id`
+    *   `service_costs.*.amount`: `sometimes`, `numeric`
+    *   `service_costs.*.description`: `sometimes`, `string`
+    *   `service_cancellation`: `sometimes`, `array`
+    *   `service_cancellation.reason`: `sometimes`, `string`
+    *   `service_cancellation.canceled_by`: `sometimes`, `exists:users,id`
+    *   `vendor_approvals`: `sometimes`, `array`
+    *   `vendor_approvals.*.id`: `sometimes`, `exists:vendor_approvals,id`
+    *   `vendor_approvals.*.approval_policy_id`: `sometimes`, `exists:approval_policies,id`
+    *   `vendor_approvals.*.approval_policy_step_id`: `sometimes`, `exists:approval_policy_steps,id`
+    *   `vendor_approvals.*.approver_id`: `sometimes`, `exists:users,id`
+    *   `vendor_approvals.*.assigned_by`: `sometimes`, `exists:users,id`
+    *   `vendor_approvals.*.approved_at`: `sometimes`, `date`
+    *   `vendor_approvals.*.status_id`: `sometimes`, `exists:statuses,id`
 
 -   **Success Response (200 OK):**
     ```json
@@ -921,7 +975,7 @@ Updates an existing service request by ID.
     }
     ```
 
-### 5. Delete Service Request
+### 6. Delete Service Request
 
 Deletes a service request by ID.
 
@@ -940,3 +994,274 @@ Deletes a service request by ID.
     }
     ```
 
+### 7. Get Allowed Transitions for a Service Request
+
+Retrieves the allowed status transitions for a service request.
+
+-   **Endpoint:** `/{id}/allowed-transitions`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": [
+            {
+                "id": 1,
+                "name": "In Progress"
+            },
+            {
+                "id": 2,
+                "name": "Cancelled"
+            }
+        ],
+        "message": "Allowed Transitions Found"
+    }
+    ```
+
+### 8. Cancel a Service Request
+
+Cancels a service request.
+
+-   **Endpoint:** `/{id}/cancellation`
+-   **Method:** `POST`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request to cancel.
+-   **Request:** `application/json`
+    ```json
+    {
+        "reason": "No longer needed"
+    }
+    ```
+-   **Validation Rules:**
+    *   `reason`: `required`, `string`
+
+-   **Success Response (201 Created):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "service_request_id": 1,
+            "reason": "No longer needed",
+            "canceled_by": 1
+        },
+        "message": "Service request cancelled successfully"
+    }
+    ```
+
+### 9. Get Costs for a Service Request
+
+Retrieves all costs associated with a service request.
+
+-   **Endpoint:** `/{id}/costs`
+-   **Method:** `GET`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": [
+            {
+                "id": 1,
+                "service_request_id": 1,
+                "cost_type_id": 1,
+                "amount": 100.50,
+                "description": "Screen replacement"
+            }
+        ],
+        "message": "Costs Found"
+    }
+    ```
+
+### 10. Add a Cost to a Service Request
+
+Adds a cost to a service request.
+
+-   **Endpoint:** `/{id}/costs`
+-   **Method:** `POST`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request.
+-   **Request:** `application/json`
+    ```json
+    {
+        "cost_type_id": 1,
+        "amount": 100.50,
+        "description": "Screen replacement"
+    }
+    ```
+-   **Validation Rules:**
+    *   `cost_type_id`: `required`, `exists:cost_types,id`
+    *   `amount`: `required`, `numeric`, `min:0`
+    *   `description`: `nullable`, `string`
+
+-   **Success Response (201 Created):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "service_request_id": 1,
+            "cost_type_id": 1,
+            "amount": 100.50,
+            "description": "Screen replacement"
+        },
+        "message": "Cost added successfully"
+    }
+    ```
+
+### 11. Remove a Cost from a Service Request
+
+Removes a cost from a service request.
+
+-   **Endpoint:** `/{id}/costs/{costId}`
+-   **Method:** `DELETE`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request.
+    *   `costId` (integer, required): The ID of the cost to remove.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": null,
+        "message": "Cost removed successfully"
+    }
+    ```
+
+### 12. Set Service Location for a Service Request
+
+Sets the service location for a service request.
+
+-   **Endpoint:** `/{id}/locations`
+-   **Method:** `POST`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request.
+-   **Request:** `application/json`
+    ```json
+    {
+        "location_type": "external",
+        "vendor_id": 1
+    }
+    ```
+-   **Validation Rules:**
+    *   `location_type`: `required`, `in:internal,external`
+    *   `vendor_id`: `required_if:location_type,external`, `exists:vendors,id`
+    *   `is_active`: `boolean`
+
+-   **Success Response (201 Created or 200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "service_request_id": 1,
+            "location_type": "external",
+            "vendor_id": 1,
+            "is_active": true
+        },
+        "message": "Service location set/updated successfully"
+    }
+    ```
+
+### 13. Update Service Location for a Service Request
+
+Updates the service location for a service request.
+
+-   **Endpoint:** `/{id}/locations/{locationId}`
+-   **Method:** `PUT`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the service request.
+    *   `locationId` (integer, required): The ID of the service location to update.
+-   **Request:** `application/json`
+    ```json
+    {
+        "is_active": false
+    }
+    ```
+-   **Validation Rules:**
+    *   `location_type`: `sometimes`, `in:internal,external`
+    *   `vendor_id`: `required_if:location_type,external`, `exists:vendors,id`
+    *   `is_active`: `boolean`
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "service_request_id": 1,
+            "location_type": "external",
+            "vendor_id": 1,
+            "is_active": false
+        },
+        "message": "Service location updated successfully"
+    }
+    ```
+
+### 14. Approve a Vendor Request
+
+Approves a vendor request for a service request.
+
+-   **Endpoint:** `/approved/{id}`
+-   **Method:** `POST`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the vendor approval.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "service_request_id": 1,
+            "approval_policy_id": 1,
+            "approval_policy_step_id": 1,
+            "approver_id": 1,
+            "assigned_by": 1,
+            "approved_at": "2024-01-21T10:00:00.000000Z",
+            "status_id": 2
+        },
+        "message": "Vendor request approved successfully"
+    }
+    ```
+
+### 15. Reject a Vendor Request
+
+Rejects a vendor request for a service request.
+
+-   **Endpoint:** `/rejected/{id}`
+-   **Method:** `POST`
+-   **Authentication:** Bearer Token (Required)
+-   **Path Parameters:**
+    *   `id` (integer, required): The ID of the vendor approval.
+
+-   **Success Response (200 OK):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "id": 1,
+            "service_request_id": 1,
+            "approval_policy_id": 1,
+            "approval_policy_step_id": 1,
+            "approver_id": 1,
+            "assigned_by": 1,
+            "approved_at": null,
+            "status_id": 3
+        },
+        "message": "Vendor request rejected successfully"
+    }
+    ```
