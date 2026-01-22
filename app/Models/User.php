@@ -52,19 +52,20 @@ class User extends Authenticatable
 		'remember_token'
 	];
 
-	protected $fillable = [
-		'name',
-		'email',
-		'email_verified_at',
-		'password',
-		'pin',
-		'remember_token',
-        'department_id'
-	];
+    protected $fillable = [
+        'name',
+        'email',
+        'email_verified_at',
+        'password',
+        'pin',
+        'remember_token',
+    ];
 
-    public function department()
+    public function departments()
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsToMany(Department::class, 'user_departments')
+                    ->using(UserDepartment::class)
+                    ->withTimestamps();
     }
 
 	public function audit_logs()
