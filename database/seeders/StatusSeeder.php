@@ -17,12 +17,18 @@ class StatusSeeder extends Seeder
         $statuses = [
             // Service Request Statuses
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'PENDING', 'name' => 'Pending'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'APPROVED', 'name' => 'Approved'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'REJECTED', 'name' => 'Rejected'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_REVIEW', 'name' => 'In Review'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_REVIEW_ADMIN', 'name' => 'In Review (Admin)'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'APPROVED_BY_ADMIN', 'name' => 'Approved by Admin'],
+
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_REVIEW_ABOVE', 'name' => 'In Review (Above)'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'APPROVED_BY_ABOVE', 'name' => 'Approved by Above'],
+
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_PROGRESS', 'name' => 'In Progress'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'COMPLETED', 'name' => 'Completed'],
+
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'REJECTED', 'name' => 'Rejected'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'CANCELLED', 'name' => 'Cancelled'],
+
 
             // Vendor Approval Statuses
             ['entity_type_id' => $vendorApprovalEntityType->id, 'code' => 'PENDING', 'name' => 'Pending'],

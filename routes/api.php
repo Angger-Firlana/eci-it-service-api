@@ -11,6 +11,7 @@ use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\ServiceRequestCancellationController;
 use App\Http\Controllers\ServiceRequestCostController;
 use App\Http\Controllers\ServiceRequestLocationController;
+use App\Http\Controllers\ServiceRequestApprovalController;
 use App\Http\Controllers\ReferenceDataController;
 use App\Http\Controllers\ExportInvoiceController;
 use App\Http\Controllers\DepartmentController;
@@ -76,8 +77,12 @@ Route::prefix('service-requests')->group(function(){
     Route::put('/{id}/locations/{locationId}', [ServiceRequestLocationController::class, 'update']);
 
     // Approval (Keep existing or aliased if needed)
-    Route::post('/approved/{id}', [ApprovalController::class, 'approveVendorRequest']);
-    Route::post('/rejected/{id}', [ApprovalController::class, 'rejectVendorRequest']);
+    Route::get('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'getByServiceRequestId']);
+    Route::post('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'store']);
+    Route::put('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'update']);
+    Route::delete('/{serviceRequestId}/approvals/{approvalId}', [ServiceRequestApprovalController::class, 'destroy']);
+    Route::post('/approved/{approvalId}', [ApprovalController::class, 'approveVendorRequest']);
+    Route::post('/rejected/{approvalId}', [ApprovalController::class, 'rejectVendorRequest']);
 });
 
 Route::prefix('references')->group(function() {

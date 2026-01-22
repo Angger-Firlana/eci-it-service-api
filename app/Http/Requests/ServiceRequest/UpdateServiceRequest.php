@@ -51,14 +51,9 @@ class UpdateServiceRequest extends FormRequest
             'service_cancellation.reason' => 'sometimes|string',
             'service_cancellation.canceled_by' => 'sometimes|exists:users,id',
 
-            'vendor_approvals' => 'sometimes|array',
-            'vendor_approvals.*.id' => 'sometimes|exists:vendor_approvals,id',
-            'vendor_approvals.*.approval_policy_id' => 'sometimes|exists:approval_policies,id',
-            'vendor_approvals.*.approval_policy_step_id' => 'sometimes|exists:approval_policy_steps,id',
-            'vendor_approvals.*.approver_id' => 'sometimes|exists:users,id',
-            'vendor_approvals.*.assigned_by' => 'sometimes|exists:users,id',
-            'vendor_approvals.*.approved_at' => 'sometimes|date',
-            'vendor_approvals.*.status_id' => 'sometimes|exists:statuses,id'
+            
+
+            'log_notes' => 'sometimes|string'
         ];
     }
 }

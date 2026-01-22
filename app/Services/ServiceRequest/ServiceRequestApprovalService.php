@@ -5,17 +5,18 @@ namespace App\Services\ServiceRequest;
 use App\Models\VendorApproval;
 use App\Models\ServiceRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Collection;
 
 class ServiceRequestApprovalService
 {
-    public function updateVendorApprovals(ServiceRequest $serviceRequest, array $approvals): \Illuminate\Database\Eloquent\Collection
+    public function updateVendorApprovals(int $serviceRequestId, array $approvals): \Illuminate\Database\Eloquent\Collection
     {
         DB::beginTransaction();
         
         foreach ($approvals as $approvalData) {
             VendorApproval::updateOrCreate(
                 [
-                    'service_request_id' => $serviceRequest->id,
+                    'service_request_id' => $serviceRequestId,
                     'approver_id' => $approvalData['approver_id'],
                 ],
                 [
@@ -32,24 +33,30 @@ class ServiceRequestApprovalService
         
         DB::commit();
 
-        return $serviceRequest->vendor_approvals()->with(['approver', 'assigned_by'])->get();
+        return VendorApproval::where('service_request_id', $serviceRequestId)->with(['approver', 'assigned_by'])->get();
     }
 
-    public function createVendorApproval(array $data, ServiceRequest $serviceRequest): VendorApproval
+    public function createVendorApprovals(int $serviceRequestId,array $approvals): Collection
     {
-        $approval = VendorApproval::create([
-            'service_request_id' => $serviceRequest->id,
-            'approver_id' => $data['approver_id'],
-            'assigned_by' => $data['assigned_by'] ?? auth()->id(),
-            'assigned_at' => now(),
-            'approved_at' => $data['approved_at'] ?? null,
-            'status_id' => $data['status_id'] ?? 8,
-            'notes' => $data['notes'] ?? null,
-            'approval_policy_id' => $data['approval_policy_id'] ?? null,
-            'approval_policy_step_id' => $data['approval_policy_step_id'] ?? null,
-        ]);
+        DB::beginTransaction();
+        
+        foreach($approvals as $data){
+            $approval = VendorApproval::create([
+                'service_request_id' => $serviceRequestId,
+                'approver_id' => $data['approver_id'],
+                'assigned_by' => $data['assigned_by'] ?? auth()->id(),
+                'assigned_at' => now(),
+                'approved_at' => $data['approved_at'] ?? null,
+                'status_id' => $data['status_id'] ?? 8,
+                'notes' => $data['notes'] ?? null,
+                'approval_policy_id' => $data['approval_policy_id'] ?? null,
+                'approval_policy_step_id' => $data['approval_policy_step_id'] ?? null,
+            ]);
+        }
+       
+        DB::commit();
 
-        return $approval->load(['approver', 'assigned_by']);
+        return VendorApproval::where('service_request_id', $serviceRequestId)->with(['approver', 'assigned_by'])->get();
     }
 
     public function approveVendorRequest(int $approvalId, array $data): VendorApproval
@@ -97,7 +104,7 @@ class ServiceRequestApprovalService
         return $approval;
     }
 
-    public function getApprovalsByServiceRequest(int $serviceRequestId): \Illuminate\Database\Eloquent\Collection
+    public function getByServiceRequestId(int $serviceRequestId): \Illuminate\Database\Eloquent\Collection
     {
         $approvals = VendorApproval::with(['approver', 'assigned_by'])
             ->where('service_request_id', $serviceRequestId)

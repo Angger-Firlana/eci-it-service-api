@@ -24,20 +24,17 @@ class ServiceRequestService
     protected $detailService;
     protected $locationService;
     protected $cancellationService;
-    protected $approvalService;
     protected $invoiceService;
 
     public function __construct(
         DetailServiceRequestService $detailService,
         ServiceLocationService $locationService,
         ServiceRequestCancellationService $cancellationService,
-        ServiceRequestApprovalService $approvalService,
         \App\Services\InvoiceService $invoiceService
     ) {
         $this->detailService = $detailService;
         $this->locationService = $locationService;
         $this->cancellationService = $cancellationService;
-        $this->approvalService = $approvalService;
         $this->invoiceService = $invoiceService;
     }
 
@@ -51,9 +48,7 @@ class ServiceRequestService
             'details.device', 
             'serviceLocation.vendor', 
             'serviceCosts.costType', 
-            'serviceCancellation', 
-            'vendorApprovals.approver', 
-            'vendorApprovals.assignedBy'
+            'serviceCancellation'
         ])
         ->when($request->has('user_id'), function($query) use ($request) {
             $query->where('user_id', $request->user_id);
@@ -95,10 +90,7 @@ class ServiceRequestService
             'service_request_details.complaint_images',
             'service_locations.vendor:id,name', 
             'service_costs.cost_type:id,type', 
-            'service_cancellations:id,reason', 
-            'vendor_approvals:id,service_request_id,approver_id,assigned_by',
-            'vendor_approvals.approver:id,name,email', 
-            'vendor_approvals.assigned_by:id,name,email'
+            'service_cancellations:id,reason'
         ])->findOrFail($id);
 
         $serviceRequest->makeHidden([
@@ -224,6 +216,7 @@ class ServiceRequestService
                     'entity_id' => $serviceRequest->id,
                     'entity_type_id' => 1, // ServiceRequest
                     'action' => 'UPDATE_STATUS',
+                    'notes' => $data['log_notes'] ?? "Status changed from {$serviceRequest->status->name} to {$status->name}",
                     'old_status_id' => $serviceRequest->status_id,
                     'new_status_id' => $newStatusId,
                     'created_at' => now()
@@ -270,11 +263,6 @@ class ServiceRequestService
                 $this->cancellationService->createCancellation($data['service_cancellation'], $serviceRequest);
             }
 
-            // Handle vendor approvals
-            if (isset($data['vendor_approvals'])) {
-                $this->approvalService->updateVendorApprovals($serviceRequest, $data['vendor_approvals']);
-            }
-
             if ($newStatusId == 2 && $serviceRequest->status_id != 2) {
                 // Ensure Admin ID is set
                 $adminId = $data['admin_id'] ?? $serviceRequest->admin_id;
@@ -305,9 +293,7 @@ class ServiceRequestService
                 'service_request_details.device', 
                 'service_locations.vendor', 
                 'service_costs.cost_type', 
-                'service_cancellations', 
-                'vendor_approvals.approver', 
-                'vendor_approvals.assigned_by'
+                'service_cancellations'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
