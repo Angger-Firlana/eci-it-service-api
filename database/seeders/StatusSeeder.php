@@ -28,6 +28,10 @@ class StatusSeeder extends Seeder
 
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'REJECTED', 'name' => 'Rejected'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'CANCELLED', 'name' => 'Cancelled'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'NEED_REVISION', 'name' => 'Need Revision'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'ESCALATED', 'name' => 'Escalated'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_REVIEW_VENDOR', 'name' => 'In Review (Vendor)'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'APPROVED_BY_VENDOR', 'name' => 'Approved by Vendor'],
 
 
             // Vendor Approval Statuses
