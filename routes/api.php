@@ -13,6 +13,8 @@ use App\Http\Controllers\ServiceRequestCostController;
 use App\Http\Controllers\ServiceRequestLocationController;
 use App\Http\Controllers\ReferenceDataController;
 use App\Http\Controllers\ExportInvoiceController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvoiceController;
 
 Route::get('/user', function (Request $request) {
@@ -82,7 +84,25 @@ Route::prefix('references')->group(function() {
     Route::get('/service-types', [ReferenceDataController::class, 'getServiceTypes']);
     Route::get('/statuses', [ReferenceDataController::class, 'getStatuses']);
     Route::get('/vendors', [ReferenceDataController::class, 'getVendors']);
+    Route::get('/roles', [ReferenceDataController::class, 'getRoles']);
     Route::get('/departments', [ReferenceDataController::class, 'getDepartments']);
+    Route::get('/users', [ReferenceDataController::class, 'getUsers']);
+});
+
+Route::prefix('departments')->group(function(){
+    Route::get('/', [DepartmentController::class, 'index']);
+    Route::get('/{id}', [DepartmentController::class, 'show']);
+    Route::post('/', [DepartmentController::class, 'store']);
+    Route::put('/{id}', [DepartmentController::class, 'update']);
+    Route::delete('/{id}', [DepartmentController::class, 'destroy']);
+});
+
+Route::prefix('users')->group(function(){
+    Route::get('/', [UserController::class, 'index']);
+    Route::get('/{id}', [UserController::class, 'show']);
+    Route::post('/', [UserController::class, 'store']);
+    Route::put('/{id}', [UserController::class, 'update']);
+    Route::delete('/{id}', [UserController::class, 'destroy']);
 });
 
 Route::prefix('invoices')->group(function(){

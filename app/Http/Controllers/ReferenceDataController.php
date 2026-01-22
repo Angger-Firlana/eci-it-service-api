@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\ServiceType;
 use App\Models\Status;
 use App\Models\Vendor;
+use App\Models\Role;
+use App\Models\User;
 use App\Helpers\APIResponse;
 
 class ReferenceDataController extends Controller
@@ -38,5 +40,17 @@ class ReferenceDataController extends Controller
     {
         $departments = \App\Models\Department::select('id', 'name', 'code')->get();
         return APIResponse::success($departments);
+    }
+
+    public function getRoles()
+    {
+        $roles = Role::select('id', 'name')->get();
+        return APIResponse::success($roles);
+    }
+
+    public function getUsers()
+    {
+        $users = User::select('id', 'name', 'email')->get();
+        return APIResponse::success($users);
     }
 }

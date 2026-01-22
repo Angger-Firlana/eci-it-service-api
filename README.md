@@ -816,6 +816,145 @@ Deletes a device.
         "message": "Device not found"
     }
     ```
+
+## Reference Data
+
+### GET /references/service-types
+
+Retrieves a list of service types.
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "Success",
+        "data": [
+            {
+                "id": 1,
+                "name": "Repair"
+            }
+        ]
+    }
+    ```
+
+### GET /references/statuses
+
+Retrieves a list of statuses.
+
+**Query Parameters:**
+
+| Field | Type | Description |
+|---|---|---|
+| entity_type_id | integer | Filter by entity type ID. (Optional) |
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "Success",
+        "data": [
+            {
+                "id": 1,
+                "name": "Pending",
+                "code": "pending",
+                "entity_type_id": 1
+            }
+        ]
+    }
+    ```
+
+### GET /references/vendors
+
+Retrieves a list of vendors.
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "Success",
+        "data": [
+            {
+                "id": 1,
+                "name": "Apple",
+                "description": "Apple Inc."
+            }
+        ]
+    }
+    ```
+
+### GET /references/roles
+
+Retrieves a list of roles.
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "Success",
+        "data": [
+            {
+                "id": 1,
+                "name": "Admin"
+            }
+        ]
+    }
+    ```
+
+### GET /references/departments
+
+Retrieves a list of departments.
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "Success",
+        "data": [
+            {
+                "id": 1,
+                "name": "IT",
+                "code": "ITD"
+            }
+        ]
+    }
+    ```
+
+### GET /references/users
+
+Retrieves a list of users.
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "Success",
+        "data": [
+            {
+                "id": 1,
+                "name": "John Doe",
+                "email": "john.doe@example.com"
+            }
+        ]
+    }
+    ```
 ## Service Request
 
 ### GET /service-requests
@@ -1056,5 +1195,418 @@ Retrieves the allowed status transitions for a service request.
                 "name": "In Progress"
             }
         ]
+    }
+    ```
+
+## Department
+
+### GET /departments
+
+Retrieves a list of departments. Supports search and pagination.
+
+**Query Parameters:**
+
+| Field | Type | Description |
+|---|---|---|
+| search | string | A search term to filter departments by name. (Optional) |
+| page | integer | The page number for pagination. (Optional) |
+| per_page | integer | The number of items per page. (Optional) |
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "Department Found",
+        "data": [
+            {
+                "id": 1,
+                "name": "IT",
+                "code": "ITD"
+            }
+        ],
+        "meta": {
+            "current_page": 1,
+            "from": 1,
+            "last_page": 1,
+            "path": "http://localhost/api/departments",
+            "per_page": 15,
+            "to": 1,
+            "total": 1
+        }
+    }
+    ```
+
+### GET /departments/{id}
+
+Retrieves a specific department by its ID.
+
+**URL Parameters:**
+
+| Field | Type | Description |
+|---|---|---|
+| id | integer | The ID of the department. (Required) |
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "Department Found",
+        "data": {
+            "id": 1,
+            "name": "IT",
+            "code": "ITD"
+        }
+    }
+    ```
+*   **404 Not Found:**
+    ```json
+    {
+        "status": "error",
+        "code": 404,
+        "message": "Department not found"
+    }
+    ```
+
+### POST /departments
+
+Creates a new department.
+
+**Request Body:**
+
+| Field | Type | Description |
+|---|---|---|
+| name | string | The name of the department. (Required, must be unique) |
+| code | string | The code of the department. (Required, must be unique) |
+
+**Responses:**
+
+*   **201 Created:**
+    ```json
+    {
+        "status": "success",
+        "code": 201,
+        "message": "Department Created",
+        "data": {
+            "id": 1,
+            "name": "IT",
+            "code": "ITD"
+        }
+    }
+    ```
+*   **422 Unprocessable Entity:**
+    ```json
+    {
+        "status": "error",
+        "code": 422,
+        "message": "The given data was invalid.",
+        "errors": {
+            "name": [
+                "The name has already been taken."
+            ],
+            "code": [
+                "The code has already been taken."
+            ]
+        }
+    }
+    ```
+
+### PUT /departments/{id}
+
+Updates an existing department.
+
+**URL Parameters:**
+
+| Field | Type | Description |
+|---|---|---|
+| id | integer | The ID of the department. (Required) |
+
+**Request Body:**
+
+| Field | Type | Description |
+|---|---|---|
+| name | string | The new name of the department. (Optional, must be unique) |
+| code | string | The new code of the department. (Optional, must be unique) |
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "Department Updated",
+        "data": {
+            "id": 1,
+            "name": "Information Technology",
+            "code": "ITD"
+        }
+    }
+    ```
+*   **404 Not Found:**
+    ```json
+    {
+        "status": "error",
+        "code": 404,
+        "message": "Department not found"
+    }
+    ```
+*   **422 Unprocessable Entity:**
+    ```json
+    {
+        "status": "error",
+        "code": 422,
+        "message": "The given data was invalid.",
+        "errors": {
+            "name": [
+                "The name has already been taken."
+            ]
+        }
+    }
+    ```
+
+### DELETE /departments/{id}
+
+Deletes a department.
+
+**URL Parameters:**
+
+| Field | Type | Description |
+|---|---|---|
+| id | integer | The ID of the department. (Required) |
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "Department Deleted"
+    }
+    ```
+*   **404 Not Found:**
+    ```json
+    {
+        "status": "error",
+        "code": 404,
+        "message": "Department not found"
+    }
+    ```
+
+## User
+
+### GET /users
+
+Retrieves a list of users. Supports search and pagination.
+
+**Query Parameters:**
+
+| Field | Type | Description |
+|---|---|---|
+| search | string | A search term to filter users by name. (Optional) |
+| page | integer | The page number for pagination. (Optional) |
+| per_page | integer | The number of items per page. (Optional) |
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "User Found",
+        "data": [
+            {
+                "id": 1,
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "department_id": 1,
+                "role_id": 1
+            }
+        ],
+        "meta": {
+            "current_page": 1,
+            "from": 1,
+            "last_page": 1,
+            "path": "http://localhost/api/users",
+            "per_page": 15,
+            "to": 1,
+            "total": 1
+        }
+    }
+    ```
+
+### GET /users/{id}
+
+Retrieves a specific user by its ID.
+
+**URL Parameters:**
+
+| Field | Type | Description |
+|---|---|---|
+| id | integer | The ID of the user. (Required) |
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "User Found",
+        "data": {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "department_id": 1,
+            "role_id": 1
+        }
+    }
+    ```
+*   **404 Not Found:**
+    ```json
+    {
+        "status": "error",
+        "code": 404,
+        "message": "User not found"
+    }
+    ```
+
+### POST /users
+
+Creates a new user.
+
+**Request Body:**
+
+| Field | Type | Description |
+|---|---|---|
+| name | string | The name of the user. (Required) |
+| email | string | The email of the user. (Required, must be unique) |
+| password | string | The password of the user. (Required, min: 8) |
+| role_id | integer | The ID of the role. (Required) |
+| department_id | integer | The ID of the department. (Required) |
+
+**Responses:**
+
+*   **201 Created:**
+    ```json
+    {
+        "status": "success",
+        "code": 201,
+        "message": "User Created",
+        "data": {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "department_id": 1,
+            "role_id": 1
+        }
+    }
+    ```
+*   **422 Unprocessable Entity:**
+    ```json
+    {
+        "status": "error",
+        "code": 422,
+        "message": "The given data was invalid.",
+        "errors": {
+            "email": [
+                "The email has already been taken."
+            ]
+        }
+    }
+    ```
+
+### PUT /users/{id}
+
+Updates an existing user.
+
+**URL Parameters:**
+
+| Field | Type | Description |
+|---|---|---|
+| id | integer | The ID of the user. (Required) |
+
+**Request Body:**
+
+| Field | Type | Description |
+|---|---|---|
+| name | string | The new name of the user. (Optional) |
+| email | string | The new email of the user. (Optional, must be unique) |
+| password | string | The new password of the user. (Optional, min: 8) |
+| role_id | integer | The new ID of the role. (Optional) |
+| department_id | integer | The new ID of the department. (Optional) |
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "User Updated",
+        "data": {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "department_id": 1,
+            "role_id": 1
+        }
+    }
+    ```
+*   **404 Not Found:**
+    ```json
+    {
+        "status": "error",
+        "code": 404,
+        "message": "User not found"
+    }
+    ```
+*   **422 Unprocessable Entity:**
+    ```json
+    {
+        "status": "error",
+        "code": 422,
+        "message": "The given data was invalid.",
+        "errors": {
+            "email": [
+                "The email has already been taken."
+            ]
+        }
+    }
+    ```
+
+### DELETE /users/{id}
+
+Deletes a user.
+
+**URL Parameters:**
+
+| Field | Type | Description |
+|---|---|---|
+| id | integer | The ID of the user. (Required) |
+
+**Responses:**
+
+*   **200 OK:**
+    ```json
+    {
+        "status": "success",
+        "code": 200,
+        "message": "User Deleted"
+    }
+    ```
+*   **404 Not Found:**
+    ```json
+    {
+        "status": "error",
+        "code": 404,
+        "message": "User not found"
     }
     ```

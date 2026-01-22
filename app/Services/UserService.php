@@ -6,18 +6,20 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use App\Models\Role;
+
 
 class UserService{
     public function getAllUser(Request $request){
-        $users = User::query()->with('departments', 'role');
+        $users = User::query()->with('departments', 'roles:id,name');
 
         if($request->has('search')){
             $users->where('name', 'like', "%{$request->search}%");
         }
 
-        if($request->has('role')){
-            $users->whereHas('role', function($q) use ($request){
-                 $q->where('name', $request->role); // Assuming role search by name, or use role_id
+        if($request->has('role_id')){
+            $users->whereHas('roles', function($q) use ($request){
+                 $q->where('roles.id', $request->role_id); // Assuming role search by name, or use role_id
             });
         }
 
@@ -35,6 +37,8 @@ class UserService{
             $users->orderBy($request->sort_by, $request->sort_order);
         }
 
+        
+
         return $users->paginate($request->per_page);
     }
 
@@ -43,10 +47,7 @@ class UserService{
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'pin' => $data['pin'] ?? null,
-            // 'role_id' handled separately if in user_roles pivot, or if column exists. 
-            // Assuming role logic is handled or column exists based on StoreUserRequest? 
-            // Wait, roles() is M-M in User model. Need to sync roles too if input provided.
+            'pin' => $data['pin'] ?? null
         ]);
 
         if(isset($data['department_id'])){
