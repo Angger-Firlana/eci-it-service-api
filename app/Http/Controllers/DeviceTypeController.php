@@ -20,9 +20,11 @@ class DeviceTypeController extends Controller
 
     public function index(Request $request)
     {
-        $data = $this->deviceTypeService->getAll($request->search);
+        $paginator = $this->deviceTypeService->getAll($request->search);
+        $data = $paginator->items();
+        $meta = APIResponse::formatPagination($paginator);
 
-        return APIResponse::success($data, 200, 'Device Type Found');
+        return APIResponse::success($data, 200, 'Device Type Found', $meta);
     }
 
     public function show(int $id)

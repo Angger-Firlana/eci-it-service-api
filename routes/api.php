@@ -82,6 +82,7 @@ Route::prefix('references')->group(function() {
     Route::get('/service-types', [ReferenceDataController::class, 'getServiceTypes']);
     Route::get('/statuses', [ReferenceDataController::class, 'getStatuses']);
     Route::get('/vendors', [ReferenceDataController::class, 'getVendors']);
+    Route::get('/departments', [ReferenceDataController::class, 'getDepartments']);
 });
 
 Route::prefix('invoices')->group(function(){

@@ -275,8 +275,7 @@ class ServiceRequestService
                 $this->approvalService->updateVendorApprovals($serviceRequest, $data['vendor_approvals']);
             }
 
-            // Create Invoice if status is completed (2) and wasn't before
-            if ($newStatusId == 2) {
+            if ($newStatusId == 2 && $serviceRequest->status_id != 2) {
                 // Ensure Admin ID is set
                 $adminId = $data['admin_id'] ?? $serviceRequest->admin_id;
                 if (!$adminId) {

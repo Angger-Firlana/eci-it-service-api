@@ -8,13 +8,13 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class DeviceTypeService
 {
-    public function getAll(?string $search = null): Collection
+    public function getAll(?string $search = null): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         return DeviceType::query()
             ->when($search, fn ($q) =>
                 $q->where('name', 'LIKE', "%{$search}%")
             )
-            ->get();
+            ->paginate(15);
     }
 
     public function getById(int $id): DeviceType

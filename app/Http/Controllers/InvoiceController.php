@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Invoice;
 use App\Helpers\APIResponse;
-use App\Services\Invoice\InvoiceService;
+use App\Services\InvoiceService;
 
 class InvoiceController extends Controller
 {
@@ -16,8 +16,10 @@ class InvoiceController extends Controller
     }
 
     public function index(Request $request){
-        $invoices = $this->invoiceService->getAllInvoice($request);
-        return APIResponse::success($invoices);
+        $paginator = $this->invoiceService->getAllInvoice($request);
+        $data = $paginator->items();
+        $meta = APIResponse::formatPagination($paginator);
+        return APIResponse::success($data, 200, "Success", $meta);
     }
 
     public function show($id){

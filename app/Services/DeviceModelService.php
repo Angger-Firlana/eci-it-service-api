@@ -6,8 +6,9 @@ use App\Models\DeviceModel;
 use Illuminate\Database\Eloquent\Collection;
 
 class DeviceModelService{
-    public function getAllDeviceModel(?string $keyword):Collection{
-        $deviceModels = DeviceModel::query()->when($keyword, fn($q) => $q->where('model', 'LIKE', "%{$search}%"))->get();
+    public function getAllDeviceModel(?string $keyword): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $deviceModels = DeviceModel::query()->when($keyword, fn($q) => $q->where('model', 'LIKE', "%{$search}%"))->paginate(15);
 
         return $deviceModels;
     }

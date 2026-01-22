@@ -21,9 +21,11 @@ class DeviceController extends Controller
     public function index(Request $request)
     {
         //
-        $data = $this->deviceService->getAllDevice($request);
+        $paginator = $this->deviceService->getAllDevice($request);
+        $data = $paginator->items();
+        $meta = APIResponse::formatPagination($paginator);
 
-        return APIResponse::success($data, 200, "");
+        return APIResponse::success($data, 200, "", $meta);
     }
     
     public function show($id)

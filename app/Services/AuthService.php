@@ -16,7 +16,9 @@ class AuthService
      * @return array An associative array containing 'success', 'message', 'data' (user and token), and 'code'.
      */
     public function login(array $credentials): array{
-        $user = User::where('email', $credentials['email'])->with(['roles:id,name'])->first();
+        $user = User::where('email', $credentials['email'])
+            ->with(['roles:id,name', 'department:id,name'])
+            ->first();
 
         if(!$user || !Hash::check($credentials['password'], $user->password)){
             return ['success' => false, 'message' => 'Invalid credentials', 'code' => 401];
@@ -28,7 +30,8 @@ class AuthService
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'role' => $user->roles->select('id', 'name')->first(),
+            'role' => $user->roles->first(),
+            'department' => $user->department,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at
         ], 'token' => $token], 'code' => 200];
@@ -46,10 +49,11 @@ class AuthService
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'pin' => isset($data['pin']) ? Hash::make($data['pin']) : null,
-            'role_id' => $data['role_id'] ?? 3
+            'role_id' => $data['role_id'] ?? 3,
+            'department_id' => $data['department_id'] ?? null
         ]);
 
-        $user->load(['roles:id,name']);
+        $user->load(['roles:id,name', 'department:id,name']);
 
         $token = $user->createToken('token_eci_service' . now()->timestamp)->plainTextToken;
 
@@ -57,7 +61,8 @@ class AuthService
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'role' => $user->roles->select('id', 'name')->first(),
+            'role' => $user->roles->first(),
+            'department' => $user->department,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at
         ], 'token' => $token], 'code' => 201];
@@ -73,12 +78,13 @@ class AuthService
         if(!$user){
             return ['success' => false, 'message' => 'User not found', 'code' => 404];
         }
-        $user->load(['roles:id,name']);
+        $user->load(['roles:id,name', 'department:id,name']);
         return ['success' => true, 'message' => 'User found', 'data' => [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'role' => $user->roles->select('id', 'name')->first(),
+            'role' => $user->roles->first(),
+            'department' => $user->department,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at
         ], 'code' => 200];

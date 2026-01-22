@@ -44,4 +44,16 @@ class APIResponse
 
         return response()->json($response, $code);
     }
+    public static function formatPagination(\Illuminate\Contracts\Pagination\LengthAwarePaginator $paginator): array
+
+    {
+        return [
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'from' => $paginator->firstItem(),
+            'to' => $paginator->lastItem(),
+        ];
+    }
 }

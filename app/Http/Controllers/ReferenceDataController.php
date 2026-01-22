@@ -33,4 +33,10 @@ class ReferenceDataController extends Controller
         $vendors = Vendor::select('id', 'name', 'description')->get();
         return APIResponse::success($vendors);
     }
+
+    public function getDepartments()
+    {
+        $departments = \App\Models\Department::select('id', 'name', 'code')->get();
+        return APIResponse::success($departments);
+    }
 }

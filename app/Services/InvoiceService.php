@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class InvoiceService
 {
     //
-    public function getAllInvoice(Request $request):Collection
+    public function getAllInvoice(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         $invoices = Invoice::query()
             ->with('serviceRequest')
@@ -33,7 +33,7 @@ class InvoiceService
             ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 10);
 
-        return $invoices->getCollection();   
+        return $invoices;   
     }
 
     public function getInvoiceById($id):Invoice

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 class DeviceService
 {
     //
-    public function getAllDevice(Request $request):Collection
+    public function getAllDevice(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         $devices = Device::select(['id','device_model_id','serial_number'])->with(['device_model:id,brand,model']);
 
@@ -29,7 +29,7 @@ class DeviceService
             });
         }
 
-        return $devices->get();
+        return $devices->paginate($request->get('per_page', 15));
     }
 
     public function getDeviceById(int $id):Device{

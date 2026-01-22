@@ -29,9 +29,12 @@ Authenticates a user and returns an access token.
             "user": {
                 "id": 1,
                 "name": "John Doe",
-                "department_id": 1
-                ...
-            },
+                "department": {
+                    "id": 1,
+                    "name": "IT",
+                    "code": "IT"
+                },
+                "role": { ... }
             "token": "YOUR_ACCESS_TOKEN"
         },
         "message": "Login successful"
@@ -50,10 +53,38 @@ Registers a new user in the system.
         "name": "Jane Doe",
         "email": "jane.doe@example.com",
         "password": "password123",
-        "department_id": 1
+        "department_id": 1,
+        "pin": "123456"
     }
     ```
--   **Success Response (201 Created)**
+-   **Validation Rules:**
+    *   `department_id`: `optional`, `exists:departments,id`
+
+-   **Success Response (201 Created):**
+    ```json
+    {
+        "success": true,
+        "data": {
+            "user": {
+                "id": 2,
+                "name": "Jane Doe",
+                "email": "jane.doe@example.com",
+                "department": {
+                    "id": 1,
+                    "name": "IT Support",
+                    "code": "IT"
+                },
+                "role": {
+                    "id": 2,
+                    "name": "User"
+                },
+                ...
+            },
+            "token": "..."
+        },
+        "message": "Registration successful"
+    }
+    ```
 
 ### 3. Get Authenticated User Data
 
@@ -158,6 +189,7 @@ Base URL: `/api/references`
 -   **Service Types:** `GET /service-types`
 -   **Statuses:** `GET /statuses`
 -   **Vendors:** `GET /vendors`
+-   **Departments:** `GET /departments`
 
 ---
 

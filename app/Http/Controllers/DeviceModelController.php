@@ -20,9 +20,11 @@ class DeviceModelController extends Controller
     }
 
     public function index(Request $request){
-        $data = $this->deviceModelService->getAllDeviceModel($request->keyword);
+        $paginator = $this->deviceModelService->getAllDeviceModel($request->keyword);
+        $data = $paginator->items();
+        $meta = APIResponse::formatPagination($paginator);
         
-        return APIResponse::success($data, 200, "Device Model Found");
+        return APIResponse::success($data, 200, "Device Model Found", $meta);
     }
 
     public function show(int $id){
