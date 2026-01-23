@@ -20,6 +20,7 @@ Dokumentasi ini menyediakan detail untuk semua endpoint API yang tersedia.
   }
 }
 ```
+
 - `meta` hanya ada pada response yang melibatkan paginasi.
 
 ### Respons Error
@@ -418,6 +419,14 @@ Mendapatkan daftar status berikutnya yang valid untuk suatu permintaan layanan b
 
 Mengunduh file PDF invoice untuk permintaan layanan yang sudah selesai.
 
+**Catatan:** Selain endpoint di atas, tersedia juga endpoint alternatif:
+
+### `GET /api/export-invoice/{id}`
+
+Mengunduh file PDF invoice berdasarkan `service_request_id`.
+
+**Response:** File download `application/pdf`.
+
 
 
 **Contoh Objek `ServiceRequest` (Detail View):**
@@ -502,47 +511,310 @@ Mengunduh file PDF invoice untuk permintaan layanan yang sudah selesai.
 
 ### Sub-resource: Biaya (`/costs`)
 
+Endpoint biaya untuk suatu service request.
 
+#### `GET /api/service-requests/{serviceRequestId}/costs`
 
-- `GET /api/service-requests/{serviceRequestId}/costs`: Daftar biaya.
+Mengembalikan daftar biaya untuk service request.
 
-- `POST /api/service-requests/{serviceRequestId}/costs`: Tambah biaya.
+**Contoh Respons Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "service_request_id": 10,
+      "cost_type_id": 1,
+      "amount": 150000,
+      "description": "Sparepart",
+      "created_at": "2026-01-23T10:00:00.000000Z",
+      "updated_at": "2026-01-23T10:00:00.000000Z"
+    }
+  ],
+  "message": "Success"
+}
+```
 
-- `PUT /api/service-requests/{serviceRequestId}/costs/{costId}`: Update biaya.
+#### `POST /api/service-requests/{serviceRequestId}/costs`
 
-- `DELETE /api/service-requests/{serviceRequestId}/costs/{costId}`: Hapus biaya.
+Menambah biaya pada service request.
+
+**Request Body:**
+- `cost_type_id` (integer, required, exists:cost_types,id)
+- `amount` (number, required, min:0)
+- `description` (string, nullable)
+
+**Contoh Request:**
+```json
+{
+  "cost_type_id": 1,
+  "amount": 150000,
+  "description": "Sparepart"
+}
+```
+
+**Contoh Respons Sukses (201 Created):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "service_request_id": 10,
+    "cost_type_id": 1,
+    "amount": 150000,
+    "description": "Sparepart",
+    "created_at": "2026-01-23T10:00:00.000000Z",
+    "updated_at": "2026-01-23T10:00:00.000000Z"
+  },
+  "message": "Cost added successfully"
+}
+```
+
+#### `PUT /api/service-requests/{serviceRequestId}/costs/{costId}`
+
+Update biaya.
+
+**Request Body (semua opsional):**
+- `cost_type_id` (integer, exists:cost_types,id)
+- `amount` (number, min:0)
+- `description` (string)
+
+**Contoh Respons Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "service_request_id": 10,
+    "cost_type_id": 2,
+    "amount": 200000,
+    "description": "Service fee",
+    "created_at": "2026-01-23T10:00:00.000000Z",
+    "updated_at": "2026-01-23T10:10:00.000000Z"
+  },
+  "message": "Cost updated successfully"
+}
+```
+
+#### `DELETE /api/service-requests/{serviceRequestId}/costs/{costId}`
+
+Hapus biaya.
+
+**Contoh Respons Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "Cost removed successfully"
+}
+```
 
 
 
 ### Sub-resource: Lokasi (`/locations`)
 
+Endpoint lokasi untuk service request. Data lokasi tersimpan di tabel `service_locations`.
 
+#### `GET /api/service-requests/{serviceRequestId}/locations`
 
-- `GET /api/service-requests/{serviceRequestId}/locations`: Daftar histori lokasi.
+Mengambil semua lokasi (historical) milik service request.
 
-- `POST /api/service-requests/{serviceRequestId}/locations`: Menambah atau memperbarui lokasi servis aktif.
+**Contoh Respons Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "service_request_id": 10,
+      "location_type": "external",
+      "vendor_id": 2,
+      "is_active": true,
+      "vendor": {
+        "id": 2,
+        "name": "Tech Solutions Inc.",
+        "maps_url": "https://maps.google.com/...",
+        "description": "..."
+      },
+      "created_at": "2026-01-23T10:00:00.000000Z",
+      "updated_at": "2026-01-23T10:00:00.000000Z"
+    }
+  ],
+  "message": "Service locations retrieved successfully"
+}
+```
 
-- `PUT /api/service-requests/{serviceRequestId}/locations/{locationId}`: Update lokasi.
+#### `POST /api/service-requests/{serviceRequestId}/locations`
 
-- `DELETE /api/service-requests/{serviceRequestId}/locations/{locationId}`: Hapus lokasi.
+Set lokasi aktif. Jika sudah ada lokasi aktif, endpoint ini akan melakukan update lokasi aktif tersebut.
+
+**Request Body:**
+- `location_type` (string, required, in:internal,external)
+- `vendor_id` (integer, required_if:location_type,external, exists:vendors,id)
+- `is_active` (boolean, required)
+
+**Contoh Request:**
+```json
+{
+  "location_type": "external",
+  "vendor_id": 2,
+  "is_active": true
+}
+```
+
+**Contoh Respons Sukses (201 Created):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "service_request_id": 10,
+    "location_type": "external",
+    "vendor_id": 2,
+    "is_active": true,
+    "vendor": {
+      "id": 2,
+      "name": "Tech Solutions Inc.",
+      "maps_url": "https://maps.google.com/...",
+      "description": "..."
+    },
+    "created_at": "2026-01-23T10:00:00.000000Z",
+    "updated_at": "2026-01-23T10:00:00.000000Z"
+  },
+  "message": "Service location set successfully"
+}
+```
+
+#### `GET /api/service-requests/{serviceRequestId}/locations/{locationId}`
+
+Mengambil detail satu lokasi.
+
+**Contoh Respons Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "service_request_id": 10,
+    "location_type": "external",
+    "vendor_id": 2,
+    "is_active": true,
+    "vendor": {
+      "id": 2,
+      "name": "Tech Solutions Inc.",
+      "maps_url": "https://maps.google.com/...",
+      "description": "..."
+    },
+    "created_at": "2026-01-23T10:00:00.000000Z",
+    "updated_at": "2026-01-23T10:00:00.000000Z"
+  },
+  "message": "Service location retrieved successfully"
+}
+```
+
+#### `PUT /api/service-requests/{serviceRequestId}/locations/{locationId}`
+
+Update lokasi.
+
+**Request Body:**
+- `location_type` (string, optional)
+- `vendor_id` (integer, required_if:location_type,external)
+- `is_active` (boolean, required)
+
+**Contoh Respons Error (400 Bad Request):**
+```json
+{
+  "success": false,
+  "message": "Location does not belong to this service request",
+  "errors": "Location does not belong to this service request"
+}
+```
+
+#### `DELETE /api/service-requests/{serviceRequestId}/locations/{locationId}`
+
+Hapus lokasi.
+
+**Contoh Respons Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "Service location deleted successfully"
+}
+```
 
 
 
 ### Sub-resource: Persetujuan (`/approvals` & `/approved`, `/rejected`)
 
+Endpoint persetujuan vendor untuk service request.
 
+#### `GET /api/service-requests/{serviceRequestId}/approvals`
 
-- `GET /api/service-requests/{serviceRequestId}/approvals`: Daftar persetujuan vendor.
+Mengambil daftar approval vendor berdasarkan service request.
 
-- `POST /api/service-requests/{serviceRequestId}/approvals`: Membuat permintaan persetujuan.
+**Contoh Respons Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "service_request_id": 10,
+      "approval_policy_id": 1,
+      "approval_policy_step_id": 1,
+      "assigned_by": 1,
+      "approver_id": 2,
+      "approved_at": null,
+      "status_id": 4,
+      "created_at": "2026-01-23T10:00:00.000000Z",
+      "updated_at": "2026-01-23T10:00:00.000000Z"
+    }
+  ],
+  "message": "Service request approvals retrieved successfully"
+}
+```
 
-- `PUT /api/service-requests/{serviceRequestId}/approvals`: Memperbarui permintaan persetujuan.
+#### `POST /api/service-requests/{serviceRequestId}/approvals`
 
-- `DELETE /api/service-requests/{serviceRequestId}/approvals/{approvalId}`: Hapus permintaan.
+Membuat approval vendor. Body berupa array item.
 
-- `POST /api/approved/{approvalId}`: Menyetujui permintaan.
+**Request Body (array):**
+- `*.approval_policy_id` (required, exists:approval_policies,id)
+- `*.approval_policy_step_id` (required, exists:approval_policy_steps,id)
+- `*.assigned_by` (required, exists:users,id)
+- `*.approver_id` (required, exists:users,id)
+- `*.status_id` (required, exists:statuses,id)
 
-- `POST /api/rejected/{approvalId}`: Menolak permintaan.
+**Contoh Request:**
+```json
+[
+  {
+    "approval_policy_id": 1,
+    "approval_policy_step_id": 1,
+    "assigned_by": 1,
+    "approver_id": 2,
+    "status_id": 4
+  }
+]
+```
+
+#### `PUT /api/service-requests/{serviceRequestId}/approvals`
+
+Update approval vendor (body array, semua field opsional).
+
+#### `DELETE /api/service-requests/{serviceRequestId}/approvals/{approvalId}`
+
+Hapus approval vendor.
+
+#### `POST /api/service-requests/approved/{approvalId}`
+
+Approve vendor request.
+
+#### `POST /api/service-requests/rejected/{approvalId}`
+
+Reject vendor request.
 
 
 
@@ -563,6 +835,49 @@ Mengunduh file PDF invoice untuk permintaan layanan yang sudah selesai.
 
 
 - `PUT /api/service-requests/{serviceRequestId}/cancellation`: Memperbarui alasan pembatalan.
+
+#### `POST /api/service-requests/{serviceRequestId}/cancellation`
+
+**Request Body:**
+- `reason` (string, required)
+
+**Contoh Request:**
+```json
+{
+  "reason": "User requested cancellation"
+}
+```
+
+**Contoh Respons Sukses (201 Created):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "service_request_id": 10,
+    "reason": "User requested cancellation",
+    "canceled_by": 2,
+    "created_at": "2026-01-23T10:00:00.000000Z",
+    "updated_at": "2026-01-23T10:00:00.000000Z"
+  },
+  "message": "Service request cancelled successfully"
+}
+```
+
+#### `PUT /api/service-requests/{serviceRequestId}/cancellation`
+
+Update cancellation.
+
+**Contoh Request:**
+```json
+{
+  "reason": "Updated reason"
+}
+```
+
+#### `GET /api/service-requests/{serviceRequestId}/cancellation`
+
+Get cancellation detail.
 
 
 
@@ -825,15 +1140,6 @@ Menghapus departemen.
 
 
 
-
----
-
-
-
-
-
-
-
 ## Pengguna (User)
 
 
@@ -989,26 +1295,13 @@ Menghapus pengguna.
 }
 
 
-
 ```
 
 
 
 
 
-
-
----
-
-
-
-
-
-
-
 ## Invoice
-
-
 
 
 
@@ -1119,6 +1412,22 @@ Mendapatkan data yang diformat untuk keperluan cetak invoice.
 
 
 ```
+
+## Export Invoice
+
+Endpoint untuk mengunduh invoice dalam bentuk PDF.
+
+### `GET /api/service-requests/{id}/download-invoice`
+
+Mengunduh PDF invoice berdasarkan `service_request_id`.
+
+**Response:** File download `application/pdf`.
+
+### `GET /api/export-invoice/{id}`
+
+Mengunduh PDF invoice berdasarkan `service_request_id`.
+
+**Response:** File download `application/pdf`.
 
 
 

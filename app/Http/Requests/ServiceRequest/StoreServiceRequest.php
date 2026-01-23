@@ -25,7 +25,7 @@ class StoreServiceRequest extends FormRequest
             //
             'admin_id' => 'required|exists:users,id',
             'user_id' => 'sometimes|exists:users,id',
-            'service_type_id' => 'sometimes|exists:users,id',
+            'service_type_id' => 'sometimes|exists:service_types,id',
             'request_date' => 'required|date',
             'status_id'  => 'required|exists:statuses,id',
             'details' => 'required|array',

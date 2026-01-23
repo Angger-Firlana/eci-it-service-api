@@ -17,7 +17,7 @@ class AuthService
      */
     public function login(array $credentials): array{
         $user = User::where('email', $credentials['email'])
-            ->with(['roles:id,name', 'department:id,name'])
+            ->with(['roles:id,name', 'departments:id,name,code'])
             ->first();
 
         if(!$user || !Hash::check($credentials['password'], $user->password)){
@@ -31,7 +31,7 @@ class AuthService
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->roles->first(),
-            'department' => $user->department,
+            'department' => $user->departments->first(),
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at
         ], 'token' => $token], 'code' => 200];
@@ -49,11 +49,17 @@ class AuthService
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'pin' => isset($data['pin']) ? Hash::make($data['pin']) : null,
-            'role_id' => $data['role_id'] ?? 3,
-            'department_id' => $data['department_id'] ?? null
         ]);
 
-        $user->load(['roles:id,name', 'department:id,name']);
+        if (isset($data['role_id'])) {
+            $user->roles()->syncWithoutDetaching([$data['role_id']]);
+        }
+
+        if (isset($data['department_id'])) {
+            $user->departments()->syncWithoutDetaching([$data['department_id']]);
+        }
+
+        $user->load(['roles:id,name', 'departments:id,name,code']);
 
         $token = $user->createToken('token_eci_service' . now()->timestamp)->plainTextToken;
 
@@ -62,7 +68,7 @@ class AuthService
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->roles->first(),
-            'department' => $user->department,
+            'department' => $user->departments->first(),
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at
         ], 'token' => $token], 'code' => 201];
@@ -78,13 +84,13 @@ class AuthService
         if(!$user){
             return ['success' => false, 'message' => 'User not found', 'code' => 404];
         }
-        $user->load(['roles:id,name', 'department:id,name']);
+        $user->load(['roles:id,name', 'departments:id,name,code']);
         return ['success' => true, 'message' => 'User found', 'data' => [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->roles->first(),
-            'department' => $user->department,
+            'department' => $user->departments->first(),
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at
         ], 'code' => 200];
@@ -93,16 +99,20 @@ class AuthService
     /**
      * Log out the currently authenticated user by revoking their tokens.
      *
-     * @param User $user The authenticated user instance.
      * @return array An associative array containing 'success', 'message', and 'code'.
      */
-    public function logout(User $user): array{
+    public function logout(): array{
+        $user = auth()->user();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthenticated', 'code' => 401];
+        }
+
         $user->tokens()->delete();
 
-        if(!$user->tokens()->count()){
+        if ($user->tokens()->count() > 0) {
             return ['success' => false, 'message' => 'Logout failed', 'code' => 500];
         }
-        
+
         return ['success' => true, 'message' => 'Logout successful', 'code' => 200];
     }
 }

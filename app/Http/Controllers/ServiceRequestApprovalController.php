@@ -20,6 +20,11 @@ class ServiceRequestApprovalController extends Controller
         $this->serviceRequestApprovalService = $serviceRequestApprovalService;
     }
 
+    public function index($serviceRequestId)
+    {
+        return $this->getByServiceRequestId($serviceRequestId);
+    }
+
     public function getByServiceRequestId($serviceRequestId)
     {
         $data = $this->serviceRequestApprovalService->getByServiceRequestId($serviceRequestId);

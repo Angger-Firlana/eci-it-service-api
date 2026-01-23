@@ -25,7 +25,7 @@ class UpdateServiceRequest extends FormRequest
             //
             'admin_id' => 'sometimes|exists:users,id',
             'user_id' => 'sometimes|exists:users,id',
-            'service_type_id' => 'sometimes|exists:users,id',
+            'service_type_id' => 'sometimes|exists:service_types,id',
             'request_date' => 'sometimes|date',
             'estimated_date' => 'sometimes|date',
             'status_id'  => 'sometimes|exists:statuses,id',
