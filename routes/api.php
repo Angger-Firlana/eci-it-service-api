@@ -66,23 +66,31 @@ Route::prefix('service-requests')->group(function(){
     Route::get('/{id}/allowed-transitions', [ServiceRequestController::class, 'allowedTransitions']);
     Route::get('/{id}/download-invoice', [ExportInvoiceController::class, 'download']);
     
-    // Sub-resourcesj
-    Route::post('/{id}/cancellation', [ServiceRequestCancellationController::class, 'store']);
-    
-    Route::get('/{id}/costs', [ServiceRequestCostController::class, 'index']);
-    Route::post('/{id}/costs', [ServiceRequestCostController::class, 'store']);
-    Route::delete('/{id}/costs/{costId}', [ServiceRequestCostController::class, 'destroy']);
+    //costs
+    Route::get('/{serviceRequestId}/costs', [ServiceRequestCostController::class, 'index']);
+    Route::post('/{serviceRequestId}/costs', [ServiceRequestCostController::class, 'store']);
+    Route::put('/{serviceRequestId}/costs/{costId}', [ServiceRequestCostController::class, 'update']);
+    Route::delete('/{serviceRequestId}/costs/{costId}', [ServiceRequestCostController::class, 'destroy']);
 
-    Route::post('/{id}/locations', [ServiceRequestLocationController::class, 'store']);
-    Route::put('/{id}/locations/{locationId}', [ServiceRequestLocationController::class, 'update']);
+    //Locations
+    Route::post('/{serviceRequestId}/locations', [ServiceRequestLocationController::class, 'store']);
+    Route::get('/{serviceRequestId}/locations', [ServiceRequestLocationController::class, 'index']);
+    Route::get('/{serviceRequestId}/locations/{locationId}', [ServiceRequestLocationController::class, 'show']);
+    Route::put('/{serviceRequestId}/locations/{locationId}', [ServiceRequestLocationController::class, 'update']);
+    Route::delete('/{serviceRequestId}/locations/{locationId}', [ServiceRequestLocationController::class, 'destroy']);
 
     // Approval (Keep existing or aliased if needed)
-    Route::get('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'getByServiceRequestId']);
+    Route::get('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'index']);
     Route::post('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'store']);
     Route::put('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'update']);
     Route::delete('/{serviceRequestId}/approvals/{approvalId}', [ServiceRequestApprovalController::class, 'destroy']);
     Route::post('/approved/{approvalId}', [ApprovalController::class, 'approveVendorRequest']);
     Route::post('/rejected/{approvalId}', [ApprovalController::class, 'rejectVendorRequest']);
+
+    //Cancellation
+    Route::get('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'index']);
+    Route::post('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'store']);
+    Route::put('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'update']);
 });
 
 Route::prefix('references')->group(function() {

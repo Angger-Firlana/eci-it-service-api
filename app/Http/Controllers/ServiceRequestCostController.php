@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Helpers\APIResponse;
 use App\Services\ServiceRequest\ServiceRequestCostService;
+use App\Http\Requests\ServiceCost\StoreServiceCostRequest;
+use App\Http\Requests\ServiceCost\UpdateServiceCostRequest;
 
 class ServiceRequestCostController extends Controller
 {
@@ -15,27 +17,26 @@ class ServiceRequestCostController extends Controller
         $this->costService = $costService;
     }
 
-    public function index($id)
+    public function index($serviceRequestId)
     {
-        $costs = $this->costService->getCostsByRequest($id);
+        $costs = $this->costService->getCostsByRequest($serviceRequestId);
         return APIResponse::success($costs);
     }
-
-    public function store(Request $request, $id)
+    public function store(StoreServiceCostRequest $request, $serviceRequestId)
     {
-        $request->validate([
-            'cost_type_id' => 'required|exists:cost_types,id',
-            'amount' => 'required|numeric|min:0',
-            'description' => 'nullable|string'
-        ]);
 
-        $cost = $this->costService->addCost($id, $request->all());
+        $cost = $this->costService->addCost($serviceRequestId, $request->validated());
         return APIResponse::success($cost, 201, 'Cost added successfully');
     }
 
-    public function destroy($id, $costId)
+    public function update(UpdateServiceCostRequest $request, $serviceRequestId, $id){
+        $cost = $this->costService->updateCost($serviceRequestId, $id, $request->validated());
+        return APIResponse::success($cost, 200, 'Cost updated successfully');
+    }
+
+    public function destroy($serviceRequestId, $costId)
     {
-        $this->costService->removeCost($costId);
+        $this->costService->removeCost($serviceRequestId, $costId);
         return APIResponse::success(null, 200, 'Cost removed successfully');
     }
 }

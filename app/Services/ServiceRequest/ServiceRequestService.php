@@ -3,95 +3,43 @@
 namespace App\Services\ServiceRequest;
 
 use App\Models\ServiceRequest;
-use App\Models\ServiceRequestDetail;
-use App\Models\Device;
-use App\Models\VendorApproval;
 use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\ServiceRequest\ServiceRequestApprovalService;
 use App\Services\ServiceRequest\DetailServiceRequestService;
-use App\Services\ServiceRequest\ServiceLocationService;
-use App\Services\ServiceRequest\ServiceRequestCancellationService;
 use App\Models\StatusTransition;
-use App\Models\AuditLog;
+use App\Services\AuditLogService;
 use Illuminate\Support\Facades\Auth;
-
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class ServiceRequestService
 {
-    protected $detailService;
-    protected $locationService;
-    protected $cancellationService;
-    protected $invoiceService;
+    protected DetailServiceRequestService $detailService;
+    protected \App\Services\InvoiceService $invoiceService;
+    protected AuditLogService $auditLogService;
 
     public function __construct(
         DetailServiceRequestService $detailService,
-        ServiceLocationService $locationService,
-        ServiceRequestCancellationService $cancellationService,
-        \App\Services\InvoiceService $invoiceService
+        \App\Services\InvoiceService $invoiceService,
+        AuditLogService $auditLogService
     ) {
         $this->detailService = $detailService;
-        $this->locationService = $locationService;
-        $this->cancellationService = $cancellationService;
         $this->invoiceService = $invoiceService;
+        $this->auditLogService = $auditLogService;
     }
 
     public function getAllServiceRequest(Request $request): LengthAwarePaginator
     {
-        $serviceRequests = ServiceRequest::with([
-            'user', 
-            'admin', 
-            'service_type', 
-            'status', 
-            'details.device', 
-            'serviceLocation.vendor', 
-            'serviceCosts.costType', 
-            'serviceCancellation'
-        ])
-        ->when($request->has('user_id'), function($query) use ($request) {
-            $query->where('user_id', $request->user_id);
-        })
-        ->when($request->has('admin_id'), function($query) use ($request) {
-            $query->where('admin_id', $request->admin_id);
-        })
-        ->when($request->has('service_type_id'), function($query) use ($request) {
-            $query->where('service_type_id', $request->service_type_id);
-        })
-        ->when($request->has('status_id'), function($query) use ($request) {
-            $query->where('status_id', $request->status_id);
-        })
-        ->when($request->has('request_date'), function($query) use ($request) {
-            $query->whereDate('request_date', $request->request_date);
-        })
-        ->when($request->has('estimated_date'), function($query) use ($request) {
-            $query->whereDate('estimated_date', $request->estimated_date);
-        })
-        ->when($request->has('search'), function($query) use ($request) {
-            $query->where('service_number', 'like', '%' . $request->search . '%');
-        })
-        ->orderBy('created_at', 'desc')
-        ->paginate($request->get('per_page', 15));
-
-        return $serviceRequests;
-    }
+        return ServiceRequest::with($this->indexWith())
+            ->filter($request)
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 15));
+    }   
 
     public function getServiceRequestById(int $id): ServiceRequest
     {
-        $serviceRequest = ServiceRequest::with([
-            'user:id,name,email', 
-            'admin:id,name,email', 
-            'service_type:id,name', 
-            'status:id,name', 
-            'service_request_details:id,service_request_id,device_id,complaint',
-            'service_request_details.device:id,device_model_id,serial_number',
-            'service_request_details.device.device_model:id,brand,model', 
-            'service_request_details.complaint_images',
-            'service_locations.vendor:id,name', 
-            'service_costs.cost_type:id,type', 
-            'service_cancellations:id,reason'
-        ])->findOrFail($id);
+        $serviceRequest = ServiceRequest::with($this->showWith())->findOrFail($id);
 
         $serviceRequest->makeHidden([
             'created_at',
@@ -103,56 +51,49 @@ class ServiceRequestService
 
     public function createServiceRequest(array $data): ServiceRequest
     {
-        DB::beginTransaction();
-        try {
-            $serviceRequest = ServiceRequest::create([
-                'service_number' => $this->generateServiceNumber(),
-                'admin_id' => $data['admin_id'] ?? null,
-                'user_id' => $data['user_id'] ?? auth()->id(),
-                'service_type_id' => $data['service_type_id'],
-                'request_date' => now(),
-                'estimated_date' => $data['estimated_date'] ?? null,
-                'status_id' => $data['status_id'] ?? 1, // Default to pending status
+        return DB::transaction(function () use ($data) {
+            $serviceRequest = $this->createMainServiceRequest($data);
+            $this->createServiceRequestDetails($serviceRequest, $data['details'] ?? []);
+
+            return $this->loadRelations($serviceRequest);
+        });
+    }   
+
+    private function createServiceRequestDetails(ServiceRequest $serviceRequest, array $details): void
+    {
+        foreach ($details as $detail) {
+            $this->detailService->createDetailServiceRequest([
+                'service_request_id' => $serviceRequest->id,
+                'device_id' => $detail['device_id'],
+                'complaint' => $detail['complaint'],
+                'complaint_images' => $detail['complaint_images'] ?? [],
             ]);
-
-            // Create service request details
-            if (isset($data['details'])) {
-                foreach ($data['details'] as $detail) {
-                    $this->detailService->createDetailServiceRequest([
-                        'service_request_id' => $serviceRequest->id,
-                        'device_id' => $detail['device_id'],
-                        'complaint' => $detail['complaint'],
-                        'complaint_images' => $detail['complaint_images'] ?? [],
-                    ]);
-                }
-            }
-
-            // Create service location
-            if (isset($data['service_location'])) {
-                $this->locationService->createServiceLocation($data['service_location'], $serviceRequest);
-            }
-
-            DB::commit();
-
-            return $serviceRequest->load([
-                    'user', 
-                    'service_type', 
-                    'status', 
-                    'service_request_details.device'
-                ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
         }
     }
 
-    public function getAllowedTransitions(int $serviceRequestId)
+    private function createMainServiceRequest(array $data): ServiceRequest
+    {
+        return ServiceRequest::create([
+            'service_number'   => $this->generateServiceNumber(),
+            'admin_id'         => $data['admin_id'] ?? null,
+            'user_id'          => $data['user_id'] ?? auth()->id(),
+            'service_type_id'  => $data['service_type_id'],
+            'request_date'     => now(),
+            'estimated_date'   => $data['estimated_date'] ?? null,
+            'status_id'        => $data['status_id'] ?? Status::PENDING, // kalau ada const
+        ]);
+    }
+
+
+    public function getAllowedTransitions(int $serviceRequestId): Collection
     {
         $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
         $user = Auth::user();
         
         // If user is not authenticated, return empty
-        if (!$user) return collect([]);
+        if (!$user) {
+            return collect([]);
+        }
 
         $userRoles = $user->roles->pluck('id');
 
@@ -166,7 +107,7 @@ class ServiceRequestService
         return $transitions->pluck('status');
     }
 
-    public function getStats()
+    public function getStats(): array
     {
         return [
             'total' => ServiceRequest::count(),
@@ -187,135 +128,45 @@ class ServiceRequestService
 
     public function updateServiceRequest(int $id, array $data): ServiceRequest
     {
-        DB::beginTransaction();
-        try {
+        return DB::transaction(function () use ($id, $data) {
             $serviceRequest = ServiceRequest::findOrFail($id);
-            
-            // Update main service request
+            $oldStatusId = $serviceRequest->status_id;
+
             $newStatusId = $data['status_id'] ?? $serviceRequest->status_id;
-            $status = Status::findOrFail($newStatusId);
+            $status = $this->getServiceRequestStatusOrFail($newStatusId);
 
-            if($status->entity_type_id != 1){
-                throw new \Exception('Status tidak valid');
-            }
+            $this->createStatusAuditLogIfNeeded($serviceRequest, $status, $oldStatusId, $newStatusId, $data);
 
-            // Check Status Transition
-            if ($newStatusId != $serviceRequest->status_id) {
-                // $allowedTransitions = $this->getAllowedTransitions($id);
-                // if (!$allowedTransitions->contains('id', $newStatusId)) {
-                //     // Start: Allow Admin Bypass (Optional, but let's be strict for now or check for specific admin logic)
-                //      // For now, if the transition is not in the table, it's forbidden.
-                //      // Exception: Maybe the user is a super admin? 
-                //      // Let's assume the table is the source of truth.
-                //      throw new \Exception("Perubahan status dari {$serviceRequest->status->name} ke {$status->name} tidak diizinkan untuk role anda.");
-                // }
-
-                // Create Audit Log
-                AuditLog::create([
-                    'actor_id' => auth()->id() ?? $serviceRequest->user_id, // Fallback if no auth (e.g. seeding)
-                    'entity_id' => $serviceRequest->id,
-                    'entity_type_id' => 1, // ServiceRequest
-                    'action' => 'UPDATE_STATUS',
-                    'notes' => $data['log_notes'] ?? "Status changed from {$serviceRequest->status->name} to {$status->name}",
-                    'old_status_id' => $serviceRequest->status_id,
-                    'new_status_id' => $newStatusId,
-                    'created_at' => now()
-                ]);
-            }
-
-            $updateData = [
+            $serviceRequest->update(array_filter([
                 'admin_id' => $data['admin_id'] ?? $serviceRequest->admin_id,
                 'service_type_id' => $data['service_type_id'] ?? $serviceRequest->service_type_id,
                 'estimated_date' => $data['estimated_date'] ?? $serviceRequest->estimated_date,
                 'status_id' => $data['status_id'] ?? $serviceRequest->status_id,
-            ];
-            
-            
-            $serviceRequest->update(array_filter($updateData));
+            ]));
 
-            // Update service request details
             if (isset($data['details'])) {
-                foreach ($data['details'] as $detail) {
-                    if (isset($detail['id'])) {
-                        $this->detailService->updateDetailServiceRequest($detail['id'], $detail);
-                    } else {
-                        $this->detailService->createDetailServiceRequest([
-                            'service_request_id' => $serviceRequest->id,
-                            'device_id' => $detail['device_id'],
-                            'complaint' => $detail['complaint'],
-                            'complaint_images' => $detail['complaint_images'] ?? [],
-                        ]);
-                    }
-                }
+                $this->syncDetails($serviceRequest, $data['details']);
             }
 
-            // Update service location
-            if (isset($data['service_location'])) {
-                if ($serviceRequest->serviceLocation) {
-                    $this->locationService->updateServiceLocation($serviceRequest->serviceLocation, $data['service_location']);
-                } else {
-                    $this->locationService->createServiceLocation($data['service_location'], $serviceRequest);
-                }
+            if ($newStatusId == 2 && $oldStatusId != 2) {
+                $this->createInvoiceForServiceRequest($serviceRequest, $data);
             }
 
-            // Handle service cancellation
-            if (isset($data['service_cancellation'])) {
-                $this->cancellationService->createCancellation($data['service_cancellation'], $serviceRequest);
-            }
-
-            if ($newStatusId == 2 && $serviceRequest->status_id != 2) {
-                // Ensure Admin ID is set
-                $adminId = $data['admin_id'] ?? $serviceRequest->admin_id;
-                if (!$adminId) {
-                    throw new \Exception('Admin wajib diisi untuk mengubah status menjadi selesai/invoice.');
-                }
-                
-                // Calculate Total Amount
-                $totalAmount = $serviceRequest->service_costs()->sum('amount');
-                
-                // Create Invoice
-                $this->invoiceService->createInvoice([
-                    'service_request_id' => $serviceRequest->id,
-                    'issue_date' => now(),
-                    'due_date' => now()->addDays(7),
-                    'total_amount' => $totalAmount,
-                    'status_id' => 11 // Default invoice status
-                ]);
-            }
-
-            DB::commit();
-
-            return $serviceRequest->load([
-                'user', 
-                'admin', 
-                'service_type', 
-                'status', 
-                'service_request_details.device', 
-                'service_locations.vendor', 
-                'service_costs.cost_type', 
-                'service_cancellations'
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+            return $this->loadRelations($serviceRequest);
+        });
     }
 
     public function deleteServiceRequest(int $id): ServiceRequest
     {
-        try {
-            $serviceRequest = ServiceRequest::findOrFail($id);
-            
-            if ($serviceRequest->status_id == 3) { 
-                throw new \Exception('Cannot delete completed service request');
-            }
+        $serviceRequest = ServiceRequest::findOrFail($id);
 
-            $serviceRequest->delete();
-
-            return $serviceRequest;
-        } catch (\Exception $e) {
-            throw $e;
+        if ($serviceRequest->status_id == 3) {
+            throw new \Exception('Cannot delete completed service request');
         }
+
+        $serviceRequest->delete();
+
+        return $serviceRequest;
     }
 
     private function generateServiceNumber(): string
@@ -329,5 +180,114 @@ class ServiceRequestService
         $sequence = $lastService ? (int) substr($lastService->service_number, -4) + 1 : 1;
         
         return $prefix . $date . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+    }
+
+    private function loadRelations(ServiceRequest $serviceRequest): ServiceRequest
+    {
+        return $serviceRequest->load($this->defaultWith());
+    }
+
+    private function indexWith(): array
+    {
+        return [
+            'user',
+            'admin',
+            'service_type',
+            'status',
+            'service_request_details.device',
+        ];
+    }
+
+    private function showWith(): array
+    {
+        return [
+            'user:id,name,email',
+            'admin:id,name,email',
+            'service_type:id,name',
+            'status:id,name',
+            'service_request_details:id,service_request_id,device_id,complaint',
+            'service_request_details.device:id,device_model_id,serial_number',
+            'service_request_details.device.device_model:id,brand,model',
+            'service_request_details.complaint_images',
+            'audit_logs',
+        ];
+    }
+
+    private function defaultWith(): array
+    {
+        return [
+            'user',
+            'service_type',
+            'status',
+            'service_request_details.device',
+        ];
+    }
+
+    private function syncDetails(ServiceRequest $serviceRequest, array $details): void
+    {
+        foreach ($details as $detail) {
+            if (isset($detail['id'])) {
+                $this->detailService->updateDetailServiceRequest($detail['id'], $detail);
+                continue;
+            }
+
+            $this->detailService->createDetailServiceRequest([
+                'service_request_id' => $serviceRequest->id,
+                'device_id' => $detail['device_id'],
+                'complaint' => $detail['complaint'],
+                'complaint_images' => $detail['complaint_images'] ?? [],
+            ]);
+        }
+    }
+
+    private function getServiceRequestStatusOrFail(int $statusId): Status
+    {
+        $status = Status::findOrFail($statusId);
+
+        if ($status->entity_type_id != 1) {
+            throw new \Exception('Status tidak valid');
+        }
+
+        return $status;
+    }
+
+    private function createStatusAuditLogIfNeeded(
+        ServiceRequest $serviceRequest,
+        Status $status,
+        int $oldStatusId,
+        int $newStatusId,
+        array $data
+    ): void {
+        if ($newStatusId == $oldStatusId) {
+            return;
+        }
+
+        $this->auditLogService->createAuditLog([
+            'actor_id' => auth()->id() ?? $serviceRequest->user_id,
+            'entity_id' => $serviceRequest->id,
+            'entity_type_id' => 1,
+            'action' => 'UPDATE_STATUS',
+            'notes' => $data['log_notes'] ?? "Status changed from {$serviceRequest->status->name} to {$status->name}",
+            'old_status_id' => $oldStatusId,
+            'new_status_id' => $newStatusId,
+        ]);
+    }
+
+    private function createInvoiceForServiceRequest(ServiceRequest $serviceRequest, array $data): void
+    {
+        $adminId = $data['admin_id'] ?? $serviceRequest->admin_id;
+        if (!$adminId) {
+            throw new \Exception('Admin wajib diisi untuk mengubah status menjadi selesai/invoice.');
+        }
+
+        $totalAmount = $serviceRequest->service_costs()->sum('amount');
+
+        $this->invoiceService->createInvoice([
+            'service_request_id' => $serviceRequest->id,
+            'issue_date' => now(),
+            'due_date' => now()->addDays(7),
+            'total_amount' => $totalAmount,
+            'status_id' => 13,
+        ]);
     }
 }

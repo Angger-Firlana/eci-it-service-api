@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 
 /**
  * Class ServiceRequest
@@ -108,4 +109,34 @@ class ServiceRequest extends Model
 	{
 		return $this->hasMany(VendorApproval::class);
 	}
+
+	public function scopeFilter($query, $request)
+	{
+		$equalFilters = [
+			'user_id',
+			'admin_id',
+			'service_type_id',
+			'status_id',
+		];
+
+		foreach ($equalFilters as $field) {
+			$query->when(
+				$request->filled($field),
+				fn ($q) => $q->where($field, $request->$field)
+			);
+		}
+
+		return $query
+			->when($request->filled('request_date'),
+				fn ($q) => $q->whereDate('request_date', $request->request_date)
+			)
+			->when($request->filled('estimated_date'),
+				fn ($q) => $q->whereDate('estimated_date', $request->estimated_date)
+			)
+			->when($request->filled('search'),
+				fn ($q) => $q->where('service_number', 'like', "%{$request->search}%")
+			);
+	}
+
+
 }

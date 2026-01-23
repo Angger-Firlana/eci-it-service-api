@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use App\Helpers\APIResponse;
 use App\Services\ServiceRequest\ServiceLocationService;
 use App\Models\ServiceRequest;
-
+use App\Http\Requests\ServiceLocation\UpdateServiceLocationRequest;
+use App\Http\Requests\ServiceLocation\StoreServiceLocationRequest;
 class ServiceRequestLocationController extends Controller
 {
     protected $locationService;
@@ -16,46 +17,47 @@ class ServiceRequestLocationController extends Controller
         $this->locationService = $locationService;
     }
 
-    public function store(Request $request, $id)
+    public function store(StoreServiceLocationRequest $request, $serviceRequestId)
     {
-        $request->validate([
-            'location_type' => 'required|in:internal,external',
-            'vendor_id' => 'required_if:location_type,external|exists:vendors,id',
-            'is_active' => 'boolean'
-        ]);
-
-        $serviceRequest = ServiceRequest::findOrFail($id);
-        
-        // If location exists, update it? Or just create new? 
-        // Logic in service: createServiceLocation just creates. 
-        // If we want to replace, we check if it exists.
+        $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
         
         $location = $serviceRequest->service_locations()->where('is_active', true)->first();
 
         if ($location) {
-             $updatedLocation = $this->locationService->updateServiceLocation($location, $request->all());
+             $updatedLocation = $this->locationService->updateServiceLocation($location, $request->validated());
              return APIResponse::success($updatedLocation, 200, 'Service location updated successfully');
         } else {
-             $newLocation = $this->locationService->createServiceLocation($request->all(), $serviceRequest);
+             $newLocation = $this->locationService->createServiceLocation($request->validated(), $serviceRequest);
              return APIResponse::success($newLocation, 201, 'Service location set successfully');
         }
     }
 
-    public function update(Request $request, $id, $locationId)
+    public function index($serviceRequestId)
     {
-        $request->validate([
-            'location_type' => 'sometimes|in:internal,external',
-            'vendor_id' => 'required_if:location_type,external|exists:vendors,id',
-            'is_active' => 'boolean'
-        ]);
+        $locations = $this->locationService->getLocationsByServiceRequestId($serviceRequestId);
+        return APIResponse::success($locations, 200, 'Service locations retrieved successfully');
+    }
 
+    public function show($serviceRequestId, $locationId){
+        $location = $this->locationService->getLocationById($locationId);
+        return APIResponse::success($location, 200, 'Service location retrieved successfully');
+    }
+
+    public function update(UpdateServiceLocationRequest $request, $serviceRequestId, $locationId)
+    {
         $location = $this->locationService->getLocationById($locationId);
         
-        if($location->service_request_id != $id){
+        if($location->service_request_id != $serviceRequestId){
             return APIResponse::error('Location does not belong to this service request', 400);
         }
 
-        $updatedLocation = $this->locationService->updateServiceLocation($location, $request->all());
+        $updatedLocation = $this->locationService->updateServiceLocation($location, $request->validated());
         return APIResponse::success($updatedLocation, 200, 'Service location updated successfully');
+    }
+    
+    public function destroy($serviceRequestId, $locationId)
+    {
+        $this->locationService->deleteServiceLocation($locationId);
+        return APIResponse::success(null, 200, 'Service location deleted successfully');
     }
 }

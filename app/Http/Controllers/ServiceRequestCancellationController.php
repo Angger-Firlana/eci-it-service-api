@@ -16,13 +16,25 @@ class ServiceRequestCancellationController extends Controller
         $this->cancellationService = $cancellationService;
     }
 
-    public function store(Request $request, $id)
+    public function index($serviceRequestId)
+    {
+        $cancellation = $this->cancellationService->getCancellationByServiceRequestId($serviceRequestId);
+        return APIResponse::success($cancellation);
+    }
+
+    public function update(Request $request, $serviceRequestId)
+    {
+        $cancellation = $this->cancellationService->updateCancellation($request->all(), $serviceRequestId);
+        return APIResponse::success($cancellation);
+    }
+
+    public function store(Request $request, $serviceRequestId)
     {
         $request->validate([
             'reason' => 'required|string',
         ]);
 
-        $serviceRequest = ServiceRequest::findOrFail($id);
+        $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
         
         $data = [
             'reason' => $request->reason,

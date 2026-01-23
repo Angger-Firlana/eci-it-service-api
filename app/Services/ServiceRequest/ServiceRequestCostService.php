@@ -19,9 +19,28 @@ class ServiceRequestCostService
         return $cost->load('cost_type');
     }
 
-    public function removeCost(int $costId): void
+    public function updateCost($serviceRequestId,int $costId, array $data): ServiceCost
     {
         $cost = ServiceCost::findOrFail($costId);
+        if($serviceRequestId !== $cost->service_request_id){
+            throw new \Exception('Service request id not match');
+        }
+
+        $cost->update([
+            'cost_type_id' => $data['cost_type_id'],
+            'amount' => $data['amount'],
+            'description' => $data['description'] ?? null,
+        ]);
+
+        return $cost->load('cost_type');
+    }
+
+    public function removeCost($serviceRequestId, int $costId): void
+    {
+        $cost = ServiceCost::findOrFail($costId);
+        if($serviceRequestId !== $cost->service_request_id){
+            throw new \Exception('Service request id not match');
+        }
         $cost->delete();
     }
 
