@@ -1,1612 +1,1281 @@
-# API Documentation
+# Dokumentasi API ECI IT Service
 
-This document provides documentation for all the API endpoints in the application.
+Dokumentasi ini menyediakan detail untuk semua endpoint API yang tersedia.
 
-## Authentication
+## Struktur Respons Standar
 
-### POST /auth/login
+### Respons Sukses
+```json
+{
+  "success": true,
+  "data": {},
+  "message": "Pesan sukses",
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 15,
+    "total": 0,
+    "from": 1,
+    "to": 0
+  }
+}
+```
+- `meta` hanya ada pada response yang melibatkan paginasi.
 
-Logs in a user and returns a sanctum token.
+### Respons Error
+```json
+{
+  "success": false,
+  "message": "Pesan error",
+  "errors": {}
+}
+```
+- `errors` berisi detail validasi atau error lainnya.
 
-**Request Body:**
+---
 
-| Field | Type | Description |
-|---|---|---|
-| email | string | The user's email address. (Required) |
-| password | string | The user's password. (min: 8 characters) (Required) |
+## Otentikasi
 
-**Responses:**
+Endpoint yang terkait dengan otentikasi pengguna.
 
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Login successful",
-        "data": {
-            "token": "your-auth-token"
-        }
-    }
-    ```
-*   **401 Unauthorized:**
-    ```json
-    {
-        "status": "error",
-        "code": 401,
-        "message": "Invalid credentials"
-    }
-    ```
-*   **422 Unprocessable Entity:**
-    ```json
-    {
-        "status": "error",
-        "code": 422,
-        "message": "The given data was invalid.",
-        "errors": {
-            "email": [
-                "The email field is required."
-            ],
-            "password": [
-                "The password field is required."
-            ]
-        }
-    }
-    ```
+### `POST /api/auth/login`
 
-### POST /auth/register
-
-Registers a new user.
+Mengotentikasi pengguna dan mengembalikan token akses.
 
 **Request Body:**
+- `email` (string, required, email): Alamat email pengguna.
+- `password` (string, required, min:8): Kata sandi pengguna.
 
-| Field | Type | Description |
-|---|---|---|
-| name | string | The user's name. (Required) |
-| email | string | The user's email address. (Required, must be unique) |
-| password | string | The user's password. (min: 8 characters) (Required) |
-| pin | string | The user's PIN. (min: 6 characters) (Optional) |
-| role_id | integer | The ID of the user's role. (Required, must exist in roles table) |
+**Contoh Respons Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "Nama Pengguna",
+      "email": "user@example.com",
+      "role": {
+        "id": 3,
+        "name": "User"
+      },
+      "department": null,
+      "created_at": "...",
+      "updated_at": "..."
+    },
+    "token": "1|token_akses_pengguna"
+  },
+  "message": "Login successful"
+}
+```
 
-**Responses:**
+**Contoh Respons Error (401 Unauthorized):**
+```json
+{
+  "success": false,
+  "message": "Invalid credentials"
+}
+```
 
-*   **201 Created:**
-    ```json
-    {
-        "status": "success",
-        "code": 201,
-        "message": "User registered successfully",
-        "data": {
+### `POST /api/auth/register`
+
+Mendaftarkan pengguna baru.
+
+**Request Body:**
+- `name` (string, required): Nama lengkap pengguna.
+- `email` (string, required, email, unique:users): Alamat email unik.
+- `password` (string, required, min:8): Kata sandi pengguna.
+- `pin` (string, optional, min:6): PIN untuk otorisasi tambahan.
+- `role_id` (integer, required, exists:roles,id): ID dari peran pengguna.
+
+**Contoh Respons Sukses (201 Created):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": { ... }, // Struktur sama seperti login
+    "token": "2|token_akses_baru"
+  },
+  "message": "Registration successful"
+}
+```
+
+### `POST /api/auth/logout`
+
+Menghapus token akses pengguna yang sedang login. Membutuhkan otentikasi (Bearer Token).
+
+**Contoh Respons Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "Logout successful"
+}
+```
+
+### `GET /api/auth/me`
+
+Mendapatkan data pengguna yang sedang login. Membutuhkan otentikasi (Bearer Token).
+
+**Contoh Respons Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "data": { ... }, // Struktur user sama seperti login
+  "message": "User found"
+}
+```
+
+---
+
+## Tipe Perangkat (Device Type)
+
+CRUD untuk mengelola tipe perangkat (misal: Laptop, Printer).
+
+### `GET /api/device-type`
+
+Mendapatkan daftar tipe perangkat dengan paginasi.
+- **Query Params:** `search` (opsional) untuk mencari berdasarkan nama.
+
+### `GET /api/device-type/{id}`
+
+Mendapatkan detail satu tipe perangkat.
+
+### `POST /api/device-type`
+
+Membuat tipe perangkat baru.
+- **Request Body:** `name` (string, required, unique:device_types).
+
+### `PUT /api/device-type/{id}`
+
+Memperbarui nama tipe perangkat.
+- **Request Body:** `name` (string, required, unique:device_types).
+
+### `DELETE /api/device-type/{id}`
+
+Menghapus tipe perangkat.
+
+**Contoh Objek `DeviceType`:**
+```json
+{
+  "id": 1,
+  "name": "Laptop",
+  "created_at": "...",
+  "updated_at": "..."
+}
+```
+
+---
+
+## Model Perangkat (Device Model)
+
+CRUD untuk mengelola model spesifik dari sebuah perangkat.
+
+### `GET /api/device-model`
+
+Mendapatkan daftar model perangkat dengan paginasi.
+- **Query Params:** `keyword` (opsional) untuk mencari berdasarkan nama model.
+
+### `GET /api/device-model/{id}`
+
+Mendapatkan detail satu model perangkat.
+
+### `POST /api/device-model`
+
+Membuat model perangkat baru.
+- **Request Body:**
+  - `device_type_id` (integer, required, exists:device_types,id)
+  - `brand` (string, required)
+  - `model` (string, required)
+
+### `PUT /api/device-model/{id}`
+
+Memperbarui semua field model perangkat.
+- **Request Body:**
+  - `device_type_id` (integer, required)
+  - `brand` (string, required)
+  - `model` (string, required)
+
+### `PATCH /api/device-model/{id}`
+
+Memperbarui sebagian field model perangkat.
+- **Request Body:**
+  - `device_type_id` (integer, optional)
+  - `brand` (string, optional)
+  - `model` (string, optional)
+
+### `DELETE /api/device-model/{id}`
+
+Menghapus model perangkat.
+
+**Contoh Objek `DeviceModel`:**
+```json
+{
+    "id": 1,
+    "device_type_id": 1,
+    "brand": "Dell",
+    "model": "Latitude 5420",
+    "created_at": "...",
+    "updated_at": "..."
+}
+```
+
+---
+
+## Perangkat (Device)
+
+
+
+CRUD untuk mengelola perangkat individual yang dimiliki.
+
+
+
+### `GET /api/devices`
+
+
+
+Mendapatkan daftar perangkat dengan paginasi.
+
+- **Query Params:** `serial-number`, `brand`, `model` (semua opsional) untuk filter.
+
+
+
+### `GET /api/devices/{id}`
+
+
+
+Mendapatkan detail satu perangkat.
+
+
+
+### `POST /api/devices`
+
+
+
+Membuat perangkat baru.
+
+- **Request Body:**
+
+  - `device_model_id` (integer, required, exists:device_models,id)
+
+  - `serial_number` (string, required, unique:devices)
+
+
+
+### `PUT /api/devices/{id}`
+
+
+
+Memperbarui semua field perangkat.
+
+- **Request Body:**
+
+  - `device_model_id` (integer, required)
+
+  - `serial_number` (string, required, unique:devices)
+
+
+
+### `PATCH /api/devices/{id}`
+
+
+
+Memperbarui sebagian field perangkat.
+
+- **Request Body:**
+
+  - `device_model_id` (integer, optional)
+
+  - `serial_number` (string, optional, unique:devices)
+
+
+
+### `DELETE /api/devices/{id}`
+
+
+
+Menghapus perangkat.
+
+
+
+**Contoh Objek `Device`:**
+
+```json
+
+{
+
+    "id": 1,
+
+    "device_model_id": 1,
+
+    "serial_number": "SN12345XYZ",
+
+    "created_at": "...",
+
+    "updated_at": "..."
+
+}
+
+```
+
+
+
+---
+
+
+
+## Permintaan Layanan (Service Request)
+
+
+
+Endpoint untuk mengelola seluruh alur permintaan layanan.
+
+
+
+### `GET /api/service-requests`
+
+
+
+Mendapatkan daftar semua permintaan layanan dengan paginasi.
+
+- **Query Params:** `user_id`, `admin_id`, `service_type_id`, `status_id`, `request_date`, `estimated_date`, `search` (berdasarkan `service_number`). Semua opsional.
+
+
+
+### `GET /api/service-requests/stats`
+
+
+
+Mendapatkan statistik ringkas mengenai permintaan layanan (total, status, terbaru).
+
+
+
+### `GET /api/service-requests/{id}`
+
+
+
+Mendapatkan detail lengkap satu permintaan layanan, termasuk relasi seperti detail, perangkat, gambar, dan log audit.
+
+
+
+### `POST /api/service-requests`
+
+
+
+Membuat permintaan layanan baru.
+
+- **Request Body:**
+
+  - `admin_id` (integer, required)
+
+  - `user_id` (integer, optional)
+
+  - `service_type_id` (integer, optional)
+
+  - `request_date` (date, required)
+
+  - `status_id` (integer, required)
+
+  - `details` (array, required): Daftar keluhan.
+
+    - `details.*.device_id` (integer, required)
+
+    - `details.*.complaint` (string, required)
+
+    - `details.*.complaint_images` (array, optional): Array file gambar.
+
+
+
+### `PUT /api/service-requests/{id}`
+
+
+
+Memperbarui permintaan layanan. Digunakan untuk mengubah status, menambah/mengubah detail, biaya, lokasi, dll.
+
+- **Request Body:** Berisi field-field dari `POST` dan juga field tambahan seperti `estimated_date`, `service_location`, `service_costs`, `service_cancellation`, dan `log_notes`. Semua field opsional.
+
+
+
+### `DELETE /api/service-requests/{id}`
+
+
+
+Menghapus permintaan layanan.
+
+
+
+### `GET /api/service-requests/{id}/allowed-transitions`
+
+
+
+Mendapatkan daftar status berikutnya yang valid untuk suatu permintaan layanan berdasarkan peran pengguna yang login.
+
+
+
+### `GET /api/service-requests/{id}/download-invoice`
+
+
+
+Mengunduh file PDF invoice untuk permintaan layanan yang sudah selesai.
+
+
+
+**Contoh Objek `ServiceRequest` (Detail View):**
+
+```json
+
+{
+
+    "id": 1,
+
+    "user_id": 2,
+
+    "admin_id": 1,
+
+    "service_type_id": 1,
+
+    "service_number": "SR202601230001",
+
+    "request_date": "...",
+
+    "estimated_date": null,
+
+    "status_id": 1,
+
+    "user": { "id": 2, "name": "User Name", "email": "user@example.com" },
+
+    "admin": { "id": 1, "name": "Admin Name", "email": "admin@example.com" },
+
+    "service_type": { "id": 1, "name": "Perbaikan" },
+
+    "status": { "id": 1, "name": "Pending" },
+
+    "service_request_details": [
+
+        {
+
             "id": 1,
-            "name": "John Doe",
-            "email": "john.doe@example.com",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z"
-        }
-    }
-    ```
-*   **422 Unprocessable Entity:**
-    ```json
-    {
-        "status": "error",
-        "code": 422,
-        "message": "The given data was invalid.",
-        "errors": {
-            "email": [
-                "The email has already been taken."
-            ]
-        }
-    }
-    ```
 
-### POST /auth/logout
+            "service_request_id": 1,
 
-Logs out the authenticated user.
+            "device_id": 1,
 
-**Authentication:** Requires a valid sanctum token.
+            "complaint": "Layar rusak",
 
-**Responses:**
+            "device": {
 
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Logout successful"
-    }
-    ```
-*   **401 Unauthorized:**
-    ```json
-    {
-        "status": "error",
-        "code": 401,
-        "message": "Unauthenticated."
-    }
-    ```
-
-### GET /auth/me
-
-Gets the data of the currently authenticated user.
-
-**Authentication:** Requires a valid sanctum token.
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "User data retrieved successfully",
-        "data": {
-            "id": 1,
-            "name": "John Doe",
-            "email": "john.doe@example.com",
-            "email_verified_at": null,
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z"
-        }
-    }
-    ```
-*   **401 Unauthorized:**
-    ```json
-    {
-        "status": "error",
-        "code": 401,
-        "message": "Unauthenticated."
-    }
-    ```
-## Device Type
-
-### GET /device-type
-
-Retrieves a list of device types. Supports search and pagination.
-
-**Query Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| search | string | A search term to filter device types by name. (Optional) |
-| page | integer | The page number for pagination. (Optional) |
-| per_page | integer | The number of items per page. (Optional) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Type Found",
-        "data": [
-            {
                 "id": 1,
-                "name": "Laptop",
-                "created_at": "2026-01-22T12:00:00.000000Z",
-                "updated_at": "2026-01-22T12:00:00.000000Z"
-            }
-        ],
-        "meta": {
-            "current_page": 1,
-            "from": 1,
-            "last_page": 1,
-            "path": "http://localhost/api/device-type",
-            "per_page": 15,
-            "to": 1,
-            "total": 1
-        }
-    }
-    ```
 
-### GET /device-type/{id}
-
-Retrieves a specific device type by its ID.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the device type. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Type Found",
-        "data": {
-            "id": 1,
-            "name": "Laptop",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z"
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Device Type not found"
-    }
-    ```
-
-### POST /device-type
-
-Creates a new device type.
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| name | string | The name of the device type. (Required, must be unique) |
-
-**Responses:**
-
-*   **201 Created:**
-    ```json
-    {
-        "status": "success",
-        "code": 201,
-        "message": "Device Type Created",
-        "data": {
-            "id": 1,
-            "name": "Laptop"
-        }
-    }
-    ```
-*   **422 Unprocessable Entity:**
-    ```json
-    {
-        "status": "error",
-        "code": 422,
-        "message": "The given data was invalid.",
-        "errors": {
-            "name": [
-                "The name has already been taken."
-            ]
-        }
-    }
-    ```
-
-### PUT /device-type/{id}
-
-Updates an existing device type.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the device type. (Required) |
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| name | string | The new name of the device type. (Required, must be unique) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Type Updated",
-        "data": {
-            "id": 1,
-            "name": "New Laptop Name"
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Device Type not found"
-    }
-    ```
-*   **422 Unprocessable Entity:**
-    ```json
-    {
-        "status": "error",
-        "code": 422,
-        "message": "The given data was invalid.",
-        "errors": {
-            "name": [
-                "The name has already been taken."
-            ]
-        }
-    }
-    ```
-
-### DELETE /device-type/{id}
-
-Deletes a device type.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the device type. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Type Deleted"
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Device Type not found"
-    }
-    ```
-## Device Model
-
-### GET /device-model
-
-Retrieves a list of device models. Supports search and pagination.
-
-**Query Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| keyword | string | A search term to filter device models by brand or model. (Optional) |
-| page | integer | The page number for pagination. (Optional) |
-| per_page | integer | The number of items per page. (Optional) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Model Found",
-        "data": [
-            {
-                "id": 1,
-                "device_type_id": 1,
-                "brand": "Apple",
-                "model": "MacBook Pro 16-inch",
-                "created_at": "2026-01-22T12:00:00.000000Z",
-                "updated_at": "2026-01-22T12:00:00.000000Z"
-            }
-        ],
-        "meta": {
-            "current_page": 1,
-            "from": 1,
-            "last_page": 1,
-            "path": "http://localhost/api/device-model",
-            "per_page": 15,
-            "to": 1,
-            "total": 1
-        }
-    }
-    ```
-
-### GET /device-model/{id}
-
-Retrieves a specific device model by its ID.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the device model. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Model Found",
-        "data": {
-            "id": 1,
-            "device_type_id": 1,
-            "brand": "Apple",
-            "model": "MacBook Pro 16-inch",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z"
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Device Model not found"
-    }
-    ```
-
-### POST /device-model
-
-Creates a new device model.
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| device_type_id | integer | The ID of the device type. (Required) |
-| brand | string | The brand of the device model. (Required) |
-| model | string | The model of the device. (Required) |
-
-**Responses:**
-
-*   **201 Created:**
-    ```json
-    {
-        "status": "success",
-        "code": 201,
-        "message": "Device Model Create Successfully",
-        "data": {
-            "id": 1,
-            "device_type_id": 1,
-            "brand": "Apple",
-            "model": "MacBook Pro 16-inch"
-        }
-    }
-    ```
-*   **422 Unprocessable Entity:**
-    ```json
-    {
-        "status": "error",
-        "code": 422,
-        "message": "The given data was invalid.",
-        "errors": {
-            "device_type_id": [
-                "The selected device type id is invalid."
-            ]
-        }
-    }
-    ```
-
-### PUT /device-model/{id}
-
-Updates an existing device model.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the device model. (Required) |
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| device_type_id | integer | The ID of the device type. (Optional) |
-| brand | string | The brand of the device model. (Optional) |
-| model | string | The model of the device. (Optional) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Model Update Successfully",
-        "data": {
-            "id": 1,
-            "device_type_id": 1,
-            "brand": "Apple",
-            "model": "MacBook Pro 16-inch M1"
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Device Model not found"
-    }
-    ```
-
-### PATCH /device-model/{id}
-
-Partially updates an existing device model.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the device model. (Required) |
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| device_type_id | integer | The ID of the device type. (Optional) |
-| brand | string | The brand of the device model. (Optional) |
-| model | string | The model of the device. (Optional) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Model Patch Successfully",
-        "data": {
-            "id": 1,
-            "device_type_id": 1,
-            "brand": "Apple",
-            "model": "MacBook Pro 16-inch M1"
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Device Model not found"
-    }
-    ```
-
-### DELETE /device-model/{id}
-
-Deletes a device model.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the device model. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Model Delete Successfully"
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Device Model not found"
-    }
-    ```
-## Device
-
-### GET /devices
-
-Retrieves a list of devices. Supports search and pagination.
-
-**Query Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| search | string | A search term to filter devices by serial number. (Optional) |
-| page | integer | The page number for pagination. (Optional) |
-| per_page | integer | The number of items per page. (Optional) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Found",
-        "data": [
-            {
-                "id": 1,
                 "device_model_id": 1,
-                "serial_number": "C02G8426J1G5",
-                "created_at": "2026-01-22T12:00:00.000000Z",
-                "updated_at": "2026-01-22T12:00:00.000000Z"
-            }
-        ],
-        "meta": {
-            "current_page": 1,
-            "from": 1,
-            "last_page": 1,
-            "path": "http://localhost/api/devices",
-            "per_page": 15,
-            "to": 1,
-            "total": 1
-        }
-    }
-    ```
 
-### GET /devices/{id}
+                "serial_number": "SN12345XYZ",
 
-Retrieves a specific device by its ID.
+                "device_model": { "id": 1, "brand": "Dell", "model": "Latitude 5420" }
 
-**URL Parameters:**
+            },
 
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the device. (Required) |
+            "complaint_images": [
 
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Found",
-        "data": {
-            "id": 1,
-            "device_model_id": 1,
-            "serial_number": "C02G8426J1G5",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z"
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Device not found"
-    }
-    ```
-
-### POST /devices
-
-Creates a new device.
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| device_model_id | integer | The ID of the device model. (Required) |
-| serial_number | string | The serial number of the device. (Required, must be unique) |
-
-**Responses:**
-
-*   **201 Created:**
-    ```json
-    {
-        "status": "success",
-        "code": 201,
-        "message": "Device Created",
-        "data": {
-            "id": 1,
-            "device_model_id": 1,
-            "serial_number": "C02G8426J1G5"
-        }
-    }
-    ```
-*   **422 Unprocessable Entity:**
-    ```json
-    {
-        "status": "error",
-        "code": 422,
-        "message": "The given data was invalid.",
-        "errors": {
-            "serial_number": [
-                "The serial number has already been taken."
-            ]
-        }
-    }
-    ```
-
-### PUT /devices/{id}
-
-Updates an existing device.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the device. (Required) |
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| device_model_id | integer | The ID of the device model. (Optional) |
-| serial_number | string | The serial number of the device. (Optional, must be unique) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Updated",
-        "data": {
-            "id": 1,
-            "device_model_id": 1,
-            "serial_number": "NEWSERIALNUMBER"
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Device not found"
-    }
-    ```
-
-### PATCH /devices/{id}
-
-Partially updates an existing device.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the device. (Required) |
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| device_model_id | integer | The ID of the device model. (Optional) |
-| serial_number | string | The serial number of the device. (Optional, must be unique) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Updated",
-        "data": {
-            "id": 1,
-            "device_model_id": 1,
-            "serial_number": "NEWSERIALNUMBER"
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Device not found"
-    }
-    ```
-
-### DELETE /devices/{id}
-
-Deletes a device.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the device. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Device Deleted"
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Device not found"
-    }
-    ```
-
-## Reference Data
-
-### GET /references/service-types
-
-Retrieves a list of service types.
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Success",
-        "data": [
-            {
-                "id": 1,
-                "name": "Repair"
-            }
-        ]
-    }
-    ```
-
-### GET /references/statuses
-
-Retrieves a list of statuses.
-
-**Query Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| entity_type_id | integer | Filter by entity type ID. (Optional) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Success",
-        "data": [
-            {
-                "id": 1,
-                "name": "Pending",
-                "code": "pending",
-                "entity_type_id": 1
-            }
-        ]
-    }
-    ```
-
-### GET /references/vendors
-
-Retrieves a list of vendors.
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Success",
-        "data": [
-            {
-                "id": 1,
-                "name": "Apple",
-                "description": "Apple Inc."
-            }
-        ]
-    }
-    ```
-
-### GET /references/roles
-
-Retrieves a list of roles.
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Success",
-        "data": [
-            {
-                "id": 1,
-                "name": "Admin"
-            }
-        ]
-    }
-    ```
-
-### GET /references/departments
-
-Retrieves a list of departments.
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Success",
-        "data": [
-            {
-                "id": 1,
-                "name": "IT",
-                "code": "ITD"
-            }
-        ]
-    }
-    ```
-
-### GET /references/users
-
-Retrieves a list of users.
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Success",
-        "data": [
-            {
-                "id": 1,
-                "name": "John Doe",
-                "email": "john.doe@example.com"
-            }
-        ]
-    }
-    ```
-## Service Request
-
-### GET /service-requests
-
-Retrieves a list of service requests.
-
-**Query Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| search | string | Search by user name or admin name. (Optional) |
-| status_id | integer | Filter by status ID. (Optional) |
-| page | integer | The page number for pagination. (Optional) |
-| per_page | integer | The number of items per page. (Optional) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Success",
-        "data": [
-            {
-                "id": 1,
-                "admin_id": 1,
-                "user_id": 2,
-                "service_type_id": 1,
-                "request_date": "2026-01-22",
-                "status_id": 1,
-                "details": [
-                    {
-                        "id": 1,
-                        "device_id": 1,
-                        "complaint": "Screen is broken"
-                    }
-                ]
-            }
-        ],
-        "meta": {
-            "current_page": 1,
-            "from": 1,
-            "last_page": 1,
-            "path": "http://localhost/api/service-requests",
-            "per_page": 15,
-            "to": 1,
-            "total": 1
-        }
-    }
-    ```
-
-### GET /service-requests/stats
-
-Retrieves statistics about service requests.
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Success",
-        "data": {
-            "total": 100,
-            "pending": 20,
-            "in_progress": 30,
-            "completed": 50
-        }
-    }
-    ```
-
-### GET /service-requests/{id}
-
-Retrieves a specific service request by its ID.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the service request. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Success",
-        "data": {
-            "id": 1,
-            "admin_id": 1,
-            "user_id": 2,
-            "service_type_id": 1,
-            "request_date": "2026-01-22",
-            "status_id": 1,
-            "details": [
                 {
+
                     "id": 1,
-                    "device_id": 1,
-                    "complaint": "Screen is broken"
+
+                    "service_request_detail_id": 1,
+
+                    "image_path": "path/to/image.jpg"
+
                 }
+
             ]
+
         }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Service Request not found"
-    }
-    ```
-
-### POST /service-requests
-
-Creates a new service request.
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| admin_id | integer | The ID of the admin user. (Required) |
-| user_id | integer | The ID of the user. (Optional) |
-| service_type_id | integer | The ID of the service type. (Optional) |
-| request_date | date | The date of the request. (Required) |
-| status_id | integer | The ID of the status. (Required) |
-| details | array | An array of service request details. (Required) |
-| details.*.device_id | integer | The ID of the device. (Required) |
-| details.*.complaint | string | The complaint description. (Required) |
-| details.*.complaint_images | array | An array of complaint images. (Optional) |
-| details.*.complaint_images.* | file | An image file. (Optional, max: 2MB, mimes: jpeg,png,jpg,gif,svg) |
-
-**Responses:**
-
-*   **201 Created:**
-    ```json
-    {
-        "status": "success",
-        "code": 201,
-        "message": "Service Request Created",
-        "data": {
-            "id": 1,
-            "admin_id": 1,
-            "user_id": 2,
-            "service_type_id": 1,
-            "request_date": "2026-01-22",
-            "status_id": 1
-        }
-    }
-    ```
-
-### PUT /service-requests/{id}
-
-Updates an existing service request.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the service request. (Required) |
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| admin_id | integer | The ID of the admin user. (Optional) |
-| user_id | integer | The ID of the user. (Optional) |
-| service_type_id | integer | The ID of the service type. (Optional) |
-| request_date | date | The date of the request. (Optional) |
-| estimated_date | date | The estimated date of completion. (Optional) |
-| status_id | integer | The ID of the status. (Optional) |
-| details | array | An array of service request details to update. (Optional) |
-| details.*.id | integer | The ID of the service request detail to update. (Optional) |
-| details.*.device_id | integer | The ID of the device. (Optional) |
-| details.*.complaint | string | The complaint description. (Optional) |
-| service_location | object | Service location details. (Optional) |
-| service_costs | array | An array of service costs. (Optional) |
-| service_cancellation | object | Service cancellation details. (Optional) |
-| vendor_approvals | array | An array of vendor approvals. (Optional) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Service Request Updated"
-    }
-    ```
-
-### DELETE /service-requests/{id}
-
-Deletes a service request.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the service request. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Service Request Deleted"
-    }
-    ```
-
-### GET /service-requests/{id}/allowed-transitions
-
-Retrieves the allowed status transitions for a service request.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the service request. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Success",
-        "data": [
-            {
-                "id": 2,
-                "name": "In Progress"
-            }
-        ]
-    }
-    ```
-
-## Department
-
-### GET /departments
-
-Retrieves a list of departments. Supports search and pagination.
-
-**Query Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| search | string | A search term to filter departments by name. (Optional) |
-| page | integer | The page number for pagination. (Optional) |
-| per_page | integer | The number of items per page. (Optional) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Department Found",
-        "data": [
-            {
-                "id": 1,
-                "name": "IT",
-                "code": "ITD"
-            }
-        ],
-        "meta": {
-            "current_page": 1,
-            "from": 1,
-            "last_page": 1,
-            "path": "http://localhost/api/departments",
-            "per_page": 15,
-            "to": 1,
-            "total": 1
-        }
-    }
-    ```
-
-### GET /departments/{id}
-
-Retrieves a specific department by its ID.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the department. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Department Found",
-        "data": {
-            "id": 1,
-            "name": "IT",
-            "code": "ITD"
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Department not found"
-    }
-    ```
-
-### POST /departments
-
-Creates a new department.
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| name | string | The name of the department. (Required, must be unique) |
-| code | string | The code of the department. (Required, must be unique) |
-
-**Responses:**
-
-*   **201 Created:**
-    ```json
-    {
-        "status": "success",
-        "code": 201,
-        "message": "Department Created",
-        "data": {
-            "id": 1,
-            "name": "IT",
-            "code": "ITD"
-        }
-    }
-    ```
-*   **422 Unprocessable Entity:**
-    ```json
-    {
-        "status": "error",
-        "code": 422,
-        "message": "The given data was invalid.",
-        "errors": {
-            "name": [
-                "The name has already been taken."
-            ],
-            "code": [
-                "The code has already been taken."
-            ]
-        }
-    }
-    ```
-
-### PUT /departments/{id}
-
-Updates an existing department.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the department. (Required) |
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| name | string | The new name of the department. (Optional, must be unique) |
-| code | string | The new code of the department. (Optional, must be unique) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Department Updated",
-        "data": {
-            "id": 1,
-            "name": "Information Technology",
-            "code": "ITD"
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Department not found"
-    }
-    ```
-*   **422 Unprocessable Entity:**
-    ```json
-    {
-        "status": "error",
-        "code": 422,
-        "message": "The given data was invalid.",
-        "errors": {
-            "name": [
-                "The name has already been taken."
-            ]
-        }
-    }
-    ```
-
-### DELETE /departments/{id}
-
-Deletes a department.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the department. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "Department Deleted"
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "Department not found"
-    }
-    ```
-
-## User
-
-### GET /users
-
-Retrieves a list of users. Supports search and pagination.
-
-**Query Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| search | string | A search term to filter users by name. (Optional) |
-| page | integer | The page number for pagination. (Optional) |
-| per_page | integer | The number of items per page. (Optional) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "User Found",
-        "data": [
-            {
-                "id": 1,
-                "name": "John Doe",
-                "email": "john.doe@example.com",
-                "department_id": 1,
-                "role_id": 1
-            }
-        ],
-        "meta": {
-            "current_page": 1,
-            "from": 1,
-            "last_page": 1,
-            "path": "http://localhost/api/users",
-            "per_page": 15,
-            "to": 1,
-            "total": 1
-        }
-    }
-    ```
-
-### GET /users/{id}
-
-Retrieves a specific user by its ID.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the user. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "User Found",
-        "data": {
-            "id": 1,
-            "name": "John Doe",
-            "email": "john.doe@example.com",
-            "department_id": 1,
-            "role_id": 1
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "User not found"
-    }
-    ```
-
-### POST /users
-
-Creates a new user.
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| name | string | The name of the user. (Required) |
-| email | string | The email of the user. (Required, must be unique) |
-| password | string | The password of the user. (Required, min: 8) |
-| role_id | integer | The ID of the role. (Required) |
-| department_id | integer | The ID of the department. (Required) |
-
-**Responses:**
-
-*   **201 Created:**
-    ```json
-    {
-        "status": "success",
-        "code": 201,
-        "message": "User Created",
-        "data": {
-            "id": 1,
-            "name": "John Doe",
-            "email": "john.doe@example.com",
-            "department_id": 1,
-            "role_id": 1
-        }
-    }
-    ```
-*   **422 Unprocessable Entity:**
-    ```json
-    {
-        "status": "error",
-        "code": 422,
-        "message": "The given data was invalid.",
-        "errors": {
-            "email": [
-                "The email has already been taken."
-            ]
-        }
-    }
-    ```
-
-### PUT /users/{id}
-
-Updates an existing user.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the user. (Required) |
-
-**Request Body:**
-
-| Field | Type | Description |
-|---|---|---|
-| name | string | The new name of the user. (Optional) |
-| email | string | The new email of the user. (Optional, must be unique) |
-| password | string | The new password of the user. (Optional, min: 8) |
-| role_id | integer | The new ID of the role. (Optional) |
-| department_id | integer | The new ID of the department. (Optional) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "User Updated",
-        "data": {
-            "id": 1,
-            "name": "John Doe",
-            "email": "john.doe@example.com",
-            "department_id": 1,
-            "role_id": 1
-        }
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "User not found"
-    }
-    ```
-*   **422 Unprocessable Entity:**
-    ```json
-    {
-        "status": "error",
-        "code": 422,
-        "message": "The given data was invalid.",
-        "errors": {
-            "email": [
-                "The email has already been taken."
-            ]
-        }
-    }
-    ```
-
-### DELETE /users/{id}
-
-Deletes a user.
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|---|---|---|
-| id | integer | The ID of the user. (Required) |
-
-**Responses:**
-
-*   **200 OK:**
-    ```json
-    {
-        "status": "success",
-        "code": 200,
-        "message": "User Deleted"
-    }
-    ```
-*   **404 Not Found:**
-    ```json
-    {
-        "status": "error",
-        "code": 404,
-        "message": "User not found"
-    }
-    ```
+
+    ],
+
+    "audit_logs": [ ... ]
+
+}
+
+```
+
+
+
+### Sub-resource: Biaya (`/costs`)
+
+
+
+- `GET /api/service-requests/{serviceRequestId}/costs`: Daftar biaya.
+
+- `POST /api/service-requests/{serviceRequestId}/costs`: Tambah biaya.
+
+- `PUT /api/service-requests/{serviceRequestId}/costs/{costId}`: Update biaya.
+
+- `DELETE /api/service-requests/{serviceRequestId}/costs/{costId}`: Hapus biaya.
+
+
+
+### Sub-resource: Lokasi (`/locations`)
+
+
+
+- `GET /api/service-requests/{serviceRequestId}/locations`: Daftar histori lokasi.
+
+- `POST /api/service-requests/{serviceRequestId}/locations`: Menambah atau memperbarui lokasi servis aktif.
+
+- `PUT /api/service-requests/{serviceRequestId}/locations/{locationId}`: Update lokasi.
+
+- `DELETE /api/service-requests/{serviceRequestId}/locations/{locationId}`: Hapus lokasi.
+
+
+
+### Sub-resource: Persetujuan (`/approvals` & `/approved`, `/rejected`)
+
+
+
+- `GET /api/service-requests/{serviceRequestId}/approvals`: Daftar persetujuan vendor.
+
+- `POST /api/service-requests/{serviceRequestId}/approvals`: Membuat permintaan persetujuan.
+
+- `PUT /api/service-requests/{serviceRequestId}/approvals`: Memperbarui permintaan persetujuan.
+
+- `DELETE /api/service-requests/{serviceRequestId}/approvals/{approvalId}`: Hapus permintaan.
+
+- `POST /api/approved/{approvalId}`: Menyetujui permintaan.
+
+- `POST /api/rejected/{approvalId}`: Menolak permintaan.
+
+
+
+### Sub-resource: Pembatalan (`/cancellation`)
+
+
+
+
+
+
+
+- `GET /api/service-requests/{serviceRequestId}/cancellation`: Melihat detail pembatalan.
+
+
+
+- `POST /api/service-requests/{serviceRequestId}/cancellation`: Membatalkan permintaan layanan.
+
+
+
+- `PUT /api/service-requests/{serviceRequestId}/cancellation`: Memperbarui alasan pembatalan.
+
+
+
+
+
+
+
+---
+
+
+
+
+
+
+
+## Data Referensi
+
+
+
+
+
+
+
+Endpoint untuk mendapatkan daftar data yang umumnya statis.
+
+
+
+
+
+
+
+### `GET /api/references/service-types`
+
+
+
+Mengembalikan daftar semua tipe layanan.
+
+
+
+
+
+
+
+### `GET /api/references/statuses`
+
+
+
+Mengembalikan daftar semua status.
+
+
+
+- **Query Params:** `entity_type_id` (opsional) untuk filter berdasarkan tipe entitas.
+
+
+
+
+
+
+
+### `GET /api/references/vendors`
+
+
+
+Mengembalikan daftar semua vendor.
+
+
+
+
+
+
+
+### `GET /api/references/roles`
+
+
+
+Mengembalikan daftar semua peran pengguna.
+
+
+
+
+
+
+
+### `GET /api/references/departments`
+
+
+
+Mengembalikan daftar semua departemen.
+
+
+
+
+
+
+
+### `GET /api/references/users`
+
+
+
+Mengembalikan daftar semua pengguna (hanya ID, nama, email).
+
+
+
+
+
+
+
+---
+
+
+
+
+
+
+
+## Departemen
+
+
+
+
+
+
+
+CRUD untuk mengelola departemen.
+
+
+
+
+
+
+
+### `GET /api/departments`
+
+
+
+Mendapatkan daftar departemen dengan paginasi.
+
+
+
+- **Query Params:** `search`, `sort_by`, `sort_order`, `per_page`.
+
+
+
+
+
+
+
+### `GET /api/departments/{id}`
+
+
+
+Mendapatkan detail satu departemen.
+
+
+
+
+
+
+
+### `POST /api/departments`
+
+
+
+Membuat departemen baru.
+
+
+
+- **Request Body:**
+
+
+
+  - `name` (string, required, unique)
+
+
+
+  - `code` (string, required, unique)
+
+
+
+
+
+
+
+### `PUT /api/departments/{id}`
+
+
+
+Memperbarui departemen.
+
+
+
+- **Request Body:**
+
+
+
+  - `name` (string, required)
+
+
+
+  - `code` (string, required)
+
+
+
+
+
+
+
+### `DELETE /api/departments/{id}`
+
+
+
+Menghapus departemen.
+
+
+
+
+
+
+
+**Contoh Objek `Department`:**
+
+
+
+```json
+
+
+
+{
+
+
+
+    "id": 1,
+
+
+
+    "name": "Teknologi Informasi",
+
+
+
+    "code": "IT",
+
+
+
+    "created_at": "...",
+
+
+
+    "updated_at": "..."
+
+
+
+}
+
+
+
+```
+
+
+
+
+
+
+
+---
+
+
+
+
+
+
+
+## Pengguna (User)
+
+
+
+
+
+
+
+CRUD untuk mengelola pengguna.
+
+
+
+
+
+
+
+### `GET /api/users`
+
+
+
+Mendapatkan daftar pengguna dengan paginasi.
+
+
+
+- **Query Params:** `search`, `role_id`, `department_id`, `status`, `sort_by`, `sort_order`, `per_page`.
+
+
+
+
+
+
+
+### `GET /api/users/{id}`
+
+
+
+Mendapatkan detail satu pengguna.
+
+
+
+
+
+
+
+### `POST /api/users`
+
+
+
+Membuat pengguna baru.
+
+
+
+- **Request Body:**
+
+
+
+  - `name` (string, required)
+
+
+
+  - `email` (string, required, email, unique)
+
+
+
+  - `password` (string, required, min:8)
+
+
+
+  - `role_id` (integer, required, exists:roles)
+
+
+
+  - `department_id` (integer, required, exists:departments)
+
+
+
+
+
+
+
+### `PUT /api/users/{id}`
+
+
+
+Memperbarui pengguna.
+
+
+
+- **Request Body:** Field sama seperti `POST`, namun semua opsional dan `email` harus unik untuk pengguna selain dirinya.
+
+
+
+
+
+
+
+### `DELETE /api/users/{id}`
+
+
+
+Menghapus pengguna.
+
+
+
+
+
+
+
+**Contoh Objek `User`:**
+
+
+
+```json
+
+
+
+{
+
+
+
+    "id": 1,
+
+
+
+    "name": "John Doe",
+
+
+
+    "email": "john@example.com",
+
+
+
+    "email_verified_at": null,
+
+
+
+    "created_at": "...",
+
+
+
+    "updated_at": "...",
+
+
+
+    "departments": [ { "id": 1, "name": "IT" } ],
+
+
+
+    "roles": [ { "id": 1, "name": "Admin" } ]
+
+
+
+}
+
+
+
+```
+
+
+
+
+
+
+
+---
+
+
+
+
+
+
+
+## Invoice
+
+
+
+
+
+
+
+Endpoint untuk melihat data invoice.
+
+
+
+
+
+
+
+### `GET /api/invoices`
+
+
+
+Mendapatkan daftar invoice dengan paginasi.
+
+
+
+- **Query Params:** `service_request_id`, `status`, `vendor_id`, `start_date`, `end_date`, `search` (berdasarkan `invoice_number`).
+
+
+
+
+
+
+
+### `GET /api/invoices/{id}`
+
+
+
+Mendapatkan detail satu invoice.
+
+
+
+
+
+
+
+### `GET /api/invoices/{id}/print`
+
+
+
+Mendapatkan data yang diformat untuk keperluan cetak invoice.
+
+
+
+
+
+
+
+**Contoh Objek `Invoice`:**
+
+
+
+```json
+
+
+
+{
+
+
+
+    "id": 1,
+
+
+
+    "invoice_number": "INV202601230001",
+
+
+
+    "service_request_id": 1,
+
+
+
+    "issue_date": "...",
+
+
+
+    "due_date": "...",
+
+
+
+    "total_amount": 500000.00,
+
+
+
+    "status_id": 13,
+
+
+
+    "created_at": "...",
+
+
+
+    "updated_at": "...",
+
+
+
+    "service_request": { ... }
+
+
+
+}
+
+
+
+```
+
+
+
+
+
+
+
+---
+
+
+
+
+
+
+
+## Vendor
+
+
+
+
+
+
+
+CRUD untuk mengelola vendor pihak ketiga.
+
+
+
+
+
+
+
+### `GET /api/vendors`
+
+
+
+Mendapatkan daftar vendor dengan paginasi.
+
+
+
+- **Query Params:** `search` (berdasarkan nama).
+
+
+
+
+
+
+
+### `GET /api/vendors/{id}`
+
+
+
+Mendapatkan detail satu vendor.
+
+
+
+
+
+
+
+### `POST /api/vendors`
+
+
+
+Membuat vendor baru.
+
+
+
+- **Request Body:**
+
+
+
+  - `name` (string, required)
+
+
+
+  - `maps_url` (string, required, url)
+
+
+
+  - `description` (string, required)
+
+
+
+
+
+
+
+### `PUT /api/vendors/{id}`
+
+
+
+Memperbarui vendor.
+
+
+
+- **Request Body:** `name`, `maps_url`, `description`. Semua opsional.
+
+
+
+
+
+
+
+### `DELETE /api/vendors/{id}`
+
+
+
+Menghapus vendor.
+
+
+
+
+
+
+
+**Contoh Objek `Vendor`:**
+
+
+
+```json
+
+
+
+{
+
+
+
+    "id": 1,
+
+
+
+    "name": "Service Center Resmi",
+
+
+
+    "maps_url": "https://maps.google.com/...",
+
+
+
+    "description": "Pusat servis resmi untuk berbagai merk.",
+
+
+
+    "created_at": "...",
+
+
+
+    "updated_at": "..."
+
+
+
+}
+
+
+
+```
+
+
+
+
