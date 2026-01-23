@@ -5,14 +5,27 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Status;
 use App\Models\EntityType;
+use RuntimeException;
 
 class StatusSeeder extends Seeder
 {
     public function run(): void
     {
-        $serviceRequestEntityType = EntityType::where('name', 'Service Request')->first();
-        $vendorApprovalEntityType = EntityType::where('name', 'Vendor Approval')->first();
-        $invoiceEntityType = EntityType::where('name', 'Invoice')->first();
+        $serviceRequestEntityType = EntityType::where('code', 'SERVICE_REQUEST')->first();
+        $vendorApprovalEntityType = EntityType::where('code', 'VENDOR_APPROVAL')->first();
+        $invoiceEntityType = EntityType::where('code', 'INVOICE')->first();
+
+        if (!$serviceRequestEntityType) {
+            throw new RuntimeException('EntityType SERVICE_REQUEST not found. Run EntityTypeSeeder first.');
+        }
+
+        if (!$vendorApprovalEntityType) {
+            throw new RuntimeException('EntityType VENDOR_APPROVAL not found. Run EntityTypeSeeder first.');
+        }
+
+        if (!$invoiceEntityType) {
+            throw new RuntimeException('EntityType INVOICE not found. Run EntityTypeSeeder first.');
+        }
 
         $statuses = [
             // Service Request Statuses

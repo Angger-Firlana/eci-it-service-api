@@ -17,6 +17,7 @@ use App\Http\Controllers\ExportInvoiceController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\VendorController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -122,6 +123,14 @@ Route::prefix('invoices')->group(function(){
     Route::get('/', [InvoiceController::class, 'index']);
     Route::get('/{id}', [InvoiceController::class, 'show']);
     Route::get('/{id}/print', [InvoiceController::class, 'print']);
+});
+
+Route::prefix('vendors')->group(function(){
+    Route::get('/', [VendorController::class, 'index']);
+    Route::get('/{id}', [VendorController::class, 'show']);
+    Route::post('/', [VendorController::class, 'store']);
+    Route::put('/{id}', [VendorController::class, 'update']);
+    Route::delete('/{id}', [VendorController::class, 'destroy']);
 });
 
 Route::get('/export-invoice/{id}', [ExportInvoiceController::class, 'download']);

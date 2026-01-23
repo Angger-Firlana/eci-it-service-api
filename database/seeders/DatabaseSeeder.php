@@ -16,10 +16,12 @@ class DatabaseSeeder extends Seeder
             DeviceTypeSeeder::class,
             DeviceModelSeeder::class,
             ServiceTypeSeeder::class,
+            CostTypeSeeder::class,
             ConditionTypeDataSeeder::class,
             ConditionTypeSeeder::class,
             ApprovalPolicySeeder::class,
             VendorSeeder::class,
+            DepartmentSeeder::class,
             UserSeeder::class,
         ]);
     }

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\ServiceLocation;
+namespace App\Http\Requests\Vendor;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreServiceLocationRequest extends FormRequest
+class StoreVendorRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,9 +23,9 @@ class StoreServiceLocationRequest extends FormRequest
     {
         return [
             //
-            'location_type' => 'required|in:internal,external',
-            'vendor_id' => 'required_if:location_type,external|exists:vendors,id',
-            'is_active' => 'required|boolean'
+            'name' => 'required|string|max:255',
+            'maps_url' => 'required|url',
+            'description' => 'required|string'
         ];
     }
 }

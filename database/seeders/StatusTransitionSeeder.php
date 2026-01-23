@@ -7,33 +7,64 @@ use App\Models\StatusTransition;
 use App\Models\Status;
 use App\Models\Role;
 use App\Models\EntityType;
+use RuntimeException;
 
 class StatusTransitionSeeder extends Seeder
 {
     public function run(): void
     {
-        $serviceRequestEntityType = EntityType::where('name', 'Service Request')->first();
-        
-        // Fetch statuses
-        $pending = Status::where('entity_type_id', $serviceRequestEntityType->id)->where('code', 'PENDING')->first();
-        $inReview = Status::where('entity_type_id', $serviceRequestEntityType->id)->where('code', 'IN_REVIEW')->first();
-        $approved = Status::where('entity_type_id', $serviceRequestEntityType->id)->where('code', 'APPROVED')->first();
-        $rejected = Status::where('entity_type_id', $serviceRequestEntityType->id)->where('code', 'REJECTED')->first();
-        $inProgress = Status::where('entity_type_id', $serviceRequestEntityType->id)->where('code', 'IN_PROGRESS')->first();
-        $completed = Status::where('entity_type_id', $serviceRequestEntityType->id)->where('code', 'COMPLETED')->first();
-        $cancelled = Status::where('entity_type_id', $serviceRequestEntityType->id)->where('code', 'CANCELLED')->first();
+        $serviceRequestEntityType = EntityType::where('code', 'SERVICE_REQUEST')->first();
+        if (!$serviceRequestEntityType) {
+            throw new RuntimeException('EntityType SERVICE_REQUEST not found. Run EntityTypeSeeder first.');
+        }
+
+        $getStatus = function (string $code) use ($serviceRequestEntityType): Status {
+            $status = Status::where('entity_type_id', $serviceRequestEntityType->id)
+                ->where('code', $code)
+                ->first();
+
+            if (!$status) {
+                throw new RuntimeException("Status {$code} for SERVICE_REQUEST not found. Check StatusSeeder.");
+            }
+
+            return $status;
+        };
+
+        $getRole = function (string $name): Role {
+            $role = Role::where('name', $name)->first();
+
+            if (!$role) {
+                throw new RuntimeException("Role {$name} not found. Run RoleSeeder first.");
+            }
+
+            return $role;
+        };
+
+        // Fetch statuses (must match StatusSeeder)
+        $pending = $getStatus('PENDING');
+        $inReviewAdmin = $getStatus('IN_REVIEW_ADMIN');
+        $approvedByAdmin = $getStatus('APPROVED_BY_ADMIN');
+        $inReviewAbove = $getStatus('IN_REVIEW_ABOVE');
+        $approvedByAbove = $getStatus('APPROVED_BY_ABOVE');
+        $inReviewVendor = $getStatus('IN_REVIEW_VENDOR');
+        $approvedByVendor = $getStatus('APPROVED_BY_VENDOR');
+        $rejected = $getStatus('REJECTED');
+        $cancelled = $getStatus('CANCELLED');
+        $inProgress = $getStatus('IN_PROGRESS');
+        $completed = $getStatus('COMPLETED');
 
         // Fetch Roles
-        $admin = Role::where('name', 'admin')->first();
-        $user = Role::where('name', 'user')->first();
-        $technician = Role::where('name', 'technician')->first();
+        $admin = $getRole('admin');
+        $user = $getRole('user');
+        $technician = $getRole('technician');
+        $superior = $getRole('superior');
 
         $transitions = [
             // From PENDING
             [
                 'from' => $pending->id,
-                'to' => $inReview->id,
-                'code' => 'REVIEW_REQUEST',
+                'to' => $inReviewAdmin->id,
+                'code' => 'REVIEW_REQUEST_ADMIN',
                 'description' => 'Admin reviews the request',
                 'roles' => [$admin->id]
             ],
@@ -52,25 +83,75 @@ class StatusTransitionSeeder extends Seeder
                 'roles' => [$user->id, $admin->id]
             ],
 
-            // From IN_REVIEW
+            // From IN_REVIEW_ADMIN
             [
-                'from' => $inReview->id,
-                'to' => $approved->id,
-                'code' => 'APPROVE_REQUEST',
-                'description' => 'Admin approves the request to proceed',
+                'from' => $inReviewAdmin->id,
+                'to' => $approvedByAdmin->id,
+                'code' => 'APPROVE_REQUEST_ADMIN',
+                'description' => 'Admin approves the request',
                 'roles' => [$admin->id]
             ],
             [
-                'from' => $inReview->id,
+                'from' => $inReviewAdmin->id,
                 'to' => $rejected->id,
                 'code' => 'REJECT_IN_REVIEW',
                 'description' => 'Admin rejects after review',
                 'roles' => [$admin->id]
             ],
 
-            // From APPROVED (Waiting for Technician/Vendor)
+            // From APPROVED_BY_ADMIN
             [
-                'from' => $approved->id,
+                'from' => $approvedByAdmin->id,
+                'to' => $inReviewAbove->id,
+                'code' => 'REVIEW_REQUEST_ABOVE',
+                'description' => 'Superior reviews the request',
+                'roles' => [$superior->id]
+            ],
+
+            // From IN_REVIEW_ABOVE
+            [
+                'from' => $inReviewAbove->id,
+                'to' => $approvedByAbove->id,
+                'code' => 'APPROVE_REQUEST_ABOVE',
+                'description' => 'Superior approves the request',
+                'roles' => [$superior->id]
+            ],
+            [
+                'from' => $inReviewAbove->id,
+                'to' => $rejected->id,
+                'code' => 'REJECT_REQUEST_ABOVE',
+                'description' => 'Superior rejects the request',
+                'roles' => [$superior->id]
+            ],
+
+            // From APPROVED_BY_ABOVE
+            [
+                'from' => $approvedByAbove->id,
+                'to' => $inReviewVendor->id,
+                'code' => 'REVIEW_REQUEST_VENDOR',
+                'description' => 'Vendor review process starts',
+                'roles' => [$admin->id]
+            ],
+
+            // From IN_REVIEW_VENDOR
+            [
+                'from' => $inReviewVendor->id,
+                'to' => $approvedByVendor->id,
+                'code' => 'APPROVE_REQUEST_VENDOR',
+                'description' => 'Vendor approves the request',
+                'roles' => [$admin->id]
+            ],
+            [
+                'from' => $inReviewVendor->id,
+                'to' => $rejected->id,
+                'code' => 'REJECT_REQUEST_VENDOR',
+                'description' => 'Vendor rejects the request',
+                'roles' => [$admin->id]
+            ],
+
+            // From APPROVED_BY_VENDOR
+            [
+                'from' => $approvedByVendor->id,
                 'to' => $inProgress->id,
                 'code' => 'START_WORK',
                 'description' => 'Work starts on the request',

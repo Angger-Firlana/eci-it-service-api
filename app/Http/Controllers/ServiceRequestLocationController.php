@@ -24,10 +24,10 @@ class ServiceRequestLocationController extends Controller
         $location = $serviceRequest->service_locations()->where('is_active', true)->first();
 
         if ($location) {
-             $updatedLocation = $this->locationService->updateServiceLocation($location, $request->validated());
+             $updatedLocation = $this->locationService->updateServiceLocation($serviceRequestId, $location->id, $request->validated());
              return APIResponse::success($updatedLocation, 200, 'Service location updated successfully');
         } else {
-             $newLocation = $this->locationService->createServiceLocation($request->validated(), $serviceRequest);
+             $newLocation = $this->locationService->createServiceLocation($serviceRequestId, $request->validated());
              return APIResponse::success($newLocation, 201, 'Service location set successfully');
         }
     }
@@ -51,7 +51,7 @@ class ServiceRequestLocationController extends Controller
             return APIResponse::error('Location does not belong to this service request', 400);
         }
 
-        $updatedLocation = $this->locationService->updateServiceLocation($location, $request->validated());
+        $updatedLocation = $this->locationService->updateServiceLocation($serviceRequestId, $location->id, $request->validated());
         return APIResponse::success($updatedLocation, 200, 'Service location updated successfully');
     }
     

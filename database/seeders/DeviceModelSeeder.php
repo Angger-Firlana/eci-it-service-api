@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\DeviceModel;
 use App\Models\DeviceType;
+use RuntimeException;
 
 class DeviceModelSeeder extends Seeder
 {
@@ -14,6 +15,10 @@ class DeviceModelSeeder extends Seeder
         $desktopType = DeviceType::where('name', 'Desktop')->first();
         $printerType = DeviceType::where('name', 'Printer')->first();
         $monitorType = DeviceType::where('name', 'Monitor')->first();
+
+        if (!$laptopType || !$desktopType || !$printerType || !$monitorType) {
+            throw new RuntimeException('Required DeviceType not found. Run DeviceTypeSeeder first.');
+        }
 
         $deviceModels = [
             ['device_type_id' => $laptopType->id, 'brand' => 'Dell', 'model' => 'Latitude 5420'],

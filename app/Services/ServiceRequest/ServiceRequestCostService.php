@@ -22,7 +22,7 @@ class ServiceRequestCostService
     public function updateCost($serviceRequestId,int $costId, array $data): ServiceCost
     {
         $cost = ServiceCost::findOrFail($costId);
-        if($serviceRequestId !== $cost->service_request_id){
+        if($serviceRequestId != $cost->service_request_id){
             throw new \Exception('Service request id not match');
         }
 

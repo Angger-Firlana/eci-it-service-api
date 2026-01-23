@@ -38,4 +38,14 @@ class Vendor extends Model
 	{
 		return $this->hasMany(ServiceLocation::class);
 	}
+
+	public function scopeFilter($query, $request)
+	{
+		//
+		return $query
+			->when($request->filled('search'),
+				fn ($q) => $q->where('name', 'like', "%{$request->search}%")
+			);
+	}
+
 }

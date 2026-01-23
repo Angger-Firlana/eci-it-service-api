@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\ServiceLocation;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -25,7 +25,7 @@ class UpdateServiceLocationRequest extends FormRequest
             //
             'location_type' => 'sometimes|in:internal,external',
             'vendor_id' => 'required_if:location_type,external|exists:vendors,id',
-            'is_active' => 'boolean'
+            'is_active' => 'required|boolean'
         ];
     }
 }

@@ -5,7 +5,9 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Department;
 use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 
 class UserSeeder extends Seeder
 {
@@ -16,59 +18,84 @@ class UserSeeder extends Seeder
         $technicianRole = Role::where('name', 'technician')->first();
         $superiorRole = Role::where('name', 'superior')->first();
 
+        if (!$adminRole || !$userRole || !$technicianRole || !$superiorRole) {
+            throw new RuntimeException('Required roles not found. Run RoleSeeder first.');
+        }
+
+        $itDepartment = Department::where('code', 'IT')->first();
+        $hrDepartment = Department::where('code', 'HR')->first();
+        $financeDepartment = Department::where('code', 'FIN')->first();
+        $gaDepartment = Department::where('code', 'GA')->first();
+
+        if (!$itDepartment || !$hrDepartment || !$financeDepartment || !$gaDepartment) {
+            throw new RuntimeException('Required departments not found. Run DepartmentSeeder first.');
+        }
+
         $users = [
             [
                 'name' => 'Administrator',
                 'email' => 'admin@eci-service.com',
                 'password' => Hash::make('admin123'),
                 'pin' => '1234',
-                'roles' => [$adminRole]
+                'roles' => [$adminRole],
+                'departments' => [$itDepartment]
             ],
             [
                 'name' => 'John Doe',
                 'email' => 'john.doe@company.com',
                 'password' => Hash::make('user123'),
                 'pin' => '5678',
-                'roles' => [$userRole]
+                'roles' => [$userRole],
+                'departments' => [$hrDepartment]
             ],
             [
                 'name' => 'Jane Smith',
                 'email' => 'jane.smith@company.com',
                 'password' => Hash::make('user123'),
                 'pin' => '9012',
-                'roles' => [$userRole]
+                'roles' => [$userRole],
+                'departments' => [$financeDepartment]
             ],
             [
                 'name' => 'Tech Wilson',
                 'email' => 'tech.wilson@eci-service.com',
                 'password' => Hash::make('tech123'),
                 'pin' => '3456',
-                'roles' => [$technicianRole]
+                'roles' => [$technicianRole],
+                'departments' => [$itDepartment]
             ],
             [
                 'name' => 'Service Brown',
                 'email' => 'service.brown@eci-service.com',
                 'password' => Hash::make('tech123'),
                 'pin' => '7890',
-                'roles' => [$technicianRole]
+                'roles' => [$technicianRole],
+                'departments' => [$itDepartment]
             ],
             [
                 'name' => 'Supervisor',
                 'email' => 'supervisor@company.com',
                 'password' => Hash::make('atasan123'),
                 'pin' => '2468',
-                'roles' => [$superiorRole]
+                'roles' => [$superiorRole],
+                'departments' => [$gaDepartment]
             ],
         ];
 
         foreach ($users as $userData) {
             $roles = $userData['roles'];
+            $departments = $userData['departments'] ?? [];
             unset($userData['roles']);
+            unset($userData['departments']);
 
             $user = User::firstOrCreate(['email' => $userData['email']], $userData);
             
             foreach ($roles as $role) {
                 $user->roles()->syncWithoutDetaching($role->id);
+            }
+
+            foreach ($departments as $department) {
+                $user->departments()->syncWithoutDetaching($department->id);
             }
         }
     }

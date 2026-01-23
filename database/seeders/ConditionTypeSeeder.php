@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\ConditionType;
 use App\Models\ConditionTypeData;
+use RuntimeException;
 
 class ConditionTypeSeeder extends Seeder
 {
@@ -16,6 +17,18 @@ class ConditionTypeSeeder extends Seeder
         $deviceTypeData = ConditionTypeData::where('type_data', 'Device Type')->first();
         $serviceTypeData = ConditionTypeData::where('type_data', 'Service Type')->first();
         $costRangeData = ConditionTypeData::where('type_data', 'Cost Range')->first();
+
+        if (!$deviceTypeData) {
+            throw new RuntimeException('ConditionTypeData "Device Type" not found. Run ConditionTypeDataSeeder first.');
+        }
+
+        if (!$serviceTypeData) {
+            throw new RuntimeException('ConditionTypeData "Service Type" not found. Run ConditionTypeDataSeeder first.');
+        }
+
+        if (!$costRangeData) {
+            throw new RuntimeException('ConditionTypeData "Cost Range" not found. Run ConditionTypeDataSeeder first.');
+        }
 
         $conditionTypes = [
             [

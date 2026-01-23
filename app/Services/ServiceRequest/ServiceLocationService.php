@@ -8,13 +8,13 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ServiceLocationService
 {
-    public function createServiceLocation(array $data, int $serviceRequestId): ServiceLocation
+    public function createServiceLocation(int $serviceRequestId, array $data): ServiceLocation
     {
         $serviceLocation = ServiceLocation::create([
             'service_request_id' => $serviceRequestId,
-            'location_type' => $data['location_type'] ?? 'internal',
-            'vendor_id' => $data['vendor_id'] ?? null,
-            'is_active' => $data['is_active'] ?? true,
+            'location_type' => $data['location_type'],
+            'vendor_id' => $data['vendor_id'],
+            'is_active' => $data['is_active'],
         ]);
 
         return $serviceLocation->load('vendor');
@@ -23,14 +23,23 @@ class ServiceLocationService
     public function updateServiceLocation(int $serviceRequestId, int $locationId, array $data): ServiceLocation
     {
         $serviceLocation = ServiceLocation::findOrFail($locationId);
-        
-        $updateData = [
-            'location_type' => $data['location_type'] ?? $serviceLocation->location_type,
-            'vendor_id' => $data['vendor_id'] ?? $serviceLocation->vendor_id,
-            'is_active' => $data['is_active'] ?? $serviceLocation->is_active
-        ];
-        
-        $serviceLocation->update(array_filter($updateData));
+
+        $updateData = [];
+        if (array_key_exists('location_type', $data)) {
+            $updateData['location_type'] = $data['location_type'];
+        }
+
+        if (array_key_exists('vendor_id', $data)) {
+            $updateData['vendor_id'] = $data['vendor_id'];
+        }
+
+        if (array_key_exists('is_active', $data)) {
+            $updateData['is_active'] = $data['is_active'];
+        }
+
+        if (!empty($updateData)) {
+            $serviceLocation->update($updateData);
+        }
 
         return $serviceLocation->load('vendor');
     }
@@ -51,7 +60,7 @@ class ServiceLocationService
 
     public function getLocationById(int $id): ServiceLocation
     {
-        $location = ServiceLocation::with(['serviceRequest', 'vendor'])->findOrFail($id);
+        $location = ServiceLocation::with(['service_request', 'vendor'])->findOrFail($id);
 
         return $location;
     }
