@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 class DeviceModelService{
     public function getAllDeviceModel(?string $keyword): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        $deviceModels = DeviceModel::query()->when($keyword, fn($q) => $q->where('model', 'LIKE', "%{$search}%"))->paginate(15);
+        $deviceModels = DeviceModel::query()->when($keyword, fn($q) => $q->where('model', 'LIKE', "%{$keyword}%"))->paginate(15);
 
         return $deviceModels;
     }

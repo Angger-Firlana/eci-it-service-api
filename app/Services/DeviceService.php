@@ -25,7 +25,7 @@ class DeviceService
 
         if($request->has('model')){
             $devices = $devices->whereHas('device_model', function($query) use ($request) {
-                $query->where('name', 'like', '%' . $request->input('model') . '%');
+                $query->where('model', 'like', '%' . $request->input('model') . '%');
             });
         }
 
