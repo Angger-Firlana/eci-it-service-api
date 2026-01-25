@@ -25,7 +25,12 @@ class UpdateServiceLocationRequest extends FormRequest
             //
             'location_type' => 'sometimes|in:internal,external',
             'vendor_id' => 'required_if:location_type,external|exists:vendors,id',
-            'is_active' => 'required|boolean'
+            'is_active' => 'required|boolean',
+            'address' => 'required_if:location_type,external|string',
+            'city' => 'required_if:location_type,external|string',
+            'province' => 'required_if:location_type,external|string',
+            'postal_code' => 'required_if:location_type,external|string',
+            'maps_url' => 'required_if:location_type,external|url',
         ];
     }
 }

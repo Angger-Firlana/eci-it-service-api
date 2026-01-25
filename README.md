@@ -920,11 +920,11 @@ Mengembalikan daftar semua tipe layanan.
 
 
 
-
+`
 ### `GET /api/references/statuses`
 
 
-
+`
 Mengembalikan daftar semua status.
 
 
@@ -1193,9 +1193,6 @@ Membuat pengguna baru.
 
 
 - **Request Body:**
-
-
-
   - `name` (string, required)
 
 

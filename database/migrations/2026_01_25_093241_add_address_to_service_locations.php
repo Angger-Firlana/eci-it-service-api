@@ -1,0 +1,38 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('service_locations', function (Blueprint $table) {
+            //
+            $table->string('address')->nullable();
+            $table->string('city')->nullable();
+            $table->string('province')->nullable();
+            $table->string('postal_code')->nullable();
+            $table->string('maps_url')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('service_locations', function (Blueprint $table) {
+            //
+            $table->dropColumn('address');
+            $table->dropColumn('city');
+            $table->dropColumn('province');
+            $table->dropColumn('postal_code');
+            $table->dropColumn('maps_url');
+        });
+    }
+};
