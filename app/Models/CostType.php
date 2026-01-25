@@ -36,4 +36,14 @@ class CostType extends Model
 	{
 		return $this->hasMany(ServiceCost::class);
 	}
+
+	public function scopeFilter($query, $request)
+	{
+		return $query->when($request->has('code'), function ($query) use ($request) {
+			return $query->where('code', 'like', '%' . $request->code . '%');
+		})
+		->when($request->has('name'), function ($query) use ($request) {
+			return $query->where('name', 'like', '%' . $request->name . '%');
+		});
+	}
 }

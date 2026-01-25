@@ -18,6 +18,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\CostTypeController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -131,6 +132,14 @@ Route::prefix('vendors')->group(function(){
     Route::post('/', [VendorController::class, 'store']);
     Route::put('/{id}', [VendorController::class, 'update']);
     Route::delete('/{id}', [VendorController::class, 'destroy']);
+});
+
+Route::prefix('cost-types')->group(function(){
+    Route::get('/', [CostTypeController::class, 'index']);
+    Route::get('/{id}', [CostTypeController::class, 'show']);
+    Route::post('/', [CostTypeController::class, 'store']);
+    Route::put('/{id}', [CostTypeController::class, 'update']);
+    Route::delete('/{id}', [CostTypeController::class, 'destroy']);
 });
 
 Route::get('/export-invoice/{id}', [ExportInvoiceController::class, 'download']);

@@ -12,7 +12,7 @@ class CostTypeSeeder extends Seeder
         $costTypes = [
             ['code' => 'SPAREPART', 'name' => 'Sparepart'],
             ['code' => 'SERVICE_FEE', 'name' => 'Service Fee'],
-            ['code' => 'LABOR', 'name' => 'Labor'],
+            ['code' => 'CANCELLATION', 'name' => 'Cancellation'],
             ['code' => 'TRANSPORT', 'name' => 'Transport'],
             ['code' => 'OTHER', 'name' => 'Other'],
         ];
