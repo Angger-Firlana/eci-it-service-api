@@ -35,24 +35,6 @@ class UpdateServiceRequest extends FormRequest
             'details.*.complaint' => 'sometimes|string',
             'details.*.complaint_images' => 'sometimes|array',
             'details.*.complaint_images.*' => 'sometimes|file|mimes:jpeg,png,jpg,gif,svg|max:2048',
-
-            // Location and vendor
-            'service_location' => 'sometimes|array',
-            'service_location.location_type' => 'sometimes|in:internal,external',
-            'service_location.vendor_id' => 'sometimes|exists:vendors,id',
-            'service_location.is_active' => 'sometimes|boolean',
-
-            'service_costs' => 'sometimes|array',
-            'service_costs.*.cost_type_id' => 'sometimes|exists:cost_types,id',
-            'service_costs.*.amount' => 'sometimes|numeric',
-            'service_costs.*.description' => 'sometimes|string',
-
-            'service_cancellation' => 'sometimes|array',
-            'service_cancellation.reason' => 'sometimes|string',
-            'service_cancellation.canceled_by' => 'sometimes|exists:users,id',
-
-            
-
             'log_notes' => 'sometimes|string'
         ];
     }

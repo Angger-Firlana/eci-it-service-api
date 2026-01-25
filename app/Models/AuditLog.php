@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $entity_id
  * @property int $entity_type_id
  * @property string $action
+ * @property string $notes
  * @property int $old_status_id
  * @property int $new_status_id
  * @property Carbon $created_at
@@ -45,6 +46,7 @@ class AuditLog extends Model
 		'entity_id',
 		'entity_type_id',
 		'action',
+		'notes',
 		'old_status_id',
 		'new_status_id'
 	];
