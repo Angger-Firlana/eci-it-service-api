@@ -22,6 +22,11 @@ class UserController extends Controller
         return APIResponse::success($data, 200, "", $meta);
     }
 
+    public function show($id){
+        $user = $this->userService->getUserById($id);
+        return APIResponse::success($user);
+    }
+
     public function store(StoreUserRequest $request){
         $user = $this->userService->createUser($request->validated());
         return APIResponse::success($user);

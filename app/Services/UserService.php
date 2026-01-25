@@ -42,7 +42,11 @@ class UserService{
         return $users->paginate($request->per_page);
     }
 
-    public function createUser(array $data){
+    public function getUserById(int $id):User{
+        return User::with('departments', 'roles')->findOrFail($id);
+    }
+
+    public function createUser(array $data):User{
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
@@ -61,7 +65,7 @@ class UserService{
         return $user->load('departments', 'roles');
     }
 
-    public function updateUser(int $id, array $data){
+    public function updateUser(int $id, array $data):User{
         $user = User::findOrFail($id);
         
         $updateData = [
@@ -90,9 +94,8 @@ class UserService{
         return $user->load('departments', 'roles');
     }
 
-    public function deleteUser(int $id){
+    public function deleteUser(int $id):void{
         $user = User::findOrFail($id);
         $user->delete();
-        return true;
     }
 }
