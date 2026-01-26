@@ -44,7 +44,8 @@ class VendorApproval extends Model
 		'approved_at' => 'datetime',
 		'assigned_by' => 'int',
 		'assigned_at' => 'datetime',
-		'status_id' => 'int'
+		'status_id' => 'int',
+		'read_at' => 'datetime'
 	];
 
 	protected $fillable = [
@@ -55,7 +56,8 @@ class VendorApproval extends Model
 		'approved_at',
 		'assigned_by',
 		'assigned_at',
-		'status_id'
+		'status_id',
+		'read_at'
 	];
 
 	public function approval_policy()

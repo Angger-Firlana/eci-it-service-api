@@ -35,6 +35,7 @@ class StatusSeeder extends Seeder
 
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_REVIEW_ABOVE', 'name' => 'In Review (Above)'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'APPROVED_BY_ABOVE', 'name' => 'Approved by Above'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'REJECTED_BY_ABOVE', 'name' => 'Rejected by Above'],
 
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_PROGRESS', 'name' => 'In Progress'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'COMPLETED', 'name' => 'Completed'],

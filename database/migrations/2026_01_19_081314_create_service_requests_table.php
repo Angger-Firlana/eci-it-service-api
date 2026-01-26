@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('service_requests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('user_id')->nullable()->constrained('users');
             $table->foreignId('admin_id')->nullable()->constrained('users');
             $table->foreignId('service_type_id')->constrained('service_types');
             $table->string('service_number')->unique();

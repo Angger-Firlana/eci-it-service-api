@@ -127,4 +127,22 @@ class InvoiceService
             ]
         ];
     }
+
+    private function createInvoiceForServiceRequest(ServiceRequest $serviceRequest, array $data): void
+    {
+        $adminId = $data['admin_id'] ?? $serviceRequest->admin_id;
+        if (!$adminId) {
+            throw new \Exception('Admin wajib diisi untuk mengubah status menjadi selesai/invoice.');
+        }
+
+        $totalAmount = $serviceRequest->service_costs()->sum('amount');
+
+        $this->invoiceService->createInvoice([
+            'service_request_id' => $serviceRequest->id,
+            'issue_date' => now(),
+            'due_date' => now()->addDays(7),
+            'total_amount' => $totalAmount,
+            'status_id' => 13,
+        ]);
+    }
 }

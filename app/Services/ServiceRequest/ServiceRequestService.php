@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\ServiceRequest\DetailServiceRequestService;
 use App\Models\StatusTransition;
 use App\Services\AuditLogService;
+use App\Services\InvoiceService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -135,7 +136,7 @@ class ServiceRequestService
             $newStatusId = $data['status_id'] ?? $serviceRequest->status_id;
             $status = $this->getServiceRequestStatusOrFail($newStatusId);
 
-            $this->createStatusAuditLogIfNeeded($serviceRequest, $status, $oldStatusId, $newStatusId, $data);
+            $this->auditLogService->createStatusAuditLog($serviceRequest, $status, $oldStatusId, $newStatusId, $data);
 
             $serviceRequest->update(array_filter([
                 'admin_id' => $data['admin_id'] ?? $serviceRequest->admin_id,
@@ -149,7 +150,7 @@ class ServiceRequestService
             }
 
             if ($newStatusId == 2 && $oldStatusId != 2) {
-                $this->createInvoiceForServiceRequest($serviceRequest, $data);
+                $this->invoiceService->createInvoiceForServiceRequest($serviceRequest, $data);
             }
 
             return $this->loadRelations($serviceRequest);
@@ -249,45 +250,5 @@ class ServiceRequestService
         }
 
         return $status;
-    }
-
-    private function createStatusAuditLogIfNeeded(
-        ServiceRequest $serviceRequest,
-        Status $status,
-        int $oldStatusId,
-        int $newStatusId,
-        array $data
-    ): void {
-        if ($newStatusId == $oldStatusId) {
-            return;
-        }
-
-        $this->auditLogService->createAuditLog([
-            'actor_id' => auth()->id() ?? $serviceRequest->user_id,
-            'entity_id' => $serviceRequest->id,
-            'entity_type_id' => 1,
-            'action' => 'UPDATE_STATUS',
-            'notes' => $data['log_notes'] ?? "Status changed from {$serviceRequest->status->name} to {$status->name}",
-            'old_status_id' => $oldStatusId,
-            'new_status_id' => $newStatusId,
-        ]);
-    }
-
-    private function createInvoiceForServiceRequest(ServiceRequest $serviceRequest, array $data): void
-    {
-        $adminId = $data['admin_id'] ?? $serviceRequest->admin_id;
-        if (!$adminId) {
-            throw new \Exception('Admin wajib diisi untuk mengubah status menjadi selesai/invoice.');
-        }
-
-        $totalAmount = $serviceRequest->service_costs()->sum('amount');
-
-        $this->invoiceService->createInvoice([
-            'service_request_id' => $serviceRequest->id,
-            'issue_date' => now(),
-            'due_date' => now()->addDays(7),
-            'total_amount' => $totalAmount,
-            'status_id' => 13,
-        ]);
     }
 }

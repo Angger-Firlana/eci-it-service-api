@@ -19,6 +19,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\CostTypeController;
+use App\Http\Controllers\InboxApprovalController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -82,11 +83,13 @@ Route::prefix('service-requests')->group(function(){
     Route::delete('/{serviceRequestId}/locations/{locationId}', [ServiceRequestLocationController::class, 'destroy']);
 
     // Approval (Keep existing or aliased if needed)
+    Route::get('/{serviceRequestId}/approver', [ServiceRequestApprovalController::class, 'getApproverByServiceRequestId']);
     Route::get('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'index']);
     Route::post('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'store']);
     Route::put('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'update']);
     Route::delete('/{serviceRequestId}/approvals/{approvalId}', [ServiceRequestApprovalController::class, 'destroy']);
     Route::post('/approved/{approvalId}', [ApprovalController::class, 'approveVendorRequest']);
+    Route::post('/approved-by-admin/{serviceRequestId}', [ApprovalController::class, 'approveRequestByAdmin']);
     Route::post('/rejected/{approvalId}', [ApprovalController::class, 'rejectVendorRequest']);
 
     //Cancellation
@@ -101,7 +104,6 @@ Route::prefix('references')->group(function() {
     Route::get('/vendors', [ReferenceDataController::class, 'getVendors']);
     Route::get('/roles', [ReferenceDataController::class, 'getRoles']);
     Route::get('/departments', [ReferenceDataController::class, 'getDepartments']);
-    Route::get('/users', [ReferenceDataController::class, 'getUsers']);
 });
 
 Route::prefix('departments')->group(function(){
@@ -140,6 +142,11 @@ Route::prefix('cost-types')->group(function(){
     Route::post('/', [CostTypeController::class, 'store']);
     Route::put('/{id}', [CostTypeController::class, 'update']);
     Route::delete('/{id}', [CostTypeController::class, 'destroy']);
+});
+
+Route::prefix('inbox-approvals')->middleware('auth:sanctum')->group(function(){
+    Route::get('/{statusId}', [InboxApprovalController::class, 'index']);
+    Route::put('/{id}/read', [InboxApprovalController::class, 'readInbox']);
 });
 
 Route::get('/export-invoice/{id}', [ExportInvoiceController::class, 'download']);
