@@ -20,6 +20,12 @@ class ServiceRequestApprovalController extends Controller
         $this->serviceRequestApprovalService = $serviceRequestApprovalService;
     }
 
+    public function getApproverByServiceRequestId($serviceRequestId)
+    {
+        $data = $this->serviceRequestApprovalService->getApproverByServiceRequestId($serviceRequestId);
+        return APIResponse::success($data, 200, 'Approvers retrieved successfully');
+    }
+
     public function index($serviceRequestId)
     {
         return $this->getByServiceRequestId($serviceRequestId);

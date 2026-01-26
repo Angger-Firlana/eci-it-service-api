@@ -16,9 +16,12 @@ class UserSeeder extends Seeder
         $adminRole = Role::where('name', 'admin')->first();
         $userRole = Role::where('name', 'user')->first();
         $technicianRole = Role::where('name', 'technician')->first();
-        $superiorRole = Role::where('name', 'superior')->first();
+        $supervisorRole = Role::where('name', 'supervisor')->first();
+        $managerRole = Role::where('name', 'manager')->first();
+        $directorRole = Role::where('name', 'director')->first();
+        $ceoRole = Role::where('name', 'ceo')->first();
 
-        if (!$adminRole || !$userRole || !$technicianRole || !$superiorRole) {
+        if (!$adminRole || !$userRole || !$technicianRole || !$supervisorRole || !$managerRole || !$directorRole || !$ceoRole) {
             throw new RuntimeException('Required roles not found. Run RoleSeeder first.');
         }
 
@@ -77,8 +80,32 @@ class UserSeeder extends Seeder
                 'email' => 'supervisor@company.com',
                 'password' => Hash::make('atasan123'),
                 'pin' => '2468',
-                'roles' => [$superiorRole],
+                'roles' => [$supervisorRole],
                 'departments' => [$gaDepartment]
+            ],
+            [
+                'name' => 'Manager',
+                'email' => 'manager@company.com',
+                'password' => Hash::make('manager123'),
+                'pin' => '1111',
+                'roles' => [$managerRole],
+                'departments' => [$itDepartment]
+            ],
+            [
+                'name' => 'Director',
+                'email' => 'director@company.com',
+                'password' => Hash::make('director123'),
+                'pin' => '2222',
+                'roles' => [$directorRole],
+                'departments' => [$itDepartment]
+            ],
+            [
+                'name' => 'CEO',
+                'email' => 'ceo@company.com',
+                'password' => Hash::make('ceo123'),
+                'pin' => '3333',
+                'roles' => [$ceoRole],
+                'departments' => [$itDepartment]
             ],
         ];
 
@@ -91,11 +118,15 @@ class UserSeeder extends Seeder
             $user = User::firstOrCreate(['email' => $userData['email']], $userData);
             
             foreach ($roles as $role) {
-                $user->roles()->syncWithoutDetaching($role->id);
+                if($role) {
+                    $user->roles()->syncWithoutDetaching($role->id);
+                }
             }
 
             foreach ($departments as $department) {
-                $user->departments()->syncWithoutDetaching($department->id);
+                if($department) {
+                    $user->departments()->syncWithoutDetaching($department->id);
+                }
             }
         }
     }

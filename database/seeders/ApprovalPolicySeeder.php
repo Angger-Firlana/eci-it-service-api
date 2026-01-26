@@ -25,9 +25,11 @@ class ApprovalPolicySeeder extends Seeder
         $costRangeConditionType = ConditionType::where('code', 'COST_RANGE')->first();
 
         $adminRole = Role::where('name', 'admin')->first();
-        $superiorRole = Role::where('name', 'superior')->first();
         $technicianRole = Role::where('name', 'technician')->first();
-        $userRole = Role::where('name', 'user')->first();
+        $supervisorRole = Role::where('name', 'supervisor')->first();
+        $managerRole = Role::where('name', 'manager')->first();
+        $directorRole = Role::where('name', 'director')->first();
+        $ceoRole = Role::where('name', 'ceo')->first();
 
         if (!$serviceRequestEntityType) {
             throw new RuntimeException('EntityType SERVICE_REQUEST not found. Run EntityTypeSeeder first.');
@@ -37,7 +39,7 @@ class ApprovalPolicySeeder extends Seeder
             throw new RuntimeException('ConditionType not found. Run ConditionTypeDataSeeder + ConditionTypeSeeder first.');
         }
 
-        if (!$adminRole || !$superiorRole || !$technicianRole || !$userRole) {
+        if (!$adminRole || !$technicianRole || !$supervisorRole || !$managerRole || !$directorRole || !$ceoRole) {
             throw new RuntimeException('Required roles not found. Run RoleSeeder first.');
         }
 
@@ -56,11 +58,11 @@ class ApprovalPolicySeeder extends Seeder
         // Steps for Policy 1
         ApprovalPolicyStep::firstOrCreate(
             ['approval_policy_id' => $policy1->id, 'step_order' => 1],
-            ['role_id' => $technicianRole->id, 'is_mandatory' => true]
+            ['role_id' => $supervisorRole->id, 'is_mandatory' => true]
         );
         ApprovalPolicyStep::firstOrCreate(
             ['approval_policy_id' => $policy1->id, 'step_order' => 2],
-            ['role_id' => $superiorRole->id, 'is_mandatory' => true]
+            ['role_id' => $managerRole->id, 'is_mandatory' => true]
         );
 
         // Policy 2: Approval for Service Request based on Service Type 'Software Installation'
@@ -78,7 +80,7 @@ class ApprovalPolicySeeder extends Seeder
         // Steps for Policy 2
         ApprovalPolicyStep::firstOrCreate(
             ['approval_policy_id' => $policy2->id, 'step_order' => 1],
-            ['role_id' => $technicianRole->id, 'is_mandatory' => true]
+            ['role_id' => $supervisorRole->id, 'is_mandatory' => true]
         );
 
         // Policy 3: Approval for Service Request based on Cost Range '>1000000'
@@ -96,15 +98,44 @@ class ApprovalPolicySeeder extends Seeder
         // Steps for Policy 3
         ApprovalPolicyStep::firstOrCreate(
             ['approval_policy_id' => $policy3->id, 'step_order' => 1],
-            ['role_id' => $technicianRole->id, 'is_mandatory' => true]
+            ['role_id' => $managerRole->id, 'is_mandatory' => true]
         );
         ApprovalPolicyStep::firstOrCreate(
             ['approval_policy_id' => $policy3->id, 'step_order' => 2],
-            ['role_id' => $superiorRole->id, 'is_mandatory' => true]
+            ['role_id' => $directorRole->id, 'is_mandatory' => true]
         );
         ApprovalPolicyStep::firstOrCreate(
             ['approval_policy_id' => $policy3->id, 'step_order' => 3],
-            ['role_id' => $adminRole->id, 'is_mandatory' => true]
+            ['role_id' => $ceoRole->id, 'is_mandatory' => true]
         );
+
+        // Policy 4: Approval for service request based on cost range '<1000000'
+        $policy4 = ApprovalPolicy::firstOrCreate(
+            [
+                'entity_type_id' => $serviceRequestEntityType->id,
+                'condition_type_id' => $costRangeConditionType->id,
+                'condition_value' => '<1000000',
+            ],
+            [
+                'is_active' => true,
+            ]   
+        );
+
+        // Steps For Policy 4
+        $superiorRoles = [$supervisorRole, $managerRole, $directorRole, $ceoRole];
+        foreach ($superiorRoles as $role) {
+            if ($role) {
+                ApprovalPolicyStep::updateOrCreate(
+                    [
+                        'approval_policy_id' => $policy4->id,
+                        'role_id' => $role->id
+                    ],
+                    [
+                        'step_order' => 1,
+                        'is_mandatory' => false
+                    ]
+                );
+            }
+        }
     }
 }

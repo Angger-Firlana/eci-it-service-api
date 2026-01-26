@@ -57,7 +57,19 @@ class StatusTransitionSeeder extends Seeder
         $admin = $getRole('admin');
         $user = $getRole('user');
         $technician = $getRole('technician');
-        $superior = $getRole('superior');
+
+        $superiorRoles = ['supervisor', 'manager', 'director', 'ceo'];
+        $superior = null;
+        foreach ($superiorRoles as $roleName) {
+            if ($role = Role::where('name', $roleName)->first()) {
+                $superior = $role;
+                break;
+            }
+        }
+
+        if (!$superior) {
+            throw new RuntimeException("None of the specified superior roles found (" . implode(', ', $superiorRoles) . "). Please check RoleSeeder.");
+        }
 
         $transitions = [
             // From PENDING
