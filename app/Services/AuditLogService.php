@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\ServiceRequest;
 
 class AuditLogService
 {
@@ -31,5 +32,15 @@ class AuditLogService
             'old_status_id' => $oldStatusId,
             'new_status_id' => $newStatusId,
         ]);
+    }
+
+
+    public function getAuditLogsForServiceRequest(ServiceRequest $serviceRequest): \Illuminate\Database\Eloquent\Collection
+    {
+        return AuditLog::where('entity_type_id', 1)
+            ->where('entity_id', $serviceRequest->id)
+            ->with(['actor', 'old_status', 'new_status'])
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 }

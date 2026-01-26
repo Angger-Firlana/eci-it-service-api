@@ -47,6 +47,9 @@ class ServiceRequestService
             'updated_at'
         ]);
 
+        $auditLogs = $this->auditLogService->getAuditLogsForServiceRequest($serviceRequest);
+        $serviceRequest->audit_logs = $auditLogs;
+
         return $serviceRequest;
     }
 
@@ -209,9 +212,10 @@ class ServiceRequestService
             'service_request_details:id,service_request_id,device_id,complaint',
             'service_request_details.device:id,device_model_id,serial_number',
             'service_request_details.device.device_model:id,brand,model',
-            'service_request_details.complaint_images',
-            'audit_logs',
+            'service_request_details.complaint_images'
         ];
+
+
     }
 
     private function defaultWith(): array
