@@ -22,11 +22,8 @@ class StoreApprovalsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            '*.approval_policy_id' => 'required|exists:approval_policies,id',
-            '*.approval_policy_step_id' => 'required|exists:approval_policy_steps,id',
-            '*.assigned_by' => 'required|exists:users,id',
-            '*.approver_id' => 'required|exists:users,id',
-            '*.status_id' => 'required|exists:statuses,id'
+            'approver_ids' => 'required|array',
+            'approver_ids.*' => 'required|exists:users,id',
         ];
     }
 }

@@ -22,12 +22,8 @@ class UpdateApprovalsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            '*.approval_policy_id' => 'sometimes|exists:approval_policies,id',
-            '*.approval_policy_step_id' => 'sometimes|exists:approval_policy_steps,id',
-            '*.assigned_by' => 'sometimes|exists:users,id',
-            '*.approver_id' => 'sometimes|exists:users,id',
-            '*.approved_at' => 'sometimes|date',
-            '*.status_id' => 'sometimes|exists:statuses,id'
+            'approvers' => 'required|array',
+            'approvers.*' => 'integer|exists:users,id',
         ];
     }
 }

@@ -11,29 +11,65 @@ use App\Models\VendorApproval;
 use App\Models\ServiceRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
+use App\Services\ApprovalPolicyService;
+use App\Services\AuditLogService;
 
 class ServiceRequestApprovalService
 {
-    public function updateVendorApprovals(int $serviceRequestId, array $approvals): \Illuminate\Database\Eloquent\Collection
+    protected $approvalPolicyService;
+    protected $auditLogService;
+    
+    public function __construct(ApprovalPolicyService $approvalPolicyService, AuditLogService $auditLogService)
+    {
+        $this->approvalPolicyService = $approvalPolicyService;
+        $this->auditLogService = $auditLogService;
+    }
+    
+    public function update(int $serviceRequestId, array $approvalsData): \Illuminate\Database\Eloquent\Collection
     {
         DB::beginTransaction();
+
+        // 1. Delete existing VendorApproval records for this service request
+        VendorApproval::where('service_request_id', $serviceRequestId)->delete();
+
+        $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
+        $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
+        $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
         
-        foreach ($approvals as $approvalData) {
-            VendorApproval::updateOrCreate(
-                [
-                    'service_request_id' => $serviceRequestId,
-                    'approver_id' => $approvalData['approver_id'],
-                ],
-                [
-                    'assigned_by' => $approvalData['assigned_by'] ?? auth()->id(),
-                    'assigned_at' => now(),
-                    'approved_at' => $approvalData['approved_at'] ?? null,
-                    'status_id' => $approvalData['status_id'] ?? 6,
-                    'notes' => $approvalData['notes'] ?? null,
-                    'approval_policy_id' => $approvalData['approval_policy_id'] ?? null,
-                    'approval_policy_step_id' => $approvalData['approval_policy_step_id'] ?? null,
-                ]
-            );
+        // Ensure approvalPolicy is found
+        if (!$approvalPolicy) {
+            DB::rollBack();
+            throw new \Exception('No approval policy found for the given service request cost.');
+        }
+
+        // Use the 'approvers' key from the validated data
+        foreach ($approvalsData['approvers'] as $approverId) {
+            $approver = User::findOrFail($approverId);
+            $approvalPolicyStep = $approvalPolicy->approval_policy_steps->where('role_id', $approver->roles->first()->id)->first();
+
+            // Ensure approvalPolicyStep is found for the approver's role
+            if (!$approvalPolicyStep) {
+                DB::rollBack();
+                throw new \Exception('No approval policy step found for approver role.');
+            }
+
+            VendorApproval::create([
+                'service_request_id' => $serviceRequestId,
+                'approver_id' => $approverId,
+                'assigned_by' => auth()->id(),
+                'assigned_at' => now(),
+                'status_id' => 15,
+                'approval_policy_id' => $approvalPolicy->id,
+                'approval_policy_step_id' => $approvalPolicyStep->id,
+            ]);
+
+            $this->auditLogService->createAuditLog([
+                'actor_id' => auth()->id(),
+                'entity_id' => $serviceRequestId,
+                'entity_type_id' => 1, // Assuming 1 is the entity type for VendorApproval
+                'action' => 'UPDATE_VENDOR_APPROVAL', // Action reflects re-creation
+                'notes' => 'Vendor approvals re-created for service request ' . $serviceRequestId,
+            ]);
         }
         
         DB::commit();
@@ -44,18 +80,30 @@ class ServiceRequestApprovalService
     public function createVendorApprovals(int $serviceRequestId,array $approvals): Collection
     {
         DB::beginTransaction();
+        $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
+        $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
+        $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
         
-        foreach($approvals as $data){
+        foreach($approvals as $approverId){
+            $approver = User::findOrFail($approverId);
+            $approvalPolicyStep = $approvalPolicy->approval_policy_steps->where('role_id', $approver->roles->first()->id)->first();
+
             $approval = VendorApproval::create([
                 'service_request_id' => $serviceRequestId,
-                'approver_id' => $data['approver_id'],
-                'assigned_by' => $data['assigned_by'] ?? auth()->id(),
+                'approver_id' => $approverId,
+                'assigned_by' => auth()->id(),
                 'assigned_at' => now(),
-                'approved_at' => $data['approved_at'] ?? null,
-                'status_id' => $data['status_id'] ?? 15,
-                'notes' => $data['notes'] ?? null,
-                'approval_policy_id' => $data['approval_policy_id'] ?? null,
-                'approval_policy_step_id' => $data['approval_policy_step_id'] ?? null,
+                'status_id' => 15,
+                'approval_policy_id' => $approvalPolicy->id,
+                'approval_policy_step_id' => $approvalPolicyStep->id,
+            ]);
+
+            $this->auditLogService->createAuditLog([
+                'actor_id' => auth()->id(),
+                'entity_id' => $serviceRequestId,
+                'entity_type_id' => 1,
+                'action' => 'CREATE_VENDOR_APPROVAL',
+                'notes' => 'Vendor approval created',
             ]);
         }
        
@@ -70,7 +118,7 @@ class ServiceRequestApprovalService
         
         $approval->update([
             'approved_at' => now(),
-            'status_id' => 15,
+            'status_id' => 16,
         ]);
 
         $this->auditLogService->createAuditLog([
@@ -156,27 +204,18 @@ class ServiceRequestApprovalService
         }
     }
 
-    public function getApproverByServiceRequestId($serviceRequestId)
+    public function getApproverByServiceRequestId($serviceRequestId):Collection
     {
+        $data = [];
         $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
         
-        $costRangeConditionType = ConditionType::where('code', 'COST_RANGE')->first();
-        if (!$costRangeConditionType) {
-            return collect(); // No condition type found
-        }
-        
-        $conditionValue = $serviceCost > 1000000 ? '>1000000' : '<1000000';
-
-        $approvalPolicy = ApprovalPolicy::where('condition_type_id', $costRangeConditionType->id)
-                                ->where('condition_value', $conditionValue)
-                                ->where('is_active', true)
-                                ->first();
+        $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
 
         if (!$approvalPolicy) {
             return collect(); // No policy found
         }
 
-        $approvalPolicySteps = ApprovalPolicyStep::where('approval_policy_id', $approvalPolicy->id)->get();
+        $approvalPolicySteps = $approvalPolicy->approval_policy_steps;
         if ($approvalPolicySteps->isEmpty()) {
             return collect(); // No steps found
         }
@@ -187,6 +226,9 @@ class ServiceRequestApprovalService
             $query->whereIn('roles.id', $roleIds);
         })->get();
 
-        return $approvers;
+        $data['approvers'] = $approvers;
+        $data['approvalPolicy'] = $approvalPolicy;
+        $data['approvalPolicySteps'] = $approvalPolicySteps;
+        return $data;
     }
 }

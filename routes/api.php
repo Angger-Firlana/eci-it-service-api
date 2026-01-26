@@ -32,7 +32,7 @@ Route::prefix('auth')->group(function () {
     Route::get('/me', [AuthController::class, 'getDataMe'])->middleware('auth:sanctum');
 });
 
-Route::prefix('device-type')->group(function () {
+Route::prefix('device-type')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [DeviceTypeController::class, 'index']);
     Route::get('/{id}', [DeviceTypeController::class, 'show']);
     Route::post('/', [DeviceTypeController::class, 'store']);
@@ -40,7 +40,7 @@ Route::prefix('device-type')->group(function () {
     Route::delete('/{id}', [DeviceTypeController::class, 'destroy']);
 });
 
-Route::prefix('device-model')->group(function(){
+Route::prefix('device-model')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [DeviceModelController::class, 'index']);
     Route::get('/{id}', [DeviceModelController::class, 'show']);
     Route::post('/', [DeviceModelController::class, 'store']);
@@ -49,7 +49,7 @@ Route::prefix('device-model')->group(function(){
     Route::delete('/{id}', [DeviceModelController::class, 'destroy']);
 });
 
-Route::prefix('devices')->group(function(){
+Route::prefix('devices')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [DeviceController::class, 'index']);
     Route::get('/{id}', [DeviceController::class, 'show']);
     Route::post('/', [DeviceController::class, 'store']);
@@ -59,7 +59,7 @@ Route::prefix('devices')->group(function(){
 
 });
 
-Route::prefix('service-requests')->group(function(){
+Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [ServiceRequestController::class, 'index']);
     Route::get('/stats', [ServiceRequestController::class, 'stats']);
     Route::get('/{id}', [ServiceRequestController::class, 'show']);
@@ -98,7 +98,7 @@ Route::prefix('service-requests')->group(function(){
     Route::put('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'update']);
 });
 
-Route::prefix('references')->group(function() {
+Route::prefix('references')->middleware('auth:sanctum')->group(function() {
     Route::get('/service-types', [ReferenceDataController::class, 'getServiceTypes']);
     Route::get('/statuses', [ReferenceDataController::class, 'getStatuses']);
     Route::get('/vendors', [ReferenceDataController::class, 'getVendors']);
@@ -106,7 +106,7 @@ Route::prefix('references')->group(function() {
     Route::get('/departments', [ReferenceDataController::class, 'getDepartments']);
 });
 
-Route::prefix('departments')->group(function(){
+Route::prefix('departments')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [DepartmentController::class, 'index']);
     Route::get('/{id}', [DepartmentController::class, 'show']);
     Route::post('/', [DepartmentController::class, 'store']);
@@ -114,7 +114,7 @@ Route::prefix('departments')->group(function(){
     Route::delete('/{id}', [DepartmentController::class, 'destroy']);
 });
 
-Route::prefix('users')->group(function(){
+Route::prefix('users')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [UserController::class, 'index']);
     Route::get('/{id}', [UserController::class, 'show']);
     Route::post('/', [UserController::class, 'store']);
@@ -122,13 +122,13 @@ Route::prefix('users')->group(function(){
     Route::delete('/{id}', [UserController::class, 'destroy']);
 });
 
-Route::prefix('invoices')->group(function(){
+Route::prefix('invoices')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [InvoiceController::class, 'index']);
     Route::get('/{id}', [InvoiceController::class, 'show']);
     Route::get('/{id}/print', [InvoiceController::class, 'print']);
 });
 
-Route::prefix('vendors')->group(function(){
+Route::prefix('vendors')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [VendorController::class, 'index']);
     Route::get('/{id}', [VendorController::class, 'show']);
     Route::post('/', [VendorController::class, 'store']);
@@ -136,7 +136,7 @@ Route::prefix('vendors')->group(function(){
     Route::delete('/{id}', [VendorController::class, 'destroy']);
 });
 
-Route::prefix('cost-types')->group(function(){
+Route::prefix('cost-types')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [CostTypeController::class, 'index']);
     Route::get('/{id}', [CostTypeController::class, 'show']);
     Route::post('/', [CostTypeController::class, 'store']);
