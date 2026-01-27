@@ -223,8 +223,7 @@ class ServiceRequestService
             'user',
             'admin',
             'service_type',
-            'status',
-            'service_request_details.device',
+            'status'
         ];
     }
 
