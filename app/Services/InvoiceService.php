@@ -128,7 +128,7 @@ class InvoiceService
         ];
     }
 
-    private function createInvoiceForServiceRequest(ServiceRequest $serviceRequest, array $data): void
+    public function createInvoiceForServiceRequest(ServiceRequest $serviceRequest, array $data): void
     {
         $adminId = $data['admin_id'] ?? $serviceRequest->admin_id;
         if (!$adminId) {
@@ -137,12 +137,12 @@ class InvoiceService
 
         $totalAmount = $serviceRequest->service_costs()->sum('amount');
 
-        $this->invoiceService->createInvoice([
+        $this->createInvoice([
             'service_request_id' => $serviceRequest->id,
             'issue_date' => now(),
             'due_date' => now()->addDays(7),
             'total_amount' => $totalAmount,
-            'status_id' => 13,
+            'status_id' => 8,
         ]);
     }
 }
