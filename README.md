@@ -1,7 +1,7 @@
 # ECI IT Service Management API - Complete Internal Documentation
 
 **Version:** 1.0.0  
-**Last Updated:** January 27, 2026  
+**Last Updated:** January 27, 2026 (Refactored Service Request Structure)  
 **Maintained By:** Backend Engineering Team  
 **For:** Internal Frontend Applications
 
@@ -199,7 +199,6 @@ const { data } = await response.json();
 - `user_id`: Filter by requesting user
 - `admin_id`: Filter by assigned admin
 - `status_id`: Filter by status
-- `service_type_id`: Filter by service type
 - `per_page`: Items per page (default: 15)
 
 **Frontend Example:**
@@ -305,14 +304,22 @@ const response = await fetch(`https://api.eci-itservice.com/api/service-requests
 ```json
 {
   "admin_id": 1,
-  "service_type_id": 1,
   "request_date": "2026-01-27",
   "status_id": 1,
   "details": [
     {
-      "device_id": 5,
+      "service_type_id": 1,
+      "device_id": 5, // Optional if auto-creating
       "complaint": "Laptop screen flickering",
       "complaint_images": []
+    },
+    {
+      "service_type_id": 2,
+      "device_type_id": 1, // Required if device_id is omitted
+      "brand": "Apple",
+      "model": "MacBook Pro M3",
+      "serial_number": "SN-MAC-2026-999",
+      "complaint": "Keyboard issues"
     }
   ]
 }
@@ -336,8 +343,10 @@ const response = await fetch('https://api.eci-itservice.com/api/service-requests
 ```
 
 **Internal Notes:**
+- **Auto-Device Creation:** If `device_id` is omitted in details, you MUST provide `device_type_id`, `brand`, `model`, and `serial_number`. The system will automatically find or create the corresponding Device Model and Device.
 - Images limited to 2MB, formats: jpeg, png, jpg, gif, svg
 - Service number auto-generated (format: SR{YYYYMMDD}{sequence})
+- **Invoice Trigger:** An invoice is automatically generated when status is updated to `COMPLETED` (ID 8).
 
 ---
 
@@ -1068,7 +1077,7 @@ await fetch(`https://api.eci-itservice.com/api/inbox-approvals/1/read`, {
   "message": "Validation failed",
   "errors": {
     "email": ["The email field is required."],
-    "password": ["Password must be at least 8 characters."]
+    "password": ["The password field is required."]
   }
 }
 ```
@@ -1279,6 +1288,13 @@ const usePagination = (endpoint, params = {}) => {
 - All endpoints documented with frontend examples
 - Security guidelines established
 - Best practices section added
+
+### Version 1.1.0 (January 27, 2026)
+- **Breaking Change:** Moved `service_type_id` from service request header to detail level.
+- **New Feature:** Implemented automatic device and device model creation when `device_id` is omitted in request details.
+- **Bug Fix:** Fixed storage cleanup bug for complaint images during service request deletion.
+- **Bug Fix:** Corrected invoice generation trigger (now fires on `COMPLETED` status).
+- **Update:** Relaxed password length validation on login.
 
 ---
 
