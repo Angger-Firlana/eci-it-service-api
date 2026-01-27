@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Device;
+use App\Models\DeviceModel;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -77,5 +78,75 @@ class DeviceService
     public function deleteDevice(int $id):void{
         $device = Device::findOrFail($id);
         $device->delete();
+    }
+
+    /**
+     * Find or create a device model based on device_type_id, brand, and model
+     *
+     * @param array $data
+     * @return DeviceModel
+     */
+    public function findOrCreateDeviceModel(array $data): DeviceModel
+    {
+        return DeviceModel::firstOrCreate(
+            [
+                'device_type_id' => $data['device_type_id'],
+                'brand' => $data['brand'],
+                'model' => $data['model'],
+            ],
+            [
+                'device_type_id' => $data['device_type_id'],
+                'brand' => $data['brand'],
+                'model' => $data['model'],
+            ]
+        );
+    }
+
+    /**
+     * Find or create a device based on device_model_id and serial_number
+     *
+     * @param int $deviceModelId
+     * @param string $serialNumber
+     * @return Device
+     */
+    public function findOrCreateDeviceBySerial(int $deviceModelId, string $serialNumber): Device
+    {
+        return Device::firstOrCreate(
+            [
+                'serial_number' => $serialNumber,
+            ],
+            [
+                'device_model_id' => $deviceModelId,
+                'serial_number' => $serialNumber,
+            ]
+        );
+    }
+
+    /**
+     * Find or create device from request data
+     * This is the main method that combines both operations
+     *
+     * @param array $data
+     * @return Device
+     */
+    public function findOrCreateDeviceFromRequest(array $data): Device
+    {
+        // First, find or create the device model
+        $deviceModel = $this->findOrCreateDeviceModel([
+            'device_type_id' => $data['device_type_id'],
+            'brand' => $data['brand'],
+            'model' => $data['model'],
+        ]);
+
+        // Then, find or create the device with the serial number
+        $device = $this->findOrCreateDeviceBySerial(
+            $deviceModel->id,
+            $data['serial_number']
+        );
+
+        // Load the device_model relationship for the response
+        $device->load('device_model');
+
+        return $device;
     }
 }

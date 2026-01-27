@@ -6,14 +6,34 @@ use App\Models\ServiceRequestDetail;
 use Illuminate\Http\UploadedFile;
 use App\Models\ComplaintImage;
 use Illuminate\Support\Facades\Storage;
+use App\Services\DeviceService;
 
 class DetailServiceRequestService
 {
+    protected DeviceService $deviceService;
+
+    public function __construct(DeviceService $deviceService)
+    {
+        $this->deviceService = $deviceService;
+    }
+
     public function createDetailServiceRequest(array $data): ServiceRequestDetail
     {
+        // Auto-create/resolve device if device info is provided and device_id is not
+        if (!isset($data['device_id']) && isset($data['device_type_id'], $data['brand'], $data['model'], $data['serial_number'])) {
+            $device = $this->deviceService->findOrCreateDeviceFromRequest([
+                'device_type_id' => $data['device_type_id'],
+                'brand'          => $data['brand'],
+                'model'          => $data['model'],
+                'serial_number'  => $data['serial_number'],
+            ]);
+            $data['device_id'] = $device->id;
+        }
+
         $serviceRequestDetail = ServiceRequestDetail::create([
             'service_request_id' => $data['service_request_id'],
-            'device_id' => $data['device_id'],
+            'service_type_id' => $data['service_type_id'] ?? null,
+            'device_id' => $data['device_id'] ?? null,
             'complaint' => $data['complaint'],
         ]);
 
@@ -38,7 +58,19 @@ class DetailServiceRequestService
     {
         $serviceRequestDetail = ServiceRequestDetail::findOrFail($id);
         
+        // Auto-create/resolve device if device info is provided and device_id is not
+        if (!isset($data['device_id']) && isset($data['device_type_id'], $data['brand'], $data['model'], $data['serial_number'])) {
+            $device = $this->deviceService->findOrCreateDeviceFromRequest([
+                'device_type_id' => $data['device_type_id'],
+                'brand'          => $data['brand'],
+                'model'          => $data['model'],
+                'serial_number'  => $data['serial_number'],
+            ]);
+            $data['device_id'] = $device->id;
+        }
+
         $updateData = [
+            'service_type_id' => $data['service_type_id'] ?? $serviceRequestDetail->service_type_id,
             'device_id' => $data['device_id'] ?? $serviceRequestDetail->device_id,
             'complaint' => $data['complaint'] ?? $serviceRequestDetail->complaint,
         ];
@@ -67,11 +99,9 @@ class DetailServiceRequestService
         $serviceRequestDetail = ServiceRequestDetail::findOrFail($id);
         
         // Delete associated images if any
-        if ($serviceRequestDetail->complaint_images) {
-            $images = json_decode($serviceRequestDetail->complaint_images, true) ?? [];
-            foreach ($images as $imagePath) {
-                Storage::disk('public')->delete($imagePath);
-            }
+        foreach ($serviceRequestDetail->complaint_images as $image) {
+            Storage::disk('public')->delete($image->image_path);
+            $image->delete();
         }
         
         $serviceRequestDetail->delete();

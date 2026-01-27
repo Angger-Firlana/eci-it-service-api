@@ -142,7 +142,7 @@ class InvoiceService
             'issue_date' => now(),
             'due_date' => now()->addDays(7),
             'total_amount' => $totalAmount,
-            'status_id' => 8,
+            'status_id' => 19,
         ]);
     }
 }

@@ -25,11 +25,15 @@ class StoreServiceRequest extends FormRequest
             //
             'admin_id' => 'required|exists:users,id',
             'user_id' => 'sometimes|exists:users,id',
-            'service_type_id' => 'sometimes|exists:service_types,id',
             'request_date' => 'required|date',
             'status_id'  => 'required|exists:statuses,id',
             'details' => 'required|array',
-            'details.*.device_id' =>  'required|exists:devices,id',
+            'details.*.service_type_id' => 'required|exists:service_types,id',
+            'details.*.device_id' => 'sometimes|exists:devices,id',
+            'details.*.device_type_id' =>  'required_without:details.*.device_id|exists:device_types,id',
+            'details.*.brand' => 'required_without:details.*.device_id|string',
+            'details.*.model' => 'required_without:details.*.device_id|string',
+            'details.*.serial_number' => 'required_without:details.*.device_id|string',
             'details.*.complaint' => 'required|string',
             'details.*.complaint_images' => 'sometimes|array',
             'details.*.complaint_images.*' => 'sometimes|file|mimes:jpeg,png,jpg,gif,svg|max:2048'

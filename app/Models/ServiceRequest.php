@@ -17,7 +17,6 @@ use Illuminate\Http\Request;
  * @property int $id
  * @property int $user_id
  * @property int|null $admin_id
- * @property int $service_type_id
  * @property string $service_number
  * @property Carbon $request_date
  * @property Carbon|null $estimated_date
@@ -26,7 +25,6 @@ use Illuminate\Http\Request;
  * @property Carbon|null $updated_at
  * 
  * @property User $user
- * @property ServiceType $service_type
  * @property Status $status
  * @property Collection|Invoice[] $invoices
  * @property Collection|ServiceCancellation[] $service_cancellations
@@ -44,7 +42,6 @@ class ServiceRequest extends Model
 	protected $casts = [
 		'user_id' => 'int',
 		'admin_id' => 'int',
-		'service_type_id' => 'int',
 		'request_date' => 'datetime',
 		'estimated_date' => 'datetime',
 		'status_id' => 'int'
@@ -53,7 +50,6 @@ class ServiceRequest extends Model
 	protected $fillable = [
 		'user_id',
 		'admin_id',
-		'service_type_id',
 		'service_number',
 		'request_date',
 		'estimated_date',
@@ -68,11 +64,6 @@ class ServiceRequest extends Model
 	public function admin()
 	{
 		return $this->belongsTo(User::class, 'admin_id', 'id');
-	}
-
-	public function service_type()
-	{
-		return $this->belongsTo(ServiceType::class);
 	}
 
 	public function status()
@@ -115,7 +106,6 @@ class ServiceRequest extends Model
 		$equalFilters = [
 			'user_id',
 			'admin_id',
-			'service_type_id',
 			'status_id',
 		];
 

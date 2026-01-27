@@ -67,12 +67,9 @@ class ServiceRequestService
     private function createServiceRequestDetails(ServiceRequest $serviceRequest, array $details): void
     {
         foreach ($details as $detail) {
-            $this->detailService->createDetailServiceRequest([
+            $this->detailService->createDetailServiceRequest(array_merge($detail, [
                 'service_request_id' => $serviceRequest->id,
-                'device_id' => $detail['device_id'],
-                'complaint' => $detail['complaint'],
-                'complaint_images' => $detail['complaint_images'] ?? [],
-            ]);
+            ]));
         }
     }
 
@@ -94,7 +91,6 @@ class ServiceRequestService
             'service_number'   => $this->generateServiceNumber(),
             'admin_id'         => $adminId,
             'user_id'          => $userId,
-            'service_type_id'  => $data['service_type_id'],
             'request_date'     => now(),
             'estimated_date'   => $data['estimated_date'] ?? null,
             'status_id'        => $data['status_id'] ?? Status::PENDING,
@@ -169,7 +165,6 @@ class ServiceRequestService
             }
 
             $serviceRequest->update(array_filter([
-                'service_type_id' => $data['service_type_id'] ?? $serviceRequest->service_type_id,
                 'estimated_date' => $data['estimated_date'] ?? $serviceRequest->estimated_date,
                 'status_id' => $data['status_id'] ?? $serviceRequest->status_id,
             ]));
@@ -178,7 +173,7 @@ class ServiceRequestService
                 $this->syncDetails($serviceRequest, $data['details']);
             }
 
-            if ($newStatusId == 2 && $oldStatusId != 2) {
+            if ($newStatusId == 8 && $oldStatusId != 8) {
                 $this->invoiceService->createInvoiceForServiceRequest($serviceRequest, $data);
             }
 
@@ -222,7 +217,6 @@ class ServiceRequestService
         return [
             'user',
             'admin',
-            'service_type',
             'status'
         ];
     }
@@ -232,11 +226,11 @@ class ServiceRequestService
         return [
             'user:id,name,email',
             'admin:id,name,email',
-            'service_type:id,name',
             'status:id,name',
-            'service_request_details:id,service_request_id,device_id,complaint',
+            'service_request_details:id,service_request_id,service_type_id,device_id,complaint',
             'service_request_details.device:id,device_model_id,serial_number',
             'service_request_details.device.device_model:id,brand,model',
+            'service_request_details.service_type:id,name',
             'service_request_details.complaint_images'
         ];
 
@@ -247,7 +241,6 @@ class ServiceRequestService
     {
         return [
             'user',
-            'service_type',
             'status',
             'service_request_details.device',
         ];
@@ -261,12 +254,9 @@ class ServiceRequestService
                 continue;
             }
 
-            $this->detailService->createDetailServiceRequest([
+            $this->detailService->createDetailServiceRequest(array_merge($detail, [
                 'service_request_id' => $serviceRequest->id,
-                'device_id' => $detail['device_id'],
-                'complaint' => $detail['complaint'],
-                'complaint_images' => $detail['complaint_images'] ?? [],
-            ]);
+            ]));
         }
     }
 
