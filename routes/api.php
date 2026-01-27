@@ -105,6 +105,7 @@ Route::prefix('references')->middleware('auth:sanctum')->group(function() {
     Route::get('/vendors', [ReferenceDataController::class, 'getVendors']);
     Route::get('/roles', [ReferenceDataController::class, 'getRoles']);
     Route::get('/departments', [ReferenceDataController::class, 'getDepartments']);
+    Route::get('/cost-types', [ReferenceDataController::class, 'getCostTypes']);
 });
 
 Route::prefix('departments')->middleware('auth:sanctum')->group(function(){

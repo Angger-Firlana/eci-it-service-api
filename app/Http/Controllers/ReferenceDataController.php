@@ -53,4 +53,10 @@ class ReferenceDataController extends Controller
         $users = User::select('id', 'name', 'email')->get();
         return APIResponse::success($users);
     }
+
+    public function getCostTypes()
+    {
+        $costTypes = CostType::select('id', 'name')->get();
+        return APIResponse::success($costTypes);
+    }
 }
