@@ -101,6 +101,7 @@ Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
 
 Route::prefix('references')->middleware('auth:sanctum')->group(function() {
     Route::get('/service-types', [ReferenceDataController::class, 'getServiceTypes']);
+    Route::post('/service-types', [ReferenceDataController::class, 'storeServiceType']);
     Route::get('/statuses', [ReferenceDataController::class, 'getStatuses']);
     Route::get('/vendors', [ReferenceDataController::class, 'getVendors']);
     Route::get('/roles', [ReferenceDataController::class, 'getRoles']);

@@ -8,6 +8,7 @@ use App\Models\Status;
 use App\Models\Vendor;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\CostType;
 use App\Helpers\APIResponse;
 
 class ReferenceDataController extends Controller
@@ -16,6 +17,19 @@ class ReferenceDataController extends Controller
     {
         $serviceTypes = ServiceType::select('id', 'name')->get();
         return APIResponse::success($serviceTypes);
+    }
+
+    public function storeServiceType(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|unique:service_types,name',
+        ]);
+
+        $serviceType = ServiceType::create([
+            'name' => $validated['name'],
+        ]);
+
+        return APIResponse::success($serviceType, 201, 'Service Type Created');
     }
 
     public function getStatuses(Request $request)
