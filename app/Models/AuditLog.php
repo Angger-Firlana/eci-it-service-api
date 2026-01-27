@@ -51,7 +51,7 @@ class AuditLog extends Model
 		'new_status_id'
 	];
 
-	public function user()
+	public function actor()
 	{
 		return $this->belongsTo(User::class, 'actor_id');
 	}
@@ -61,8 +61,13 @@ class AuditLog extends Model
 		return $this->belongsTo(EntityType::class);
 	}
 
-	public function status()
+	public function old_status()
 	{
 		return $this->belongsTo(Status::class, 'old_status_id');
+	}
+
+	public function new_status()
+	{
+		return $this->belongsTo(Status::class, 'new_status_id');
 	}
 }

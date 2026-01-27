@@ -152,10 +152,23 @@ class ServiceRequestService
             $newStatusId = $data['status_id'] ?? $serviceRequest->status_id;
             $status = $this->getServiceRequestStatusOrFail($newStatusId);
 
-            $this->auditLogService->createStatusAuditLog($serviceRequest, $status, $oldStatusId, $newStatusId, $data);
+            $this->auditLogService->createAuditLog([
+                'actor_id' => auth()->id() ?? $serviceRequest->user_id,
+                'entity_id' => $serviceRequest->id,
+                'entity_type_id' => 1,
+                'action' => 'UPDATE_STATUS',
+                'notes' => $data['log_notes'] ?? "Status {$serviceRequest->status->name} to {$status->name}",
+                'old_status_id' => $oldStatusId,
+                'new_status_id' => $newStatusId,
+            ]);
+
+            if(auth()->user()->roles->contains('id', Role::ADMIN)){
+                $serviceRequest->update([
+                    'admin_id' => $data['admin_id'] ?? $serviceRequest->admin_id,
+                ]);
+            }
 
             $serviceRequest->update(array_filter([
-                'admin_id' => $data['admin_id'] ?? $serviceRequest->admin_id,
                 'service_type_id' => $data['service_type_id'] ?? $serviceRequest->service_type_id,
                 'estimated_date' => $data['estimated_date'] ?? $serviceRequest->estimated_date,
                 'status_id' => $data['status_id'] ?? $serviceRequest->status_id,

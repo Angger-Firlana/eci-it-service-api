@@ -7,7 +7,7 @@ use App\Models\ServiceRequest;
 
 class AuditLogService
 {
-    private function createAuditLog(array $data): AuditLog
+    public function createAuditLog(array $data): AuditLog
     {
         return AuditLog::create($data);
     }
@@ -39,7 +39,6 @@ class AuditLogService
     {
         return AuditLog::where('entity_type_id', 1)
             ->where('entity_id', $serviceRequest->id)
-            ->with(['actor', 'old_status', 'new_status'])
             ->orderBy('created_at', 'desc')
             ->get();
     }
