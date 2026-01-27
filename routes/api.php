@@ -95,7 +95,8 @@ Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
     //Cancellation
     Route::get('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'index']);
     Route::post('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'store']);
-    Route::put('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'update']);
+    Route::put('/{serviceRequestId}/cancellation/{cancellationId}', [ServiceRequestCancellationController::class, 'update']);
+    Route::delete('/{serviceRequestId}/cancellation/{cancellationId}', [ServiceRequestCancellationController::class, 'destroy']);
 });
 
 Route::prefix('references')->middleware('auth:sanctum')->group(function() {

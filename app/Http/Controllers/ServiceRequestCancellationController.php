@@ -18,13 +18,13 @@ class ServiceRequestCancellationController extends Controller
 
     public function index($serviceRequestId)
     {
-        $cancellation = $this->cancellationService->getCancellationByServiceRequestId($serviceRequestId);
+        $cancellation = $this->cancellationService->getCancellationByServiceRequest($serviceRequestId);
         return APIResponse::success($cancellation);
     }
 
-    public function update(Request $request, $serviceRequestId)
+    public function update(Request $request, $cancellationId)
     {
-        $cancellation = $this->cancellationService->updateCancellation($request->all(), $serviceRequestId);
+        $cancellation = $this->cancellationService->updateCancellation($request->all(), $cancellationId);
         return APIResponse::success($cancellation);
     }
 
@@ -44,5 +44,11 @@ class ServiceRequestCancellationController extends Controller
         $cancellation = $this->cancellationService->createCancellation($data, $serviceRequest);
 
         return APIResponse::success($cancellation, 201, 'Service request cancelled successfully');
+    }
+
+    public function destroy($cancellationId)
+    {
+        $this->cancellationService->deleteCancellation($cancellationId);
+        return APIResponse::success(null, 204, 'Service request cancellation deleted successfully');
     }
 }
