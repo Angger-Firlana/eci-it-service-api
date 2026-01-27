@@ -22,8 +22,8 @@ class StoreApprovalsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'approver_ids' => 'required|array',
-            'approver_ids.*' => 'required|exists:users,id',
+            'approvers' => 'required|array',
+            'approvers.*' => 'required|exists:users,id',
         ];
     }
 }

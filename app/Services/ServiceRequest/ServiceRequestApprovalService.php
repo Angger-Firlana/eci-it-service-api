@@ -84,7 +84,7 @@ class ServiceRequestApprovalService
         $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
         $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
         
-        foreach($approvals as $approverId){
+        foreach($approvals['approvers'] as $approverId){
             $approver = User::findOrFail($approverId);
             $approvalPolicyStep = $approvalPolicy->approval_policy_steps->where('role_id', $approver->roles->first()->id)->first();
 
