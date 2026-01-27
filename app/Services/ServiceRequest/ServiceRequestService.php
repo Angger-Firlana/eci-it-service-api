@@ -13,6 +13,7 @@ use App\Services\InvoiceService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use App\Models\Role;
 
 class ServiceRequestService
 {
@@ -77,14 +78,26 @@ class ServiceRequestService
 
     private function createMainServiceRequest(array $data): ServiceRequest
     {
+        $adminId = null;
+        $userId = null;
+        $user = Auth::user();
+
+        if ($user && $user->roles->contains('id', Role::ADMIN)) {
+            $adminId = $data['admin_id'] ?? null;
+        }
+
+        if ($user && $user->roles->contains('id', Role::USER)) {
+            $userId = $user->id;
+        }
+
         return ServiceRequest::create([
             'service_number'   => $this->generateServiceNumber(),
-            'admin_id'         => $data['admin_id'] ?? null,
-            'user_id'          => $data['user_id'] ?? auth()->id(),
+            'admin_id'         => $adminId,
+            'user_id'          => $userId,
             'service_type_id'  => $data['service_type_id'],
             'request_date'     => now(),
             'estimated_date'   => $data['estimated_date'] ?? null,
-            'status_id'        => $data['status_id'] ?? Status::PENDING, // kalau ada const
+            'status_id'        => $data['status_id'] ?? Status::PENDING,
         ]);
     }
 

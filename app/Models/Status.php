@@ -31,6 +31,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Status extends Model
 {
+	const PENDING = 1;
+
+
 	protected $table = 'statuses';
 
 	protected $casts = [
