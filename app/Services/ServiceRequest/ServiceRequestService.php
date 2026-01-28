@@ -50,6 +50,28 @@ class ServiceRequestService
 
         $auditLogs = $this->auditLogService->getAuditLogsForServiceRequest($serviceRequest);
         $serviceRequest->audit_logs = $auditLogs;
+        $serviceRequest->service_request_approvals = $serviceRequest->vendor_approvals;
+        $serviceRequest->timeline = $auditLogs->map(function ($log) use ($serviceRequest) {
+            $label = $log->action === 'CREATE_REQUEST'
+                ? ($serviceRequest->status->name ?? 'Menunggu Approval')
+                : ($log->action === 'UPDATE_STATUS' ? 'Status diubah' : $log->action);
+
+            $actorName = $log->actor->name ?? 'Unknown';
+            $description = $log->action === 'CREATE_REQUEST'
+                ? "Request dibuat oleh {$actorName}"
+                : $log->notes;
+
+            return [
+                'id' => $log->id,
+                'label' => $label,
+                'status' => $label,
+                'date' => $log->created_at,
+                'created_at' => $log->created_at,
+                'note' => $description,
+                'description' => $description,
+                'state' => 'active',
+            ];
+        });
 
         return $serviceRequest;
     }
@@ -60,9 +82,19 @@ class ServiceRequestService
             $serviceRequest = $this->createMainServiceRequest($data);
             $this->createServiceRequestDetails($serviceRequest, $data['details'] ?? []);
 
+            $this->auditLogService->createAuditLog([
+                'actor_id' => auth()->id() ?? $serviceRequest->user_id,
+                'entity_id' => $serviceRequest->id,
+                'entity_type_id' => 1,
+                'action' => 'CREATE_REQUEST',
+                'notes' => 'Request dibuat',
+                'old_status_id' => $serviceRequest->status_id,
+                'new_status_id' => $serviceRequest->status_id,
+            ]);
+
             return $this->loadRelations($serviceRequest);
         });
-    }   
+    }
 
     private function createServiceRequestDetails(ServiceRequest $serviceRequest, array $details): void
     {
@@ -225,6 +257,7 @@ class ServiceRequestService
     {
         return [
             'user:id,name,email',
+            'user.departments:id,name',
             'admin:id,name,email',
             'status:id,name',
             'service_request_details:id,service_request_id,service_type_id,device_id,complaint',
@@ -232,7 +265,11 @@ class ServiceRequestService
             'service_request_details.device.device_model:id,device_type_id,brand,model',
             'service_request_details.device.device_model.device_type:id,name',
             'service_request_details.service_type:id,name',
-            'service_request_details.complaint_images'
+            'service_request_details.complaint_images',
+            'vendor_approvals:id,service_request_id,approver_id,assigned_by,assigned_at,approved_at,status_id,created_at,updated_at',
+            'vendor_approvals.status:id,name',
+            'vendor_approvals.approver:id,name',
+            'vendor_approvals.assigned_by:id,name'
         ];
 
 
