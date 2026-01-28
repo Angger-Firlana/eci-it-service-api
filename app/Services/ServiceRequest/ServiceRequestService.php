@@ -229,7 +229,8 @@ class ServiceRequestService
             'status:id,name',
             'service_request_details:id,service_request_id,service_type_id,device_id,complaint',
             'service_request_details.device:id,device_model_id,serial_number',
-            'service_request_details.device.device_model:id,brand,model',
+            'service_request_details.device.device_model:id,device_type_id,brand,model',
+            'service_request_details.device.device_model.device_type:id,name',
             'service_request_details.service_type:id,name',
             'service_request_details.complaint_images'
         ];
