@@ -43,17 +43,17 @@ class StatusSeeder extends Seeder
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'REJECTED', 'name' => 'Rejected'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'CANCELLED', 'name' => 'Cancelled'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'NEED_REVISION', 'name' => 'Need Revision'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'ESCALATED', 'name' => 'Escalated'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_REVIEW_VENDOR', 'name' => 'In Review (Vendor)'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'APPROVED_BY_VENDOR', 'name' => 'Approved by Vendor'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'ESCALATED', 'name' => 'Escalated'], //ga main
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_REVIEW_VENDOR', 'name' => 'In Review (Vendor)'], //ga main
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'APPROVED_BY_VENDOR', 'name' => 'Approved by Vendor'], //ga main
+
 
 
             // Vendor Approval Statuses
             ['entity_type_id' => $vendorApprovalEntityType->id, 'code' => 'PENDING', 'name' => 'Pending'],
             ['entity_type_id' => $vendorApprovalEntityType->id, 'code' => 'APPROVED', 'name' => 'Approved'],
             ['entity_type_id' => $vendorApprovalEntityType->id, 'code' => 'REJECTED', 'name' => 'Rejected'],
-
-            // Invoice Statuses
+            // Invoice Statuses 
             ['entity_type_id' => $invoiceEntityType->id, 'code' => 'DRAFT', 'name' => 'Draft'],
             ['entity_type_id' => $invoiceEntityType->id, 'code' => 'SENT', 'name' => 'Sent'],
             ['entity_type_id' => $invoiceEntityType->id, 'code' => 'PAID', 'name' => 'Paid'],

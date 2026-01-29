@@ -204,7 +204,7 @@ class ServiceRequestApprovalService
         }
     }
 
-    public function getApproverByServiceRequestId($serviceRequestId):Collection
+    public function getApproverByServiceRequestId($serviceRequestId): array
     {
         $data = [];
         $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
@@ -212,12 +212,12 @@ class ServiceRequestApprovalService
         $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
 
         if (!$approvalPolicy) {
-            return collect(); // No policy found
+            return []; // No policy found
         }
 
         $approvalPolicySteps = $approvalPolicy->approval_policy_steps;
         if ($approvalPolicySteps->isEmpty()) {
-            return collect(); // No steps found
+            return []; // No steps found
         }
         
         $roleIds = $approvalPolicySteps->pluck('role_id')->unique()->toArray();

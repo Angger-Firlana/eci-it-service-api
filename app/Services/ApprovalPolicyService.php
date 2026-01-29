@@ -29,7 +29,7 @@ class ApprovalPolicyService
         $approvalPolicy->delete();
     }
 
-    public function getApprovalPolicyByServiceRequestCost($serviceCost): ApprovalPolicy{
+    public function getApprovalPolicyByServiceRequestCost($serviceCost): ?ApprovalPolicy{
         $costRangeConditionType = ConditionType::where('code', 'COST_RANGE')->first();
         if (!$costRangeConditionType) {
             return null; // No condition type found
@@ -37,7 +37,7 @@ class ApprovalPolicyService
         
         $conditionValue = $serviceCost > 1000000 ? '>1000000' : '<1000000';
 
-        $approvalPolicy = ApprovalPolicy::with(['approval_policy_steps', 'approval_policy_steps.condition_type', 'approval_policy_steps.role'])
+        $approvalPolicy = ApprovalPolicy::with(['approval_policy_steps', 'approval_policy_steps.role'])
                                 ->where('condition_type_id', $costRangeConditionType->id)
                                 ->where('condition_value', $conditionValue)
                                 ->where('is_active', true)
@@ -48,7 +48,7 @@ class ApprovalPolicyService
 
     public function getApprovalPolicyById(int $id): ApprovalPolicy
     {
-        $approvalPolicy = ApprovalPolicy::with(['approval_policy_steps', 'approval_policy_steps.condition_type', 'approval_policy_steps.role'])
+        $approvalPolicy = ApprovalPolicy::with(['approval_policy_steps', 'approval_policy_steps.role'])
             ->findOrFail($id);
 
         return $approvalPolicy;
