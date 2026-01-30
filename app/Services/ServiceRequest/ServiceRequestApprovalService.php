@@ -63,14 +63,21 @@ class ServiceRequestApprovalService
                 'approval_policy_step_id' => $approvalPolicyStep->id,
             ]);
 
-            $this->auditLogService->createAuditLog([
-                'actor_id' => auth()->id(),
-                'entity_id' => $serviceRequestId,
-                'entity_type_id' => 1, // Assuming 1 is the entity type for VendorApproval
-                'action' => 'UPDATE_VENDOR_APPROVAL', // Action reflects re-creation
-                'notes' => 'Vendor approvals re-created for service request ' . $serviceRequestId,
-            ]);
+            
         }
+
+        $oldStatusId = $serviceRequest->status_id;
+        $newStatusId = 4;
+
+        $this->auditLogService->createAuditLog([
+            'actor_id' => auth()->id(),
+            'entity_id' => $serviceRequestId,
+            'entity_type_id' => 1, // Assuming 1 is the entity type for VendorApproval
+            'old_status_id' => $oldStatusId,
+            'new_status_id' => $newStatusId,
+            'action' => 'UPDATE_VENDOR_APPROVAL', // Action reflects re-creation
+            'notes' => 'Vendor approvals re-created for service request ' . $serviceRequestId,
+        ]);
         
         DB::commit();
 
@@ -98,15 +105,20 @@ class ServiceRequestApprovalService
                 'approval_policy_step_id' => $approvalPolicyStep->id,
             ]);
 
-            $this->auditLogService->createAuditLog([
-                'actor_id' => auth()->id(),
-                'entity_id' => $serviceRequestId,
-                'entity_type_id' => 1,
-                'action' => 'CREATE_VENDOR_APPROVAL',
-                'notes' => 'Vendor approval created',
-            ]);
+            $oldStatusId = $serviceRequest->status_id;
+            $newStatusId = 4;
         }
        
+        $this->auditLogService->createAuditLog([
+            'actor_id' => auth()->id(),
+            'entity_id' => $serviceRequestId,
+            'entity_type_id' => 1,
+            'old_status_id' => $oldStatusId,
+            'new_status_id' => $newStatusId,
+            'action' => 'CREATE_VENDOR_APPROVAL',
+            'notes' => 'Vendor approval created',
+        ]);
+
         DB::commit();
 
         return VendorApproval::where('service_request_id', $serviceRequestId)->with(['approver', 'assigned_by'])->get();
@@ -121,10 +133,15 @@ class ServiceRequestApprovalService
             'status_id' => 16,
         ]);
 
+        $oldStatusId = $approval->status_id;
+        $newStatusId = 16;
+
         $this->auditLogService->createAuditLog([
             'actor_id' => auth()->id(),
             'entity_id' => $approval->service_request_id,
-            'entity_type_id' => 1,
+            'entity_type_id' => 2,
+            'old_status_id' => $oldStatusId,
+            'new_status_id' => $newStatusId,
             'action' => 'APPROVE_VENDOR',
             'notes' => 'Vendor approval completed',
         ]);
@@ -199,12 +216,13 @@ class ServiceRequestApprovalService
         
         if ($rejectedApprovals > 0) {
             $serviceRequest->update(['status_id' => 6]); // Rejected By Above
+            $this->auditLogService->createStatusAuditLog($serviceRequest, $serviceRequest->status, $serviceRequest->status_id, 6, []);
         } elseif ($pendingApprovals === 0) {
             $serviceRequest->update(['status_id' => 7]); // In Progress
         }
     }
 
-    public function getApproverByServiceRequestId($serviceRequestId):Collection
+    public function getApproverByServiceRequestId($serviceRequestId): array
     {
         $data = [];
         $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
@@ -212,12 +230,12 @@ class ServiceRequestApprovalService
         $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
 
         if (!$approvalPolicy) {
-            return collect(); // No policy found
+            return []; // No policy found
         }
 
         $approvalPolicySteps = $approvalPolicy->approval_policy_steps;
         if ($approvalPolicySteps->isEmpty()) {
-            return collect(); // No steps found
+            return []; // No steps found
         }
         
         $roleIds = $approvalPolicySteps->pluck('role_id')->unique()->toArray();

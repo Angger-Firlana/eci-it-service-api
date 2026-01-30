@@ -13,7 +13,7 @@ class ServiceLocationService
         $serviceLocation = ServiceLocation::create([
             'service_request_id' => $serviceRequestId,
             'location_type' => $data['location_type'],
-            'vendor_id' => $data['vendor_id'],
+            'vendor_id' => $data['vendor_id'] ?? null,
             'address' => $data['address'] ?? null,
             'city' => $data['city'] ?? null,
             'province' => $data['province'] ?? null,
@@ -21,6 +21,7 @@ class ServiceLocationService
             'maps_url' => $data['maps_url'] ?? null,
             'is_active' => $data['is_active'],
         ]);
+        
 
         return $serviceLocation->load('vendor');
     }

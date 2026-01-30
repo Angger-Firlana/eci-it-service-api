@@ -65,12 +65,21 @@ class UserService{
         return $user->load('departments', 'roles');
     }
 
-    public function updateUser(int $id, array $data):User{
+    public function updateUser(int $id, Request $request):User{
         $user = User::findOrFail($id);
+        
+        $data = $request->validated();
+
+        $currentEmail = $user->email;
+        $newEmail = $data['email'];
+
+        if($currentEmail == $newEmail){
+            $email = null;
+        }
         
         $updateData = [
             'name' => $data['name'],
-            'email' => $data['email'],
+            'email' => $newEmail,
         ];
         
         if(isset($data['password'])){
@@ -88,8 +97,10 @@ class UserService{
         }
 
         if(isset($data['role_id'])){
-             $user->roles()->sync([$data['role_id']]);
+            $user->roles()->sync([$data['role_id']]);
         }
+
+        $user->save();
 
         return $user->load('departments', 'roles');
     }
