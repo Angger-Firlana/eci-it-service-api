@@ -33,7 +33,7 @@ class UserController extends Controller
     }
 
     public function update(UpdateUserRequest $request, $id){
-        $user = $this->userService->updateUser($id, $request->validated());
+        $user = $this->userService->updateUser($id, $request);
         return APIResponse::success($user);
     }
 
