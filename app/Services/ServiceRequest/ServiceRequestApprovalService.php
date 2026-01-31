@@ -215,10 +215,45 @@ class ServiceRequestApprovalService
             ->count();
         
         if ($rejectedApprovals > 0) {
-            $serviceRequest->update(['status_id' => 6]); // Rejected By Above
-            $this->auditLogService->createStatusAuditLog($serviceRequest, $serviceRequest->status, $serviceRequest->status_id, 6, []);
+            // Any rejection -> REJECTED_BY_ABOVE (6)
+            $oldStatusId = $serviceRequest->status_id;
+            $serviceRequest->update(['status_id' => 6]);
+            $this->auditLogService->createAuditLog([
+                'actor_id' => auth()->id(),
+                'entity_id' => $serviceRequest->id,
+                'entity_type_id' => 1,
+                'old_status_id' => $oldStatusId,
+                'new_status_id' => 6,
+                'action' => 'STATUS_CHANGE',
+                'notes' => 'Request ditolak oleh atasan',
+            ]);
         } elseif ($pendingApprovals === 0) {
-            $serviceRequest->update(['status_id' => 7]); // In Progress
+            // All approved -> APPROVED_BY_ABOVE (5) -> IN_PROGRESS (7)
+            $oldStatusId = $serviceRequest->status_id;
+            
+            // First transition to APPROVED_BY_ABOVE
+            $serviceRequest->update(['status_id' => 5]);
+            $this->auditLogService->createAuditLog([
+                'actor_id' => auth()->id(),
+                'entity_id' => $serviceRequest->id,
+                'entity_type_id' => 1,
+                'old_status_id' => $oldStatusId,
+                'new_status_id' => 5,
+                'action' => 'STATUS_CHANGE',
+                'notes' => 'Semua atasan sudah menyetujui',
+            ]);
+            
+            // Auto-transition to IN_PROGRESS
+            $serviceRequest->update(['status_id' => 7]);
+            $this->auditLogService->createAuditLog([
+                'actor_id' => auth()->id(),
+                'entity_id' => $serviceRequest->id,
+                'entity_type_id' => 1,
+                'old_status_id' => 5,
+                'new_status_id' => 7,
+                'action' => 'STATUS_CHANGE',
+                'notes' => 'Service dimulai (auto-transition)',
+            ]);
         }
     }
 
