@@ -131,6 +131,7 @@ Route::prefix('invoices')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [InvoiceController::class, 'index']);
     Route::get('/{id}', [InvoiceController::class, 'show']);
     Route::get('/{id}/print', [InvoiceController::class, 'print']);
+    Route::get('/{id}/download', [InvoiceController::class, 'download']);
 });
 
 Route::prefix('vendors')->middleware('auth:sanctum')->group(function(){

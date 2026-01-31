@@ -1,207 +1,337 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Invoice {{ $invoice->invoice_number }}</title>
+    <title>Service Request Form - {{ $invoice->invoice_number }}</title>
     <style>
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 14px;
-            color: #333;
-            line-height: 1.6;
-        }
-        .container {
-            width: 100%;
-            margin: 0 auto;
-            max-width: 800px;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #0056b3;
-        }
-        .header h1 {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
             margin: 0;
-            color: #0056b3;
-            font-size: 28px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            padding: 0;
+            color: #000;
         }
-        .header p {
-            margin: 5px 0 0;
-            color: #777;
-            font-size: 16px;
-        }
-        .invoice-details {
-            display: table;
+        table {
             width: 100%;
-            margin-bottom: 40px;
+            border-collapse: collapse;
+            border-spacing: 0;
         }
-        .invoice-details-row {
-            display: table-row;
+        td, th {
+            border: 1px solid #000;
+            padding: 4px;
+            vertical-align: middle;
         }
-        .invoice-details-cell {
-            display: table-cell;
-            width: 50%;
+        .no-border {
+            border: none;
+        }
+        .header-logo {
+            width: 150px;
+        }
+        .header-title {
+            text-align: right;
+            font-weight: bold;
+        }
+        .header-title div {
+            margin-bottom: 2px;
+        }
+        .section-header {
+            background-color: #d9d9d9;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .label-col {
+            width: 120px;
+            font-weight: bold;
+            background-color: #f2f2f2;
+        }
+        .input-box {
+            height: 20px;
+        }
+        .large-box {
+            height: 100px;
             vertical-align: top;
         }
-        .client-info strong {
-            font-size: 1.1em;
-            color: #000;
-        }
-        .invoice-meta {
-            text-align: right;
-        }
-        .invoice-meta table {
-            margin-left: auto;
-            border-collapse: collapse;
-        }
-        .invoice-meta td {
-            padding: 3px 0 3px 15px;
-        }
-        .invoice-meta .label {
-            color: #777;
-            font-weight: bold;
-        }
-        .section-title {
-            background-color: #f7f9fc;
-            padding: 10px 15px;
-            font-weight: bold;
-            color: #0056b3;
-            border-left: 5px solid #0056b3;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            font-size: 13px;
-            letter-spacing: 1px;
-        }
-        .device-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 40px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .device-table th {
-            background-color: #0056b3;
-            color: #fff;
-            padding: 12px 15px;
-            text-align: left;
-            font-weight: normal;
-        }
-        .device-table td {
-            border: 1px solid #e9ecef;
-            padding: 12px 15px;
-        }
-        .device-table tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        .signatures {
-            width: 100%;
-            margin-top: 80px;
-        }
-        .signatures td {
-            width: 50%;
+        .checkbox-rect {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 1px solid #000;
+            margin-right: 5px;
+            vertical-align: middle;
             text-align: center;
+            line-height: 10px;
+            font-size: 10px;
+        }
+        .signature-box {
+            height: 60px;
             vertical-align: bottom;
-            padding: 0 40px;
+            text-align: center;
         }
-        .signature-line {
-            border-bottom: 1px solid #aaa;
-            margin-bottom: 10px;
-            height: 1px;
+        .center-text {
+            text-align: center;
         }
-        .signature-name {
-            font-weight: bold;
-            color: #000;
-            margin-bottom: 5px;
-        }
-        .signature-role {
-            color: #777;
-            font-size: 0.9em;
+        .grid-bg {
+            /* Optional: add a grid background if really wanting to mimic the excel view precisely, 
+               but usually clean white is better for print. 
+               The user asked for "kek excel gini" which implies the structure/grid lines. 
+               The borders on all cells achieved that. */
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>SERVICE INVOICE</h1>
-            <p>{{ $invoice->invoice_number }}</p>
-        </div>
 
-        <div class="invoice-details">
-            <div class="invoice-details-row">
-                <div class="invoice-details-cell client-info">
-                    <div class="label" style="color:#777; margin-bottom:5px; text-transform:uppercase; font-size:11px;">Billed To</div>
-                    <strong>{{ $user->name }}</strong><br>
-                    {{ $user->email }}
-                </div>
-                <div class="invoice-details-cell invoice-meta">
-                    <table>
-                        <tr>
-                            <td class="label">Issue Date:</td>
-                            <td>{{ $invoice->issue_date->format('d M Y') }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Due Date:</td>
-                            <td>{{ $invoice->due_date->format('d M Y') }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Service Req #:</td>
-                            <td>{{ $serviceRequest->service_number }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Service Date:</td>
-                            <td>{{ $serviceRequest->request_date->format('d M Y') }}</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        </div>
+    <!-- Header Section -->
+    <table style="border: none; margin-bottom: 10px;">
+        <tr style="border: none;">
+            <td style="border: none; width: 50%; vertical-align: top;">
+                <!-- Logo Placehoder - assuming simple text or local path if available -->
+                <h1 style="margin: 0; color: #0056b3; font-style: italic;">electronic city</h1>
+            </td>
+            <td style="border: none; width: 50%; text-align: right;">
+                <div style="font-weight: bold; font-size: 14px; text-decoration: underline;">A1 FORM</div>
+                <div>IT - Department</div>
+                <div style="font-weight: bold;">Electronic City Indonesia</div>
+                <div style="font-weight: bold; font-size: 14px;">Data Request Form</div>
+            </td>
+        </tr>
+    </table>
 
-        <div class="section-title">Device Information</div>
-        
-        @if($device)
-        <table class="device-table">
-            <thead>
-                <tr>
-                    <th width="30%">Attribute</th>
-                    <th>Details</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Device Model</strong></td>
-                    <td>{{ $device->device_model->brand ?? '' }} {{ $device->device_model->model ?? '' }}</td>
-                </tr>
-                <tr>
-                    <td><strong>Serial Number</strong></td>
-                    <td>{{ $device->serial_number }}</td>
-                </tr>
-                <tr>
-                    <td><strong>Reported Complaint</strong></td>
-                    <td>{{ $device->complaint ?? '-' }}</td>
-                </tr>
-            </tbody>
-        </table>
-        @else
-        <p style="padding: 20px; text-align: center; color: #777; background: #f9f9f9;">No device details available.</p>
-        @endif
+    <table>
+        <!-- Request Info -->
+        <tr>
+            <td class="label-col">Request Date</td>
+            <td style="width: 10px; border-right: none;">:</td>
+            <td style="border-left: none;">
+                {{ $serviceRequest->request_date->format('d') }} / 
+                {{ $serviceRequest->request_date->format('m') }} / 
+                {{ $serviceRequest->request_date->format('Y') }}
+            </td>
+            <td class="label-col" style="text-align: right;">Form No :</td>
+            <td>{{ $invoice->invoice_number }}</td>
+        </tr>
+    </table>
 
-        <table class="signatures">
-            <tr>
-                <td>
-                    <div style="height: 60px;"></div>
-                    <div class="signature-line"></div>
-                    <div class="signature-name">{{ $user->name }}</div>
-                    <div class="signature-role">Customer Signature</div>
-                </td>
-                <td>
-                    <div style="height: 60px;"></div>
-                    <div class="signature-line"></div>
-                    <div class="signature-name">{{ $admin->name ?? 'Administrator' }}</div>
-                    <div class="signature-role">Authorized Signature</div>
-                </td>
-            </tr>
-        </table>
-    </div>
+    <table style="border-top: none;">
+        <!-- User Section -->
+        <tr>
+            <td colspan="3" class="section-header">Fill In by User / Requester</td>
+        </tr>
+        <tr>
+            <td class="label-col">Request Name</td>
+            <td style="width: 10px; border-right: none;">:</td>
+            <td style="border-left: none;">{{ $user->name }}</td>
+        </tr>
+        <tr>
+            <td class="label-col">Department</td>
+            <td style="width: 10px; border-right: none;">:</td>
+            <td style="border-left: none;">
+                <!-- Showing first department if available -->
+                {{ $user->departments->first()->name ?? '-' }}
+            </td>
+        </tr>
+        <tr>
+            <td class="label-col" style="vertical-align: top;">Data <br><span style="font-weight: normal; font-size: 9px;">(Device Info)</span></td>
+            <td style="width: 10px; border-right: none; vertical-align: top;">:</td>
+            <td style="border-left: none; height: 150px; vertical-align: top;">
+                @if(isset($device))
+                    <div><strong>Brand:</strong> {{ $device->device_model->brand ?? '-' }}</div>
+                    <div><strong>Model:</strong> {{ $device->device_model->model ?? '-' }}</div>
+                    <div><strong>Serial Number:</strong> {{ $device->serial_number ?? '-' }}</div>
+                @else
+                    No Device Associated
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="label-col">Database</td>
+            <td style="width: 10px; border-right: none;">:</td>
+            <td style="border-left: none;">
+                <!-- Unused for standard service request but keeping structure -->
+                -
+            </td>
+        </tr>
+        <tr>
+            <td class="label-col" style="vertical-align: top;">Description of Request</td>
+            <td style="width: 10px; border-right: none; vertical-align: top;">:</td>
+            <td style="border-left: none; height: 60px; vertical-align: top;">
+                {{ $device->complaint ?? $serviceRequest->service_request_details->first()->complaint ?? '-' }}
+            </td>
+        </tr>
+    </table>
+
+    <table style="border-top: none;">
+        <!-- IT Section -->
+        <tr>
+            <td colspan="4" class="section-header">Fill In by IT / MIS team after check the Request from user / requester</td>
+        </tr>
+        <tr>
+            <td class="label-col">Type</td>
+            <td style="width: 10px; border-right: none;">:</td>
+            <td colspan="2" style="border-left: none;">
+                @php
+                    $currentType = $serviceRequest->service_request_details->first()->service_type->name ?? '';
+                    // Standard types based on typical IT services, or static from form
+                    $types = ['New', 'Modification', 'Cancellation', 'Fix Bugs'];
+                @endphp
+                
+                @foreach($types as $type)
+                    <div style="display: inline-block; margin-right: 20px;">
+                        <span class="checkbox-rect">
+                            {{ (stripos($currentType, $type) !== false) ? 'X' : '' }}
+                        </span> {{ $type }}
+                    </div>
+                @endforeach
+                
+                <!-- Fallback if type isn't standard -->
+                @if(!in_array($currentType, $types) && $currentType)
+                     <div style="display: inline-block; margin-right: 20px;">
+                        <span class="checkbox-rect">X</span> {{ $currentType }}
+                    </div>
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="label-col" style="vertical-align: top;">Action</td>
+            <td style="width: 10px; border-right: none; vertical-align: top;">:</td>
+            <td colspan="2" style="border-left: none; height: 120px; vertical-align: top;">
+                <ul style="margin: 0; padding-left: 20px;">
+                @foreach($serviceRequest->service_costs as $cost)
+                    <li>
+                        {{ $cost->cost_type->name ?? 'Cost' }}: {{ $cost->description ?? '-' }} 
+                        (Rp {{ number_format($cost->amount, 0, ',', '.') }})
+                    </li>
+                @endforeach
+                
+                @if($serviceRequest->service_costs->isEmpty())
+                    <li>Check and Verification</li>
+                @endif
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-col">Planning</td>
+            <td style="width: 10px; border-right: none;">:</td>
+            <td colspan="2" style="border-left: none;">
+                <table style="border: none; width: 100%;">
+                    <tr style="border: none;">
+                        <td style="border: none; width: 150px;">
+                            {{ $serviceRequest->request_date->diffInDays($serviceRequest->estimated_date) }} day(s)
+                        </td>
+                        <td class="label-col" style="border: none; width: 60px;">Actual</td>
+                        <td style="border: none; width: 10px;">:</td>
+                        <td style="border: none;">
+                             {{ $serviceRequest->request_date->diffInDays($invoice->issue_date) }} day(s)
+                        </td>
+                         <td class="label-col" style="border: none; width: 60px;">Test Doc</td>
+                        <td style="border: none; width: 10px;">:</td>
+                        <td style="border: none;">
+                             <span class="checkbox-rect"></span>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-col">Start Date</td>
+            <td style="width: 10px; border-right: none;">:</td>
+             <td colspan="2" style="border-left: none;">
+                <table style="border: none; width: 100%;">
+                    <tr style="border: none;">
+                        <td style="border: none; width: 150px;">
+                             {{ $serviceRequest->request_date->format('d M Y') }}
+                        </td>
+                        <td class="label-col" style="border: none; width: 60px;">Target</td>
+                        <td style="border: none; width: 10px;">:</td>
+                        <td style="border: none;">
+                             {{ $serviceRequest->estimated_date ? $serviceRequest->estimated_date->format('d M Y') : '-' }}
+                        </td>
+                         <td class="label-col" style="border: none; width: 60px;">Finish</td>
+                        <td style="border: none; width: 10px;">:</td>
+                        <td style="border: none;">
+                             {{ $invoice->issue_date->format('d M Y') }}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-col">Programmer</td>
+            <td style="width: 10px; border-right: none;">:</td>
+             <td colspan="2" style="border-left: none;">
+                <table style="border: none; width: 100%;">
+                    <tr style="border: none;">
+                        <td style="border: none; width: 40%;">
+                             {{ $admin->name ?? '-' }}
+                        </td>
+                        <td class="label-col" style="border: none; width: 60px;">Analyst</td>
+                        <td style="border: none; width: 10px;">:</td>
+                        <td style="border: none;">
+                             {{ $admin->name ?? '-' }}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-col">Comment</td>
+            <td style="width: 10px; border-right: none;">:</td>
+             <td colspan="2" style="border-left: none; height: 40px;">
+                <!-- Placeholder for comments -->
+            </td>
+        </tr>
+    </table>
+
+    <!-- Signatures -->
+    <table style="border-top: none;">
+        <tr>
+            <th style="width: 16%;">Requester by,<br>User/Supervisor</th>
+            <th style="width: 16%;">Review by,<br>IT Manager</th>
+            <th style="width: 16%;">Approved by,<br>Director</th>
+            <th style="width: 16%;">Approved by,<br>Director</th>
+            <th style="width: 16%;">Tested,</th>
+            <th style="width: 20%;">Executed by,</th>
+        </tr>
+        <tr>
+            <!-- Requester -->
+            <td class="signature-box">
+                <br><br>
+                <div style="font-weight: bold; text-decoration: underline;">{{ $user->name }}</div>
+                <div>Date: {{ $serviceRequest->request_date->format('d/m/Y') }}</div>
+            </td>
+            <!-- Review IT Manager -->
+            <td class="signature-box">
+                 <br><br>
+                 <div style="border-bottom: 1px solid #aaa; width: 80%; margin: 0 auto;"></div>
+                 <div>Date:</div>
+            </td>
+             <!-- Approved Director 1 -->
+            <td class="signature-box">
+                 <br><br>
+                 <div style="border-bottom: 1px solid #aaa; width: 80%; margin: 0 auto;"></div>
+                 <div>Date:</div>
+            </td>
+             <!-- Approved Director 2 -->
+            <td class="signature-box">
+                 <br><br>
+                 <div style="border-bottom: 1px solid #aaa; width: 80%; margin: 0 auto;"></div>
+                 <div>Date:</div>
+            </td>
+             <!-- Tested -->
+            <td class="signature-box">
+                 <br><br>
+                 <div style="border-bottom: 1px solid #aaa; width: 80%; margin: 0 auto;"></div>
+                 <div>Date:</div>
+            </td>
+             <!-- Executed -->
+            <td class="signature-box">
+                 <br><br>
+                 <div style="font-weight: bold; text-decoration: underline;">{{ $admin->name ?? 'Admin' }}</div>
+                 <div>Date: {{ $invoice->issue_date->format('d/m/Y') }}</div>
+            </td>
+        </tr>
+    </table>
+    
+    <div style="font-size: 10px; margin-top: 5px;">Update : {{ now()->format('F Y') }}</div>
+
 </body>
 </html>
