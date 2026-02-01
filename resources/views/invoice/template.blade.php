@@ -85,7 +85,7 @@
         <tr style="border: none;">
             <td style="border: none; width: 50%; vertical-align: top;">
                 <!-- Logo Placehoder - assuming simple text or local path if available -->
-                <h1 style="margin: 0; color: #0056b3; font-style: italic;">electronic city</h1>
+                <img src="{{ public_path('images/logo.png') }}" alt="Logo" class="header-logo" style="width: 120px">
             </td>
             <td style="border: none; width: 50%; text-align: right;">
                 <div style="font-weight: bold; font-size: 14px; text-decoration: underline;">A1 FORM</div>

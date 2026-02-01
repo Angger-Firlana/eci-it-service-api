@@ -205,7 +205,7 @@ class ServiceRequestService
                 $this->syncDetails($serviceRequest, $data['details']);
             }
 
-            if ($newStatusId == 8 && $oldStatusId != 8) {
+            if ($newStatusId == 7 && $oldStatusId != 7) {
                 $this->invoiceService->createInvoiceForServiceRequest($serviceRequest, $data);
             }
 
