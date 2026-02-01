@@ -68,6 +68,8 @@ Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
     Route::delete('/{id}', [ServiceRequestController::class, 'destroy']);
     Route::get('/{id}/allowed-transitions', [ServiceRequestController::class, 'allowedTransitions']);
     Route::get('/{id}/download-invoice', [ExportInvoiceController::class, 'download']);
+    Route::get('/{id}/preview-invoice', [ExportInvoiceController::class, 'downloadPreview']);
+    Route::get('/{id}/can-print-invoice', [ExportInvoiceController::class, 'canPrint']);
     
     //costs
     Route::get('/{serviceRequestId}/costs', [ServiceRequestCostController::class, 'index']);
