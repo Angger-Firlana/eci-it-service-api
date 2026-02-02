@@ -21,7 +21,7 @@ class StoreServiceRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [
+        return [
             'admin_id' => 'required|exists:users,id',
             'user_id' => 'sometimes|exists:users,id',
             'request_date' => 'required|date',
@@ -35,17 +35,28 @@ class StoreServiceRequest extends FormRequest
             'details.*.serial_number' => 'required_without:details.*.device_id|string',
             'details.*.complaint' => 'required|string',
             'details.*.complaint_images' => 'sometimes|array',
+            'details.*.complaint_images.*' => 'sometimes|file|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ];
+    }
 
-        // Dynamic validation for complaint images
-        foreach ($this->input('details', []) as $key => $detail) {
-            if (isset($detail['complaint_images']) && is_array($detail['complaint_images'])) {
-                foreach ($detail['complaint_images'] as $imageKey => $image) {
-                    $rules["details.{$key}.complaint_images.{$imageKey}"] = 'sometimes|file|mimes:jpeg,png,jpg,gif,svg|max:2048';
+    protected function prepareForValidation()
+    {
+        // Debug: Log incoming data
+        \Log::info('Request data:', $this->all());
+        \Log::info('Files:', $this->allFiles());
+        
+        // Ensure complaint_images is properly formatted
+        $details = $this->input('details', []);
+        
+        foreach ($details as $key => $detail) {
+            if (isset($detail['complaint_images'])) {
+                // Handle both array and single file cases
+                if (!is_array($detail['complaint_images'])) {
+                    $details[$key]['complaint_images'] = [$detail['complaint_images']];
                 }
             }
         }
-
-        return $rules;
+        
+        $this->merge(['details' => $details]);
     }
 }
