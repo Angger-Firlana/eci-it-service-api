@@ -259,6 +259,7 @@ class ServiceRequestService
             'user:id,name,email',
             'user.departments:id,name',
             'admin:id,name,email',
+            'admin.departments:id,name',
             'status:id,name',
             'service_request_details:id,service_request_id,service_type_id,device_id,complaint',
             'service_request_details.device:id,device_model_id,serial_number',
