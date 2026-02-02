@@ -65,6 +65,12 @@ class ExportInvoiceService
             throw new \Exception('Invoice tidak dapat dicetak. Status request belum disetujui admin.');
         }
 
+        $user = $serviceRequest->user;
+        
+        if(!isset($user)){
+            $user = $serviceRequest->admin;
+        }
+
         // Get costs for this service request
         $costs = ServiceCost::where('service_request_id', $serviceRequestId)->get();
         $totalAmount = $costs->sum('amount');
@@ -79,7 +85,7 @@ class ExportInvoiceService
         $data = [
             'invoice' => $invoice,
             'serviceRequest' => $serviceRequest,
-            'user' => $serviceRequest->user,
+            'user' => $user,
             'admin' => $serviceRequest->admin,
             'device' => $serviceRequest->service_request_details->first()->device ?? null,
             'costs' => $costs,
