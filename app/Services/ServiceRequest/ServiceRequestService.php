@@ -125,7 +125,7 @@ class ServiceRequestService
             'user_id'          => $userId,
             'request_date'     => now(),
             'estimated_date'   => $data['estimated_date'] ?? null,
-            'status_id'        => $data['status_id'] ?? Status::PENDING,
+            'status_id'        => $data['status_id'] ?? $this->getServiceRequestStatusId('PENDING'),
         ]);
     }
 
@@ -177,7 +177,7 @@ class ServiceRequestService
             $serviceRequest = ServiceRequest::findOrFail($id);
             $oldStatusId = $serviceRequest->status_id;
 
-            $newStatusId = $data['status_id'] ?? $serviceRequest->status_id;
+            $newStatusId = Status::where('code', $data['status_code'])->value('id') ?? old('status_id');
             $status = $this->getServiceRequestStatusOrFail($newStatusId);
 
             $this->auditLogService->createAuditLog([
@@ -198,14 +198,14 @@ class ServiceRequestService
 
             $serviceRequest->update(array_filter([
                 'estimated_date' => $data['estimated_date'] ?? $serviceRequest->estimated_date,
-                'status_id' => $data['status_id'] ?? $serviceRequest->status_id,
+                'status_id' => $newStatusId,
             ]));
 
             if (isset($data['details'])) {
                 $this->syncDetails($serviceRequest, $data['details']);
             }
 
-            if ($newStatusId == 7 && $oldStatusId != 7) {
+            if ($status->code === 'IN_PROGRESS' && $oldStatusId != $newStatusId) {
                 $this->invoiceService->createInvoiceForServiceRequest($serviceRequest, $data);
             }
 
@@ -217,7 +217,8 @@ class ServiceRequestService
     {
         $serviceRequest = ServiceRequest::findOrFail($id);
 
-        if ($serviceRequest->status_id == 3) {
+        $serviceRequest->loadMissing('status');
+        if ($serviceRequest->status?->code === 'COMPLETED') {
             throw new \Exception('Cannot delete completed service request');
         }
 
@@ -301,12 +302,17 @@ class ServiceRequestService
 
     private function getServiceRequestStatusOrFail(int $statusId): Status
     {
-        $status = Status::findOrFail($statusId);
+        $status = Status::with('entity_type')->findOrFail($statusId);
 
-        if ($status->entity_type_id != 1) {
+        if ($status->entity_type?->code !== 'SERVICE_REQUEST') {
             throw new \Exception('Status tidak valid');
         }
 
         return $status;
+    }
+
+    private function getServiceRequestStatusId(string $code): int
+    {
+        return Status::idForEntityCode('SERVICE_REQUEST', $code);
     }
 }

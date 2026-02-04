@@ -46,3 +46,21 @@ Modified `checkAndUpdateServiceRequestStatus()` in `app/Services/ServiceRequest/
   - Any rejection → `REJECTED_BY_ABOVE` (6)
   - All approve → `APPROVED_BY_ABOVE` (5) → auto → `IN_PROGRESS` (7)
   - Admin marks → `COMPLETED` (8)
+
+## Session: 2026-02-04 - Replace Hardcoded Status IDs With Status Codes
+
+### Goal
+Ensure all service store/update flows resolve `status_id` by status `code` from `StatusSeeder` (entity-aware), instead of hardcoded numeric IDs.
+
+### Changes
+1. Added helpers in `Status` model to fetch a status ID by entity type code + status code.
+2. Updated service request create/update/delete flows to use status codes (`PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`) and validate entity type by code.
+3. Updated vendor approval flows to use status codes (`PENDING`, `APPROVED`, `REJECTED`) and service request transitions by code.
+4. Updated invoice creation flow to use invoice status code (`SENT`).
+
+### Files Modified
+- `app/Models/Status.php`
+- `app/Services/ServiceRequest/ServiceRequestService.php`
+- `app/Services/ServiceRequest/ServiceRequestCancellationService.php`
+- `app/Services/ServiceRequest/ServiceRequestApprovalService.php`
+- `app/Services/InvoiceService.php`

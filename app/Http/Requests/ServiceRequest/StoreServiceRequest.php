@@ -25,7 +25,7 @@ class StoreServiceRequest extends FormRequest
             'admin_id' => 'required|exists:users,id',
             'user_id' => 'sometimes|exists:users,id',
             'request_date' => 'required|date',
-            'status_id'  => 'required|exists:statuses,id',
+            'status_code'  => 'required|exists:statuses,code',
             'details' => 'required|array',
             'details.*.service_type_id' => 'required|exists:service_types,id',
             'details.*.device_id' => 'sometimes|exists:devices,id',
@@ -41,10 +41,6 @@ class StoreServiceRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        // Debug: Log incoming data
-        \Log::info('Request data:', $this->all());
-        \Log::info('Files:', $this->allFiles());
-        
         // Ensure complaint_images is properly formatted
         $details = $this->input('details', []);
         

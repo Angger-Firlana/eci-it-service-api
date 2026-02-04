@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Invoice;
 use App\Models\ServiceRequest;
+use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -142,7 +143,12 @@ class InvoiceService
             'issue_date' => now(),
             'due_date' => now()->addDays(7),
             'total_amount' => $totalAmount,
-            'status_id' => 19,
+            'status_id' => $this->getInvoiceStatusId('SENT'),
         ]);
+    }
+
+    private function getInvoiceStatusId(string $code): int
+    {
+        return Status::idForEntityCode('INVOICE', $code);
     }
 }

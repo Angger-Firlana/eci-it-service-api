@@ -6,6 +6,7 @@ use App\Models\ApprovalPolicy;
 use App\Models\ApprovalPolicyStep;
 use App\Models\ConditionType;
 use App\Models\ServiceCost;
+use App\Models\Status;
 use App\Models\User;
 use App\Models\VendorApproval;
 use App\Models\ServiceRequest;
@@ -42,6 +43,9 @@ class ServiceRequestApprovalService
             throw new \Exception('No approval policy found for the given service request cost.');
         }
 
+        $vendorPendingStatusId = $this->getVendorApprovalStatusId('PENDING');
+        $inReviewAboveStatusId = $this->getServiceRequestStatusId('IN_REVIEW_ABOVE');
+
         // Use the 'approvers' key from the validated data
         foreach ($approvalsData['approvers'] as $approverId) {
             $approver = User::findOrFail($approverId);
@@ -58,7 +62,7 @@ class ServiceRequestApprovalService
                 'approver_id' => $approverId,
                 'assigned_by' => auth()->id(),
                 'assigned_at' => now(),
-                'status_id' => 15,
+                'status_id' => $vendorPendingStatusId,
                 'approval_policy_id' => $approvalPolicy->id,
                 'approval_policy_step_id' => $approvalPolicyStep->id,
             ]);
@@ -67,7 +71,7 @@ class ServiceRequestApprovalService
         }
 
         $oldStatusId = $serviceRequest->status_id;
-        $newStatusId = 4;
+        $newStatusId = $inReviewAboveStatusId;
 
         $this->auditLogService->createAuditLog([
             'actor_id' => auth()->id(),
@@ -90,6 +94,11 @@ class ServiceRequestApprovalService
         $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
         $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
         $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
+
+        $vendorPendingStatusId = $this->getVendorApprovalStatusId('PENDING');
+        $inReviewAboveStatusId = $this->getServiceRequestStatusId('IN_REVIEW_ABOVE');
+        $oldStatusId = $serviceRequest->status_id;
+        $newStatusId = $inReviewAboveStatusId;
         
         foreach($approvals['approvers'] as $approverId){
             $approver = User::findOrFail($approverId);
@@ -100,13 +109,10 @@ class ServiceRequestApprovalService
                 'approver_id' => $approverId,
                 'assigned_by' => auth()->id(),
                 'assigned_at' => now(),
-                'status_id' => 15,
+                'status_id' => $vendorPendingStatusId,
                 'approval_policy_id' => $approvalPolicy->id,
                 'approval_policy_step_id' => $approvalPolicyStep->id,
             ]);
-
-            $oldStatusId = $serviceRequest->status_id;
-            $newStatusId = 4;
         }
        
         $this->auditLogService->createAuditLog([
@@ -127,14 +133,14 @@ class ServiceRequestApprovalService
     public function approveVendorRequest(int $approvalId, array $data): VendorApproval
     {
         $approval = VendorApproval::findOrFail($approvalId);
-        
-        $approval->update([
-            'approved_at' => now(),
-            'status_id' => 16,
-        ]);
 
         $oldStatusId = $approval->status_id;
-        $newStatusId = 16;
+        $newStatusId = $this->getVendorApprovalStatusId('APPROVED');
+
+        $approval->update([
+            'approved_at' => now(),
+            'status_id' => $newStatusId,
+        ]);
 
         $this->auditLogService->createAuditLog([
             'actor_id' => auth()->id(),
@@ -155,12 +161,15 @@ class ServiceRequestApprovalService
     public function approveRequestByAdmin($id, array $data): ServiceRequest
     {
         $serviceRequest = ServiceRequest::findOrFail($id);
-        
+
+        $oldStatusId = $serviceRequest->status_id;
+        $newStatusId = $this->getServiceRequestStatusId('APPROVED_BY_ADMIN');
+
         $serviceRequest->update([
-            'status_id' => 3
+            'status_id' => $newStatusId
         ]);
-        
-        $this->auditLogService->createStatusAuditLog($serviceRequest, $serviceRequest->status, $serviceRequest->status_id, 3, $data);
+
+        $this->auditLogService->createStatusAuditLog($serviceRequest, $serviceRequest->status, $oldStatusId, $newStatusId, $data);
         
 
         return $serviceRequest->load(['approver', 'assigned_by', 'service_request']);
@@ -172,7 +181,7 @@ class ServiceRequestApprovalService
         
         $approval->update([
             'approved_at' => now(),
-            'status_id' => 17,
+            'status_id' => $this->getVendorApprovalStatusId('REJECTED'),
             'notes' => $data['notes'] ?? $approval->notes,
         ]);
 
@@ -206,24 +215,30 @@ class ServiceRequestApprovalService
 
     private function checkAndUpdateServiceRequestStatus(ServiceRequest $serviceRequest): void
     {
+        $vendorPendingStatusId = $this->getVendorApprovalStatusId('PENDING');
+        $vendorRejectedStatusId = $this->getVendorApprovalStatusId('REJECTED');
+        $rejectedByAboveStatusId = $this->getServiceRequestStatusId('REJECTED_BY_ABOVE');
+        $approvedByAboveStatusId = $this->getServiceRequestStatusId('APPROVED_BY_ABOVE');
+        $inProgressStatusId = $this->getServiceRequestStatusId('IN_PROGRESS');
+
         $pendingApprovals = $serviceRequest->vendor_approvals()
-            ->where('status_id', 15)
+            ->where('status_id', $vendorPendingStatusId)
             ->count();
         
         $rejectedApprovals = $serviceRequest->vendor_approvals()
-            ->where('status_id', 17)
+            ->where('status_id', $vendorRejectedStatusId)
             ->count();
         
         if ($rejectedApprovals > 0) {
             // Any rejection -> REJECTED_BY_ABOVE (6)
             $oldStatusId = $serviceRequest->status_id;
-            $serviceRequest->update(['status_id' => 6]);
+            $serviceRequest->update(['status_id' => $rejectedByAboveStatusId]);
             $this->auditLogService->createAuditLog([
                 'actor_id' => auth()->id(),
                 'entity_id' => $serviceRequest->id,
                 'entity_type_id' => 1,
                 'old_status_id' => $oldStatusId,
-                'new_status_id' => 6,
+                'new_status_id' => $rejectedByAboveStatusId,
                 'action' => 'STATUS_CHANGE',
                 'notes' => 'Request ditolak oleh atasan',
             ]);
@@ -232,25 +247,25 @@ class ServiceRequestApprovalService
             $oldStatusId = $serviceRequest->status_id;
             
             // First transition to APPROVED_BY_ABOVE
-            $serviceRequest->update(['status_id' => 5]);
+            $serviceRequest->update(['status_id' => $approvedByAboveStatusId]);
             $this->auditLogService->createAuditLog([
                 'actor_id' => auth()->id(),
                 'entity_id' => $serviceRequest->id,
                 'entity_type_id' => 1,
                 'old_status_id' => $oldStatusId,
-                'new_status_id' => 5,
+                'new_status_id' => $approvedByAboveStatusId,
                 'action' => 'STATUS_CHANGE',
                 'notes' => 'Semua atasan sudah menyetujui',
             ]);
             
             // Auto-transition to IN_PROGRESS
-            $serviceRequest->update(['status_id' => 7]);
+            $serviceRequest->update(['status_id' => $inProgressStatusId]);
             $this->auditLogService->createAuditLog([
                 'actor_id' => auth()->id(),
                 'entity_id' => $serviceRequest->id,
                 'entity_type_id' => 1,
-                'old_status_id' => 5,
-                'new_status_id' => 7,
+                'old_status_id' => $approvedByAboveStatusId,
+                'new_status_id' => $inProgressStatusId,
                 'action' => 'STATUS_CHANGE',
                 'notes' => 'Service dimulai (auto-transition)',
             ]);
@@ -283,5 +298,15 @@ class ServiceRequestApprovalService
         $data['approvalPolicy'] = $approvalPolicy;
         $data['approvalPolicySteps'] = $approvalPolicySteps;
         return $data;
+    }
+
+    private function getServiceRequestStatusId(string $code): int
+    {
+        return Status::idForEntityCode('SERVICE_REQUEST', $code);
+    }
+
+    private function getVendorApprovalStatusId(string $code): int
+    {
+        return Status::idForEntityCode('VENDOR_APPROVAL', $code);
     }
 }

@@ -46,6 +46,26 @@ class Status extends Model
 		'name'
 	];
 
+	public static function forEntityCode(string $entityCode, string $statusCode): self
+	{
+		$status = self::where('code', $statusCode)
+			->whereHas('entity_type', function ($query) use ($entityCode) {
+				$query->where('code', $entityCode);
+			})
+			->first();
+
+		if (!$status) {
+			throw new \RuntimeException("Status {$statusCode} for {$entityCode} not found. Check StatusSeeder.");
+		}
+
+		return $status;
+	}
+
+	public static function idForEntityCode(string $entityCode, string $statusCode): int
+	{
+		return self::forEntityCode($entityCode, $statusCode)->id;
+	}
+
 	public function entity_type()
 	{
 		return $this->belongsTo(EntityType::class);
