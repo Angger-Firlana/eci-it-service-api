@@ -57,10 +57,23 @@ Ensure all service store/update flows resolve `status_id` by status `code` from 
 2. Updated service request create/update/delete flows to use status codes (`PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`) and validate entity type by code.
 3. Updated vendor approval flows to use status codes (`PENDING`, `APPROVED`, `REJECTED`) and service request transitions by code.
 4. Updated invoice creation flow to use invoice status code (`SENT`).
+5. Added enums for service request, vendor approval, and invoice status codes to remove magic strings.
+6. Added `status_code` request support (validated per entity type and mapped to `status_id`) for service request store/update.
+7. Added unique constraint on `statuses` (`entity_type_id`, `code`) to enforce stable business keys.
+8. Updated seeders and invoice export checks to use enums and expose status `code` in service request show payload.
 
 ### Files Modified
+- `app/Enums/ServiceRequestStatusCode.php`
+- `app/Enums/VendorApprovalStatusCode.php`
+- `app/Enums/InvoiceStatusCode.php`
 - `app/Models/Status.php`
+- `app/Services/ExportInvoiceService.php`
 - `app/Services/ServiceRequest/ServiceRequestService.php`
 - `app/Services/ServiceRequest/ServiceRequestCancellationService.php`
 - `app/Services/ServiceRequest/ServiceRequestApprovalService.php`
 - `app/Services/InvoiceService.php`
+- `app/Http/Requests/ServiceRequest/StoreServiceRequest.php`
+- `app/Http/Requests/ServiceRequest/UpdateServiceRequest.php`
+- `database/seeders/StatusSeeder.php`
+- `database/seeders/StatusTransitionSeeder.php`
+- `database/migrations/2026_02_04_000001_add_unique_status_code_per_entity.php`

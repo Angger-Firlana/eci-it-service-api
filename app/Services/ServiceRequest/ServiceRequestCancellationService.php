@@ -2,6 +2,7 @@
 
 namespace App\Services\ServiceRequest;
 
+use App\Enums\ServiceRequestStatusCode;
 use App\Models\ServiceCancellation;
 use App\Models\ServiceRequest;
 use App\Models\Status;
@@ -18,7 +19,7 @@ class ServiceRequestCancellationService
         ]);
 
         // Update service request status to cancelled
-        $serviceRequest->update(['status_id' => $this->getServiceRequestStatusId('CANCELLED')]);
+        $serviceRequest->update(['status_id' => $this->getServiceRequestStatusId(ServiceRequestStatusCode::CANCELLED)]);
 
         return $cancellation->load('cancelledBy');
     }
@@ -43,7 +44,7 @@ class ServiceRequestCancellationService
         
         // Update service request status back to pending
         $serviceRequest = $cancellation->serviceRequest;
-        $serviceRequest->update(['status_id' => $this->getServiceRequestStatusId('PENDING')]);
+        $serviceRequest->update(['status_id' => $this->getServiceRequestStatusId(ServiceRequestStatusCode::PENDING)]);
         
         $cancellation->delete();
     }
@@ -65,7 +66,7 @@ class ServiceRequestCancellationService
         return $cancellations;
     }
 
-    private function getServiceRequestStatusId(string $code): int
+    private function getServiceRequestStatusId(ServiceRequestStatusCode|string $code): int
     {
         return Status::idForEntityCode('SERVICE_REQUEST', $code);
     }

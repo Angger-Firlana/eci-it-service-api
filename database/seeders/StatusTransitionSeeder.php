@@ -7,6 +7,7 @@ use App\Models\StatusTransition;
 use App\Models\Status;
 use App\Models\Role;
 use App\Models\EntityType;
+use App\Enums\ServiceRequestStatusCode;
 use RuntimeException;
 
 class StatusTransitionSeeder extends Seeder
@@ -41,17 +42,17 @@ class StatusTransitionSeeder extends Seeder
         };
 
         // Fetch statuses (must match StatusSeeder)
-        $pending = $getStatus('PENDING');
-        $inReviewAdmin = $getStatus('IN_REVIEW_ADMIN');
-        $approvedByAdmin = $getStatus('APPROVED_BY_ADMIN');
-        $inReviewAbove = $getStatus('IN_REVIEW_ABOVE');
-        $approvedByAbove = $getStatus('APPROVED_BY_ABOVE');
-        $inReviewVendor = $getStatus('IN_REVIEW_VENDOR');
-        $approvedByVendor = $getStatus('APPROVED_BY_VENDOR');
-        $rejected = $getStatus('REJECTED');
-        $cancelled = $getStatus('CANCELLED');
-        $inProgress = $getStatus('IN_PROGRESS');
-        $completed = $getStatus('COMPLETED');
+        $pending = $getStatus(ServiceRequestStatusCode::PENDING->value);
+        $inReviewAdmin = $getStatus(ServiceRequestStatusCode::IN_REVIEW_ADMIN->value);
+        $approvedByAdmin = $getStatus(ServiceRequestStatusCode::APPROVED_BY_ADMIN->value);
+        $inReviewAbove = $getStatus(ServiceRequestStatusCode::IN_REVIEW_ABOVE->value);
+        $approvedByAbove = $getStatus(ServiceRequestStatusCode::APPROVED_BY_ABOVE->value);
+        $inReviewVendor = $getStatus(ServiceRequestStatusCode::IN_REVIEW_VENDOR->value);
+        $approvedByVendor = $getStatus(ServiceRequestStatusCode::APPROVED_BY_VENDOR->value);
+        $rejected = $getStatus(ServiceRequestStatusCode::REJECTED->value);
+        $cancelled = $getStatus(ServiceRequestStatusCode::CANCELLED->value);
+        $inProgress = $getStatus(ServiceRequestStatusCode::IN_PROGRESS->value);
+        $completed = $getStatus(ServiceRequestStatusCode::COMPLETED->value);
 
         // Fetch Roles
         $admin = $getRole('admin');

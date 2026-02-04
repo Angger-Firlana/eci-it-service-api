@@ -2,6 +2,8 @@
 
 namespace App\Services\ServiceRequest;
 
+use App\Enums\ServiceRequestStatusCode;
+use App\Enums\VendorApprovalStatusCode;
 use App\Models\ApprovalPolicy;
 use App\Models\ApprovalPolicyStep;
 use App\Models\ConditionType;
@@ -43,8 +45,8 @@ class ServiceRequestApprovalService
             throw new \Exception('No approval policy found for the given service request cost.');
         }
 
-        $vendorPendingStatusId = $this->getVendorApprovalStatusId('PENDING');
-        $inReviewAboveStatusId = $this->getServiceRequestStatusId('IN_REVIEW_ABOVE');
+        $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
+        $inReviewAboveStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::IN_REVIEW_ABOVE);
 
         // Use the 'approvers' key from the validated data
         foreach ($approvalsData['approvers'] as $approverId) {
@@ -95,8 +97,8 @@ class ServiceRequestApprovalService
         $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
         $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
 
-        $vendorPendingStatusId = $this->getVendorApprovalStatusId('PENDING');
-        $inReviewAboveStatusId = $this->getServiceRequestStatusId('IN_REVIEW_ABOVE');
+        $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
+        $inReviewAboveStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::IN_REVIEW_ABOVE);
         $oldStatusId = $serviceRequest->status_id;
         $newStatusId = $inReviewAboveStatusId;
         
@@ -135,7 +137,7 @@ class ServiceRequestApprovalService
         $approval = VendorApproval::findOrFail($approvalId);
 
         $oldStatusId = $approval->status_id;
-        $newStatusId = $this->getVendorApprovalStatusId('APPROVED');
+        $newStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::APPROVED);
 
         $approval->update([
             'approved_at' => now(),
@@ -163,7 +165,7 @@ class ServiceRequestApprovalService
         $serviceRequest = ServiceRequest::findOrFail($id);
 
         $oldStatusId = $serviceRequest->status_id;
-        $newStatusId = $this->getServiceRequestStatusId('APPROVED_BY_ADMIN');
+        $newStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::APPROVED_BY_ADMIN);
 
         $serviceRequest->update([
             'status_id' => $newStatusId
@@ -181,7 +183,7 @@ class ServiceRequestApprovalService
         
         $approval->update([
             'approved_at' => now(),
-            'status_id' => $this->getVendorApprovalStatusId('REJECTED'),
+            'status_id' => $this->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED),
             'notes' => $data['notes'] ?? $approval->notes,
         ]);
 
@@ -215,11 +217,11 @@ class ServiceRequestApprovalService
 
     private function checkAndUpdateServiceRequestStatus(ServiceRequest $serviceRequest): void
     {
-        $vendorPendingStatusId = $this->getVendorApprovalStatusId('PENDING');
-        $vendorRejectedStatusId = $this->getVendorApprovalStatusId('REJECTED');
-        $rejectedByAboveStatusId = $this->getServiceRequestStatusId('REJECTED_BY_ABOVE');
-        $approvedByAboveStatusId = $this->getServiceRequestStatusId('APPROVED_BY_ABOVE');
-        $inProgressStatusId = $this->getServiceRequestStatusId('IN_PROGRESS');
+        $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
+        $vendorRejectedStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED);
+        $rejectedByAboveStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REJECTED_BY_ABOVE);
+        $approvedByAboveStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::APPROVED_BY_ABOVE);
+        $inProgressStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::IN_PROGRESS);
 
         $pendingApprovals = $serviceRequest->vendor_approvals()
             ->where('status_id', $vendorPendingStatusId)
@@ -300,12 +302,12 @@ class ServiceRequestApprovalService
         return $data;
     }
 
-    private function getServiceRequestStatusId(string $code): int
+    private function getServiceRequestStatusId(ServiceRequestStatusCode|string $code): int
     {
         return Status::idForEntityCode('SERVICE_REQUEST', $code);
     }
 
-    private function getVendorApprovalStatusId(string $code): int
+    private function getVendorApprovalStatusId(VendorApprovalStatusCode|string $code): int
     {
         return Status::idForEntityCode('VENDOR_APPROVAL', $code);
     }

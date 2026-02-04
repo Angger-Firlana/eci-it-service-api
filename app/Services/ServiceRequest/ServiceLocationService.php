@@ -15,11 +15,9 @@ class ServiceLocationService
             'location_type' => $data['location_type'],
             'vendor_id' => $data['vendor_id'] ?? null,
             'address' => $data['address'] ?? null,
-            'city' => $data['city'] ?? null,
-            'province' => $data['province'] ?? null,
-            'postal_code' => $data['postal_code'] ?? null,
             'maps_url' => $data['maps_url'] ?? null,
-            'is_active' => $data['is_active'],
+            'phone_number' => $data['phone_number'],
+            'is_active' => $data['is_active']
         ]);
         
 
@@ -47,17 +45,9 @@ class ServiceLocationService
             $updateData['address'] = $data['address'];
         }
 
-        if (array_key_exists('city', $data)) {
-            $updateData['city'] = $data['city'];
-        }
-
-        if (array_key_exists('province', $data)) {
-            $updateData['province'] = $data['province'];
-        }
-
-        if (array_key_exists('postal_code', $data)) {
-            $updateData['postal_code'] = $data['postal_code'];
-        }
+        if(array_key_exists('phone_number')){
+            $updateData['phone_number'] = $data['phone_number'];
+        };
 
         if (array_key_exists('maps_url', $data)) {
             $updateData['maps_url'] = $data['maps_url'];

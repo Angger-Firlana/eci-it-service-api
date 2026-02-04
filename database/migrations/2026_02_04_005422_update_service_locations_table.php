@@ -16,6 +16,7 @@ return new class extends Migration
             $table->dropColumn('city');
             $table->dropColumn('province');
             $table->dropColumn('postal_code');
+            $table->dropColumn('maps_url');
             $table->string('phone_number');
         });
     }
@@ -28,6 +29,7 @@ return new class extends Migration
         Schema::table('service_locations', function (Blueprint $table) {
             //
             $table->string('postal_code');
+            $table->string('maps_url');
             $table->string('city');
             $table->string('province');
         });

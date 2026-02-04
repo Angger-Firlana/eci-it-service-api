@@ -2,6 +2,7 @@
 
 namespace App\Services\ServiceRequest;
 
+use App\Enums\ServiceRequestStatusCode;
 use App\Models\ServiceRequest;
 use App\Models\Status;
 use Illuminate\Http\Request;
@@ -125,7 +126,7 @@ class ServiceRequestService
             'user_id'          => $userId,
             'request_date'     => now(),
             'estimated_date'   => $data['estimated_date'] ?? null,
-            'status_id'        => $data['status_id'] ?? $this->getServiceRequestStatusId('PENDING'),
+            'status_id'        => $data['status_id'] ?? $this->getServiceRequestStatusId(ServiceRequestStatusCode::PENDING),
         ]);
     }
 
@@ -177,7 +178,7 @@ class ServiceRequestService
             $serviceRequest = ServiceRequest::findOrFail($id);
             $oldStatusId = $serviceRequest->status_id;
 
-            $newStatusId = Status::where('code', $data['status_code'])->value('id') ?? old('status_id');
+            $newStatusId = $data['status_id'] ?? $serviceRequest->status_id;
             $status = $this->getServiceRequestStatusOrFail($newStatusId);
 
             $this->auditLogService->createAuditLog([
@@ -205,7 +206,7 @@ class ServiceRequestService
                 $this->syncDetails($serviceRequest, $data['details']);
             }
 
-            if ($status->code === 'IN_PROGRESS' && $oldStatusId != $newStatusId) {
+            if ($status->code === ServiceRequestStatusCode::IN_PROGRESS->value && $oldStatusId != $newStatusId) {
                 $this->invoiceService->createInvoiceForServiceRequest($serviceRequest, $data);
             }
 
@@ -218,7 +219,7 @@ class ServiceRequestService
         $serviceRequest = ServiceRequest::findOrFail($id);
 
         $serviceRequest->loadMissing('status');
-        if ($serviceRequest->status?->code === 'COMPLETED') {
+        if ($serviceRequest->status?->code === ServiceRequestStatusCode::COMPLETED->value) {
             throw new \Exception('Cannot delete completed service request');
         }
 
@@ -261,7 +262,7 @@ class ServiceRequestService
             'user.departments:id,name',
             'admin:id,name,email',
             'admin.departments:id,name',
-            'status:id,name',
+            'status:id,name,code',
             'service_request_details:id,service_request_id,service_type_id,device_id,complaint',
             'service_request_details.device:id,device_model_id,serial_number',
             'service_request_details.device.device_model:id,device_type_id,brand,model',
@@ -269,7 +270,7 @@ class ServiceRequestService
             'service_request_details.service_type:id,name',
             'service_request_details.complaint_images',
             'vendor_approvals:id,service_request_id,approver_id,assigned_by,assigned_at,approved_at,status_id,created_at,updated_at',
-            'vendor_approvals.status:id,name',
+            'vendor_approvals.status:id,name,code',
             'vendor_approvals.approver:id,name',
             'vendor_approvals.assigned_by:id,name'
         ];
@@ -311,7 +312,7 @@ class ServiceRequestService
         return $status;
     }
 
-    private function getServiceRequestStatusId(string $code): int
+    private function getServiceRequestStatusId(ServiceRequestStatusCode|string $code): int
     {
         return Status::idForEntityCode('SERVICE_REQUEST', $code);
     }

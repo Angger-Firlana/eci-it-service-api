@@ -40,10 +40,7 @@ class ServiceLocation extends Model
 		'vendor_id',
 		'location_type',
 		'address',
-		'city',
-		'province',
-		'postal_code',
-		'maps_url',
+		'phone_number',
 		'is_active'
 	];
 

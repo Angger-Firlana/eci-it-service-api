@@ -31,9 +31,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Status extends Model
 {
-	const PENDING = 1;
-
-
 	protected $table = 'statuses';
 
 	protected $casts = [
@@ -46,22 +43,24 @@ class Status extends Model
 		'name'
 	];
 
-	public static function forEntityCode(string $entityCode, string $statusCode): self
+	public static function forEntityCode(string $entityCode, string|\BackedEnum $statusCode): self
 	{
-		$status = self::where('code', $statusCode)
+		$code = $statusCode instanceof \BackedEnum ? $statusCode->value : $statusCode;
+
+		$status = self::where('code', $code)
 			->whereHas('entity_type', function ($query) use ($entityCode) {
 				$query->where('code', $entityCode);
 			})
 			->first();
 
 		if (!$status) {
-			throw new \RuntimeException("Status {$statusCode} for {$entityCode} not found. Check StatusSeeder.");
+			throw new \RuntimeException("Status {$code} for {$entityCode} not found. Check StatusSeeder.");
 		}
 
 		return $status;
 	}
 
-	public static function idForEntityCode(string $entityCode, string $statusCode): int
+	public static function idForEntityCode(string $entityCode, string|\BackedEnum $statusCode): int
 	{
 		return self::forEntityCode($entityCode, $statusCode)->id;
 	}

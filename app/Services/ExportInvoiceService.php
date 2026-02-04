@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ServiceRequestStatusCode;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\ServiceCost;
@@ -14,7 +15,12 @@ class ExportInvoiceService
     private const MIN_STATUS_FOR_INVOICE = 3;
     
     // Status codes that are NOT allowed to print invoice
-    private const BLOCKED_STATUS_CODES = ['PENDING', 'IN_REVIEW_ADMIN', 'REJECTED', 'CANCELLED'];
+    private const BLOCKED_STATUS_CODES = [
+        ServiceRequestStatusCode::PENDING->value,
+        ServiceRequestStatusCode::IN_REVIEW_ADMIN->value,
+        ServiceRequestStatusCode::REJECTED->value,
+        ServiceRequestStatusCode::CANCELLED->value,
+    ];
 
     public function generateInvoice($serviceRequestId)
     {

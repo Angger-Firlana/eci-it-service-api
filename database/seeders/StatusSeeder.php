@@ -5,6 +5,9 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Status;
 use App\Models\EntityType;
+use App\Enums\ServiceRequestStatusCode;
+use App\Enums\VendorApprovalStatusCode;
+use App\Enums\InvoiceStatusCode;
 use RuntimeException;
 
 class StatusSeeder extends Seeder
@@ -29,35 +32,35 @@ class StatusSeeder extends Seeder
 
         $statuses = [
             // Service Request Statuses
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'PENDING', 'name' => 'Pending'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_REVIEW_ADMIN', 'name' => 'In Review (Admin)'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'APPROVED_BY_ADMIN', 'name' => 'Approved by Admin'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::PENDING->value, 'name' => 'Pending'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::IN_REVIEW_ADMIN->value, 'name' => 'In Review (Admin)'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::APPROVED_BY_ADMIN->value, 'name' => 'Approved by Admin'],
 
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_REVIEW_ABOVE', 'name' => 'In Review (Above)'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'APPROVED_BY_ABOVE', 'name' => 'Approved by Above'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'REJECTED_BY_ABOVE', 'name' => 'Rejected by Above'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::IN_REVIEW_ABOVE->value, 'name' => 'In Review (Above)'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::APPROVED_BY_ABOVE->value, 'name' => 'Approved by Above'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::REJECTED_BY_ABOVE->value, 'name' => 'Rejected by Above'],
 
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_PROGRESS', 'name' => 'In Progress'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'COMPLETED', 'name' => 'Completed'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::IN_PROGRESS->value, 'name' => 'In Progress'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::COMPLETED->value, 'name' => 'Completed'],
 
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'REJECTED', 'name' => 'Rejected'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'CANCELLED', 'name' => 'Cancelled'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'NEED_REVISION', 'name' => 'Need Revision'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'ESCALATED', 'name' => 'Escalated'], //ga main
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'IN_REVIEW_VENDOR', 'name' => 'In Review (Vendor)'], //ga main
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => 'APPROVED_BY_VENDOR', 'name' => 'Approved by Vendor'], //ga main
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::REJECTED->value, 'name' => 'Rejected'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::CANCELLED->value, 'name' => 'Cancelled'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::NEED_REVISION->value, 'name' => 'Need Revision'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::ESCALATED->value, 'name' => 'Escalated'], //ga main
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::IN_REVIEW_VENDOR->value, 'name' => 'In Review (Vendor)'], //ga main
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::APPROVED_BY_VENDOR->value, 'name' => 'Approved by Vendor'], //ga main
 
 
 
             // Vendor Approval Statuses
-            ['entity_type_id' => $vendorApprovalEntityType->id, 'code' => 'PENDING', 'name' => 'Pending'],
-            ['entity_type_id' => $vendorApprovalEntityType->id, 'code' => 'APPROVED', 'name' => 'Approved'],
-            ['entity_type_id' => $vendorApprovalEntityType->id, 'code' => 'REJECTED', 'name' => 'Rejected'],
+            ['entity_type_id' => $vendorApprovalEntityType->id, 'code' => VendorApprovalStatusCode::PENDING->value, 'name' => 'Pending'],
+            ['entity_type_id' => $vendorApprovalEntityType->id, 'code' => VendorApprovalStatusCode::APPROVED->value, 'name' => 'Approved'],
+            ['entity_type_id' => $vendorApprovalEntityType->id, 'code' => VendorApprovalStatusCode::REJECTED->value, 'name' => 'Rejected'],
             // Invoice Statuses 
-            ['entity_type_id' => $invoiceEntityType->id, 'code' => 'DRAFT', 'name' => 'Draft'],
-            ['entity_type_id' => $invoiceEntityType->id, 'code' => 'SENT', 'name' => 'Sent'],
-            ['entity_type_id' => $invoiceEntityType->id, 'code' => 'PAID', 'name' => 'Paid'],
-            ['entity_type_id' => $invoiceEntityType->id, 'code' => 'OVERDUE', 'name' => 'Overdue'],
+            ['entity_type_id' => $invoiceEntityType->id, 'code' => InvoiceStatusCode::DRAFT->value, 'name' => 'Draft'],
+            ['entity_type_id' => $invoiceEntityType->id, 'code' => InvoiceStatusCode::SENT->value, 'name' => 'Sent'],
+            ['entity_type_id' => $invoiceEntityType->id, 'code' => InvoiceStatusCode::PAID->value, 'name' => 'Paid'],
+            ['entity_type_id' => $invoiceEntityType->id, 'code' => InvoiceStatusCode::OVERDUE->value, 'name' => 'Overdue'],
         ];
 
         foreach ($statuses as $status) {

@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Enums;
+
+enum ServiceRequestStatusCode: string
+{
+    case PENDING = 'PENDING';
+    case IN_REVIEW_ADMIN = 'IN_REVIEW_ADMIN';
+    case APPROVED_BY_ADMIN = 'APPROVED_BY_ADMIN';
+    case IN_REVIEW_ABOVE = 'IN_REVIEW_ABOVE';
+    case APPROVED_BY_ABOVE = 'APPROVED_BY_ABOVE';
+    case REJECTED_BY_ABOVE = 'REJECTED_BY_ABOVE';
+    case IN_PROGRESS = 'IN_PROGRESS';
+    case COMPLETED = 'COMPLETED';
+    case REJECTED = 'REJECTED';
+    case CANCELLED = 'CANCELLED';
+    case NEED_REVISION = 'NEED_REVISION';
+    case ESCALATED = 'ESCALATED';
+    case IN_REVIEW_VENDOR = 'IN_REVIEW_VENDOR';
+    case APPROVED_BY_VENDOR = 'APPROVED_BY_VENDOR';
+}

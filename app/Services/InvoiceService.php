@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\InvoiceStatusCode;
 use App\Models\Invoice;
 use App\Models\ServiceRequest;
 use App\Models\Status;
@@ -143,11 +144,11 @@ class InvoiceService
             'issue_date' => now(),
             'due_date' => now()->addDays(7),
             'total_amount' => $totalAmount,
-            'status_id' => $this->getInvoiceStatusId('SENT'),
+            'status_id' => $this->getInvoiceStatusId(InvoiceStatusCode::SENT),
         ]);
     }
 
-    private function getInvoiceStatusId(string $code): int
+    private function getInvoiceStatusId(InvoiceStatusCode|string $code): int
     {
         return Status::idForEntityCode('INVOICE', $code);
     }
