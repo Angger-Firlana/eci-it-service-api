@@ -39,7 +39,8 @@ class ServiceCost extends Model
 		'service_request_id',
 		'cost_type_id',
 		'amount',
-		'description'
+		'description',
+		'image_path'
 	];
 
 	public function cost_type()
