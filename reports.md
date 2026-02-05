@@ -77,3 +77,19 @@ Ensure all service store/update flows resolve `status_id` by status `code` from 
 - `database/seeders/StatusSeeder.php`
 - `database/seeders/StatusTransitionSeeder.php`
 - `database/migrations/2026_02_04_000001_add_unique_status_code_per_entity.php`
+
+## Session: 2026-02-05 - Service Request Filters + Timeline Refactor
+
+### Goal
+Improve service request filtering (including a keyword search across related data) and centralize timeline formatting logic.
+
+### Changes
+1. Qualified `service_requests` columns in filters to avoid ambiguity when joins are applied.
+2. Added a keyword search that matches user name, device model, serial number, vendor name, and service location phone number.
+3. Ensured the base query selects only `service_requests.*` and uses `distinct()` when keyword joins are applied.
+4. Moved timeline mapping logic into `AuditLogService::getTimeLineForServiceRequest()` and reused it in service request detail response.
+
+### Files Modified
+- `app/Models/ServiceRequest.php`
+- `app/Services/AuditLogService.php`
+- `app/Services/ServiceRequest/ServiceRequestService.php`
