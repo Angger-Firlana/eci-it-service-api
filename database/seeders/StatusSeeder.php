@@ -32,23 +32,15 @@ class StatusSeeder extends Seeder
 
         $statuses = [
             // Service Request Statuses
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::PENDING->value, 'name' => 'Pending'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::IN_REVIEW_ADMIN->value, 'name' => 'In Review (Admin)'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::APPROVED_BY_ADMIN->value, 'name' => 'Approved by Admin'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::REVIEW_IN_WORKSHOP->value, 'name' => 'Requested'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::REPAIR_IN_WORKSHOP->value, 'name' => 'Repair in Workshop'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::REPAIR_IN_VENDOR->value, 'name' => 'Repair in Vendor'],
 
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::IN_REVIEW_ABOVE->value, 'name' => 'In Review (Above)'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::APPROVED_BY_ABOVE->value, 'name' => 'Approved by Above'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::REJECTED_BY_ABOVE->value, 'name' => 'Rejected by Above'],
-
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::IN_PROGRESS->value, 'name' => 'In Progress'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::WAITING_APPROVAL_ABOVE->value, 'name' => 'Waiting Approval Above'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::COMPLETED->value, 'name' => 'Completed'],
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::BAD_ASSET->value, 'name' => 'Bad Asset'],
 
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::REJECTED->value, 'name' => 'Rejected'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::CANCELLED->value, 'name' => 'Cancelled'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::NEED_REVISION->value, 'name' => 'Need Revision'],
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::ESCALATED->value, 'name' => 'Escalated'], //ga main
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::IN_REVIEW_VENDOR->value, 'name' => 'In Review (Vendor)'], //ga main
-            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::APPROVED_BY_VENDOR->value, 'name' => 'Approved by Vendor'], //ga main
 
 
 

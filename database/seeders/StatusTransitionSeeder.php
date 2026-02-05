@@ -42,17 +42,13 @@ class StatusTransitionSeeder extends Seeder
         };
 
         // Fetch statuses (must match StatusSeeder)
-        $pending = $getStatus(ServiceRequestStatusCode::PENDING->value);
-        $inReviewAdmin = $getStatus(ServiceRequestStatusCode::IN_REVIEW_ADMIN->value);
-        $approvedByAdmin = $getStatus(ServiceRequestStatusCode::APPROVED_BY_ADMIN->value);
-        $inReviewAbove = $getStatus(ServiceRequestStatusCode::IN_REVIEW_ABOVE->value);
-        $approvedByAbove = $getStatus(ServiceRequestStatusCode::APPROVED_BY_ABOVE->value);
-        $inReviewVendor = $getStatus(ServiceRequestStatusCode::IN_REVIEW_VENDOR->value);
-        $approvedByVendor = $getStatus(ServiceRequestStatusCode::APPROVED_BY_VENDOR->value);
-        $rejected = $getStatus(ServiceRequestStatusCode::REJECTED->value);
-        $cancelled = $getStatus(ServiceRequestStatusCode::CANCELLED->value);
-        $inProgress = $getStatus(ServiceRequestStatusCode::IN_PROGRESS->value);
+        $reviewInWorkshop = $getStatus(ServiceRequestStatusCode::REVIEW_IN_WORKSHOP->value);
+        $repairInWorkshop = $getStatus(ServiceRequestStatusCode::REPAIR_IN_WORKSHOP->value);
+        $repairInVendor = $getStatus(ServiceRequestStatusCode::REPAIR_IN_VENDOR->value);
+        $waitingApprovalAbove = $getStatus(ServiceRequestStatusCode::WAITING_APPROVAL_ABOVE->value);
         $completed = $getStatus(ServiceRequestStatusCode::COMPLETED->value);
+        $badAsset = $getStatus(ServiceRequestStatusCode::BAD_ASSET->value);
+        $cancelled = $getStatus(ServiceRequestStatusCode::CANCELLED->value);
 
         // Fetch Roles
         $admin = $getRole('admin');
@@ -73,111 +69,96 @@ class StatusTransitionSeeder extends Seeder
         }
 
         $transitions = [
-            // From PENDING
+            // From REVIEW_IN_WORKSHOP (Requested)
             [
-                'from' => $pending->id,
-                'to' => $inReviewAdmin->id,
-                'code' => 'REVIEW_REQUEST_ADMIN',
-                'description' => 'Admin reviews the request',
-                'roles' => [$admin->id]
+                'from' => $reviewInWorkshop->id,
+                'to' => $repairInWorkshop->id,
+                'code' => 'START_REPAIR_WORKSHOP',
+                'description' => 'Start repair in workshop',
+                'roles' => [$admin->id, $technician->id]
             ],
             [
-                'from' => $pending->id,
-                'to' => $rejected->id,
-                'code' => 'REJECT_REQUEST',
-                'description' => 'Admin rejects the request',
-                'roles' => [$admin->id]
+                'from' => $reviewInWorkshop->id,
+                'to' => $completed->id,
+                'code' => 'COMPLETE_AFTER_REVIEW',
+                'description' => 'Mark completed after review',
+                'roles' => [$admin->id, $technician->id]
             ],
             [
-                'from' => $pending->id,
+                'from' => $reviewInWorkshop->id,
+                'to' => $badAsset->id,
+                'code' => 'MARK_BAD_ASSET',
+                'description' => 'Mark asset as bad after review',
+                'roles' => [$admin->id, $technician->id]
+            ],
+            [
+                'from' => $reviewInWorkshop->id,
                 'to' => $cancelled->id,
                 'code' => 'CANCEL_REQUEST',
                 'description' => 'User cancels the request',
                 'roles' => [$user->id, $admin->id]
             ],
 
-            // From IN_REVIEW_ADMIN
+            // From WAITING_APPROVAL_ABOVE
             [
-                'from' => $inReviewAdmin->id,
-                'to' => $approvedByAdmin->id,
-                'code' => 'APPROVE_REQUEST_ADMIN',
-                'description' => 'Admin approves the request',
-                'roles' => [$admin->id]
-            ],
-            [
-                'from' => $inReviewAdmin->id,
-                'to' => $rejected->id,
-                'code' => 'REJECT_IN_REVIEW',
-                'description' => 'Admin rejects after review',
-                'roles' => [$admin->id]
-            ],
-
-            // From APPROVED_BY_ADMIN
-            [
-                'from' => $approvedByAdmin->id,
-                'to' => $inReviewAbove->id,
-                'code' => 'REVIEW_REQUEST_ABOVE',
-                'description' => 'Superior reviews the request',
-                'roles' => [$superior->id]
-            ],
-
-            // From IN_REVIEW_ABOVE
-            [
-                'from' => $inReviewAbove->id,
-                'to' => $approvedByAbove->id,
-                'code' => 'APPROVE_REQUEST_ABOVE',
-                'description' => 'Superior approves the request',
+                'from' => $waitingApprovalAbove->id,
+                'to' => $repairInVendor->id,
+                'code' => 'APPROVE_QUOTE_ABOVE',
+                'description' => 'Superior approves vendor quote',
                 'roles' => [$superior->id]
             ],
             [
-                'from' => $inReviewAbove->id,
-                'to' => $rejected->id,
-                'code' => 'REJECT_REQUEST_ABOVE',
-                'description' => 'Superior rejects the request',
+                'from' => $waitingApprovalAbove->id,
+                'to' => $reviewInWorkshop->id,
+                'code' => 'REJECT_QUOTE_ABOVE',
+                'description' => 'Superior rejects quote, back to review',
                 'roles' => [$superior->id]
             ],
 
-            // From APPROVED_BY_ABOVE
+            // From REPAIR_IN_WORKSHOP
             [
-                'from' => $approvedByAbove->id,
-                'to' => $inReviewVendor->id,
-                'code' => 'REVIEW_REQUEST_VENDOR',
-                'description' => 'Vendor review process starts',
-                'roles' => [$admin->id]
-            ],
-
-            // From IN_REVIEW_VENDOR
-            [
-                'from' => $inReviewVendor->id,
-                'to' => $approvedByVendor->id,
-                'code' => 'APPROVE_REQUEST_VENDOR',
-                'description' => 'Vendor approves the request',
-                'roles' => [$admin->id]
-            ],
-            [
-                'from' => $inReviewVendor->id,
-                'to' => $rejected->id,
-                'code' => 'REJECT_REQUEST_VENDOR',
-                'description' => 'Vendor rejects the request',
-                'roles' => [$admin->id]
-            ],
-
-            // From APPROVED_BY_VENDOR
-            [
-                'from' => $approvedByVendor->id,
-                'to' => $inProgress->id,
-                'code' => 'START_WORK',
-                'description' => 'Work starts on the request',
+                'from' => $repairInWorkshop->id,
+                'to' => $repairInVendor->id,
+                'code' => 'MOVE_TO_VENDOR',
+                'description' => 'Move repair to vendor',
                 'roles' => [$admin->id, $technician->id]
             ],
-
-            // From IN_PROGRESS
             [
-                'from' => $inProgress->id,
+                'from' => $repairInWorkshop->id,
                 'to' => $completed->id,
                 'code' => 'COMPLETE_WORK',
-                'description' => 'Work is completed',
+                'description' => 'Work completed in workshop',
                 'roles' => [$admin->id, $technician->id]
+            ],
+            [
+                'from' => $repairInWorkshop->id,
+                'to' => $badAsset->id,
+                'code' => 'MARK_BAD_ASSET',
+                'description' => 'Mark asset as bad',
+                'roles' => [$admin->id, $technician->id]
+            ],
+
+            // From REPAIR_IN_VENDOR
+            [
+                'from' => $repairInVendor->id,
+                'to' => $waitingApprovalAbove->id,
+                'code' => 'REQUEST_APPROVAL_ABOVE',
+                'description' => 'Submit vendor quote for approval',
+                'roles' => [$admin->id]
+            ],
+            [
+                'from' => $repairInVendor->id,
+                'to' => $completed->id,
+                'code' => 'COMPLETE_VENDOR_WORK',
+                'description' => 'Work completed by vendor',
+                'roles' => [$admin->id]
+            ],
+            [
+                'from' => $repairInVendor->id,
+                'to' => $badAsset->id,
+                'code' => 'MARK_BAD_ASSET',
+                'description' => 'Vendor marks asset as bad',
+                'roles' => [$admin->id]
             ],
         ];
 
