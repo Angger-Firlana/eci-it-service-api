@@ -17,6 +17,7 @@ class DetailServiceRequestService
         $this->deviceService = $deviceService;
     }
 
+    //function to create detail all service request
     public function createDetailServiceRequest(array $data): ServiceRequestDetail
     {
         // Auto-create/resolve device if device info is provided and device_id is not
@@ -54,6 +55,7 @@ class DetailServiceRequestService
         return $serviceRequestDetail->load('device');
     }
     
+    //function to update detail service request
     public function updateDetailServiceRequest(int $id, array $data): ServiceRequestDetail
     {
         $serviceRequestDetail = ServiceRequestDetail::findOrFail($id);
@@ -94,6 +96,7 @@ class DetailServiceRequestService
         return $serviceRequestDetail->load('device');
     }
 
+    //function to delete detail service request
     public function deleteDetailServiceRequest(int $id): void
     {
         $serviceRequestDetail = ServiceRequestDetail::findOrFail($id);
@@ -107,6 +110,7 @@ class DetailServiceRequestService
         $serviceRequestDetail->delete();
     }
 
+    //function to get detail service request by id
     public function getDetailById(int $id): ServiceRequestDetail
     {
         $detail = ServiceRequestDetail::with('device')->findOrFail($id);

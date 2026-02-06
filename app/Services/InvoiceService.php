@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class InvoiceService
 {
-    //
+    //GET ALL INVOICE
     public function getAllInvoice(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         $invoices = Invoice::query()
@@ -38,11 +38,13 @@ class InvoiceService
         return $invoices;   
     }
 
+    //Function to get invoice by id
     public function getInvoiceById($id):Invoice
     {
         return Invoice::findOrFail($id);
     }
 
+    //function to create invoice
     public function createInvoice(array $data): Invoice{
         return Invoice::create([
             'invoice_number' => $this->generateInvoiceNumber(),
@@ -54,6 +56,7 @@ class InvoiceService
         ]);
     }
 
+    //function to updateInvoice
     public function updateInvoice($id, array $data): Invoice{
         $invoice = Invoice::findOrFail($id);
         if(isset($data['issue_date'])){
@@ -77,10 +80,12 @@ class InvoiceService
         return $invoice;
     }
 
+    //funciton to delete invoice
     public function deleteInvoice($id):void{
         Invoice::findOrFail($id)->delete();
     }
 
+    //function to genereate invoice number automatically
     public function generateInvoiceNumber(): string
     {
         $prefix = "INV";
@@ -130,6 +135,7 @@ class InvoiceService
         ];
     }
 
+    //function to create invoice for service request
     public function createInvoiceForServiceRequest(ServiceRequest $serviceRequest, array $data): void
     {
         $adminId = $data['admin_id'] ?? $serviceRequest->admin_id;
@@ -148,6 +154,7 @@ class InvoiceService
         ]);
     }
 
+    //function to get invoice status id by code
     private function getInvoiceStatusId(InvoiceStatusCode|string $code): int
     {
         return Status::idForEntityCode('INVOICE', $code);

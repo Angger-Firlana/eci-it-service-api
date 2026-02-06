@@ -22,6 +22,7 @@ class ExportInvoiceService
         ServiceRequestStatusCode::CANCELLED->value,
     ];
 
+    //function to generate invoice by service request id
     public function generateInvoice($serviceRequestId)
     {
         $invoice = \App\Models\Invoice::with([

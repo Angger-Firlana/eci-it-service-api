@@ -36,13 +36,13 @@ class ApprovalService{
         return $approval->load(['approver', 'assigned_by', 'service_request']);
     }
 
-    public function rejectVendorRequest(int $approvalId, array $data): VendorApproval
+    public function deviceNoNeedRepair(int $approvalId, array $data): VendorApproval
     {
         $approval = VendorApproval::findOrFail($approvalId);
         
         $approval->update([
             'approved_at' => now(),
-            'status_id' => $this->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED),
+            'status_id' => $this->getVendorApprovalStatusId(VendorApprovalStatusCode::COMPLETED),
             'notes' => $data['notes'] ?? $approval->notes,
         ]);
 
@@ -51,13 +51,13 @@ class ApprovalService{
         return $approval->load(['approver', 'assigned_by', 'service_request']);
     }
 
-     private function checkAndUpdateServiceRequestStatus(ServiceRequest $serviceRequest): void
+    private function checkAndUpdateServiceRequestStatus(ServiceRequest $serviceRequest): void
     {
         $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
         $vendorRejectedStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED);
-        $rejectedByAboveStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REJECTED_BY_ABOVE);
-        $approvedByAboveStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::APPROVED_BY_ABOVE);
-        $inProgressStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::IN_PROGRESS);
+        $cancelledStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::CANCELLED);
+        $repairInVendor = $this->getServiceRequestStatusId(ServiceRequestStatusCode::APPROVED_BY_ABOVE);
+        $badAsseStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::BAD_ASSET);
 
         $pendingApprovals = $serviceRequest->vendor_approvals()
             ->where('status_id', $vendorPendingStatusId)
@@ -70,13 +70,13 @@ class ApprovalService{
         if ($rejectedApprovals > 0) {
             // Any rejection -> REJECTED_BY_ABOVE (6)
             $oldStatusId = $serviceRequest->status_id;
-            $serviceRequest->update(['status_id' => $rejectedByAboveStatusId]);
+            $serviceRequest->update(['status_id' => $badAsseStatusId]);
             $this->auditLogService->createAuditLog([
                 'actor_id' => auth()->id(),
                 'entity_id' => $serviceRequest->id,
                 'entity_type_id' => 1,
                 'old_status_id' => $oldStatusId,
-                'new_status_id' => $rejectedByAboveStatusId,
+                'new_status_id' => $badAsseStatusId,
                 'action' => 'STATUS_CHANGE',
                 'notes' => 'Request ditolak oleh atasan',
             ]);
@@ -85,37 +85,25 @@ class ApprovalService{
             $oldStatusId = $serviceRequest->status_id;
             
             // First transition to APPROVED_BY_ABOVE
-            $serviceRequest->update(['status_id' => $approvedByAboveStatusId]);
+            $serviceRequest->update(['status_id' => $repairInVendor]);
             $this->auditLogService->createAuditLog([
                 'actor_id' => auth()->id(),
                 'entity_id' => $serviceRequest->id,
                 'entity_type_id' => 1,
                 'old_status_id' => $oldStatusId,
-                'new_status_id' => $approvedByAboveStatusId,
+                'new_status_id' => $repairInVendor,
                 'action' => 'STATUS_CHANGE',
                 'notes' => 'Semua atasan sudah menyetujui',
-            ]);
-            
-            // Auto-transition to IN_PROGRESS
-            $serviceRequest->update(['status_id' => $inProgressStatusId]);
-            $this->auditLogService->createAuditLog([
-                'actor_id' => auth()->id(),
-                'entity_id' => $serviceRequest->id,
-                'entity_type_id' => 1,
-                'old_status_id' => $approvedByAboveStatusId,
-                'new_status_id' => $inProgressStatusId,
-                'action' => 'STATUS_CHANGE',
-                'notes' => 'Service dimulai (auto-transition)',
             ]);
         }
     }
 
-    public function approveRequestByAdmin($id, array $data): ServiceRequest
+    public function deviceNeedRepair($id, array $data): ServiceRequest
     {
         $serviceRequest = ServiceRequest::findOrFail($id);
 
         $oldStatusId = $serviceRequest->status_id;
-        $newStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::APPROVED_BY_ADMIN);
+        $newStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_WORKSHOP);
 
         $serviceRequest->update([
             'status_id' => $newStatusId

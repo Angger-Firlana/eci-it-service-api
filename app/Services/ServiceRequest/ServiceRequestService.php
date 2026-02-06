@@ -86,6 +86,7 @@ class ServiceRequestService
         }
     }
 
+    //
     private function createMainServiceRequest(array $data): ServiceRequest
     {
         $adminId = null;
@@ -106,11 +107,11 @@ class ServiceRequestService
             'user_id'          => $userId,
             'request_date'     => now(),
             'estimated_date'   => $data['estimated_date'] ?? null,
-            'status_id'        => $data['status_id'] ?? $this->getServiceRequestStatusId(ServiceRequestStatusCode::PENDING),
+            'status_id'        => $this->getServiceRequestStatusId(ServiceRequestStatusCode::REVIEW_IN_WORKSHOP),
         ]);
     }
 
-
+    //function to allowed transitions
     public function getAllowedTransitions(int $serviceRequestId): Collection
     {
         $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
@@ -133,6 +134,7 @@ class ServiceRequestService
         return $transitions->pluck('status');
     }
 
+    //function to get stats
     public function getStats(): array
     {
         return [
@@ -152,6 +154,7 @@ class ServiceRequestService
         ];
     }
 
+    //function to update service request
     public function updateServiceRequest(int $id, array $data): ServiceRequest
     {
         return DB::transaction(function () use ($id, $data) {
@@ -194,6 +197,7 @@ class ServiceRequestService
         });
     }
 
+    //function to delete service request
     public function deleteServiceRequest(int $id): ServiceRequest
     {
         $serviceRequest = ServiceRequest::findOrFail($id);
@@ -208,6 +212,7 @@ class ServiceRequestService
         return $serviceRequest;
     }
 
+    //function to generate service number
     private function generateServiceNumber(): string
     {
         $prefix = 'SR';
@@ -221,11 +226,13 @@ class ServiceRequestService
         return $prefix . $date . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 
+    //function to load relations 
     private function loadRelations(ServiceRequest $serviceRequest): ServiceRequest
     {
         return $serviceRequest->load($this->defaultWith());
     }
 
+    //function to get relations for index
     private function indexWith(): array
     {
         return [
@@ -235,6 +242,7 @@ class ServiceRequestService
         ];
     }
 
+    //function to get relations for show
     private function showWith(): array
     {
         return [
@@ -258,6 +266,7 @@ class ServiceRequestService
 
     }
 
+    //function to get default relations
     private function defaultWith(): array
     {
         return [
@@ -267,6 +276,7 @@ class ServiceRequestService
         ];
     }
 
+    //function to sync details
     private function syncDetails(ServiceRequest $serviceRequest, array $details): void
     {
         foreach ($details as $detail) {
@@ -281,6 +291,7 @@ class ServiceRequestService
         }
     }
 
+    //function to get service request status
     private function getServiceRequestStatusOrFail(int $statusId): Status
     {
         $status = Status::with('entity_type')->findOrFail($statusId);
@@ -292,6 +303,7 @@ class ServiceRequestService
         return $status;
     }
 
+    //function to get service request status id
     private function getServiceRequestStatusId(ServiceRequestStatusCode|string $code): int
     {
         return Status::idForEntityCode('SERVICE_REQUEST', $code);
