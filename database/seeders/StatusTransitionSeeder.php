@@ -54,6 +54,7 @@ class StatusTransitionSeeder extends Seeder
         $admin = $getRole('admin');
         $user = $getRole('user');
         $technician = $getRole('technician');
+        $operator = $getRole('operator');
 
         $superiorRoles = ['supervisor', 'manager', 'director', 'ceo'];
         $superior = null;
@@ -75,28 +76,28 @@ class StatusTransitionSeeder extends Seeder
                 'to' => $repairInWorkshop->id,
                 'code' => 'START_REPAIR_WORKSHOP',
                 'description' => 'Start repair in workshop',
-                'roles' => [$admin->id, $technician->id]
+                'roles' => [$admin->id, $technician->id, $operator->id]
             ],
             [
                 'from' => $reviewInWorkshop->id,
                 'to' => $completed->id,
                 'code' => 'COMPLETE_AFTER_REVIEW',
                 'description' => 'Mark completed after review',
-                'roles' => [$admin->id, $technician->id]
+                'roles' => [$admin->id, $technician->id, $operator->id]
             ],
             [
                 'from' => $reviewInWorkshop->id,
                 'to' => $badAsset->id,
                 'code' => 'MARK_BAD_ASSET',
                 'description' => 'Mark asset as bad after review',
-                'roles' => [$admin->id, $technician->id]
+                'roles' => [$admin->id, $technician->id, $operator->id]
             ],
             [
                 'from' => $reviewInWorkshop->id,
                 'to' => $cancelled->id,
                 'code' => 'CANCEL_REQUEST',
                 'description' => 'User cancels the request',
-                'roles' => [$user->id, $admin->id]
+                'roles' => [$user->id, $admin->id, $operator->id]
             ],
 
             // From WAITING_APPROVAL_ABOVE
@@ -121,21 +122,21 @@ class StatusTransitionSeeder extends Seeder
                 'to' => $repairInVendor->id,
                 'code' => 'MOVE_TO_VENDOR',
                 'description' => 'Move repair to vendor',
-                'roles' => [$admin->id, $technician->id]
+                'roles' => [$admin->id, $technician->id, $operator->id]
             ],
             [
                 'from' => $repairInWorkshop->id,
                 'to' => $completed->id,
                 'code' => 'COMPLETE_WORK',
                 'description' => 'Work completed in workshop',
-                'roles' => [$admin->id, $technician->id]
+                'roles' => [$admin->id, $technician->id, $operator->id]
             ],
             [
                 'from' => $repairInWorkshop->id,
                 'to' => $badAsset->id,
                 'code' => 'MARK_BAD_ASSET',
-                'description' => 'Mark asset as bad',
-                'roles' => [$admin->id, $technician->id]
+                'description' => 'IT marks asset as bad',
+                'roles' => [$admin->id, $technician->id, $operator->id]
             ],
 
             // From REPAIR_IN_VENDOR
@@ -144,21 +145,21 @@ class StatusTransitionSeeder extends Seeder
                 'to' => $waitingApprovalAbove->id,
                 'code' => 'REQUEST_APPROVAL_ABOVE',
                 'description' => 'Submit vendor quote for approval',
-                'roles' => [$admin->id]
+                'roles' => [$admin->id, $operator->id]
             ],
             [
                 'from' => $repairInVendor->id,
                 'to' => $completed->id,
                 'code' => 'COMPLETE_VENDOR_WORK',
                 'description' => 'Work completed by vendor',
-                'roles' => [$admin->id]
+                'roles' => [$admin->id, $operator->id]
             ],
             [
                 'from' => $repairInVendor->id,
                 'to' => $badAsset->id,
                 'code' => 'MARK_BAD_ASSET',
-                'description' => 'Vendor marks asset as bad',
-                'roles' => [$admin->id]
+                'description' => 'IT marks asset as bad',
+                'roles' => [$admin->id, $operator->id]
             ],
         ];
 

@@ -14,6 +14,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $adminRole = Role::where('name', 'admin')->first();
+        $operatorRole = Role::where('name', 'operator')->first();
         $userRole = Role::where('name', 'user')->first();
         $technicianRole = Role::where('name', 'technician')->first();
         $supervisorRole = Role::where('name', 'supervisor')->first();
@@ -21,7 +22,7 @@ class UserSeeder extends Seeder
         $directorRole = Role::where('name', 'director')->first();
         $ceoRole = Role::where('name', 'ceo')->first();
 
-        if (!$adminRole || !$userRole || !$technicianRole || !$supervisorRole || !$managerRole || !$directorRole || !$ceoRole) {
+        if (!$adminRole || !$operatorRole || !$userRole || !$technicianRole || !$supervisorRole || !$managerRole || !$directorRole || !$ceoRole) {
             throw new RuntimeException('Required roles not found. Run RoleSeeder first.');
         }
 
@@ -41,6 +42,14 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('admin123'),
                 'pin' => '1234',
                 'roles' => [$adminRole],
+                'departments' => [$itDepartment]
+            ],
+            [
+                'name' => 'ALI',
+                'email' => 'it.ali@eci-service.com',
+                'password' => Hash::make('ali123'),
+                'pin' => '5678',
+                'roles' => [$operatorRole],
                 'departments' => [$itDepartment]
             ],
             [
