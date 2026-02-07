@@ -1742,46 +1742,6 @@ Retrieves all approvals for a service request.
 
 ---
 
-### POST /api/service-requests/{serviceRequestId}/approvals
-
-Creates approval requests for a service request.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| approver_ids | array | Yes | Array of user IDs to be approvers |
-| approver_ids.* | integer | Yes | User ID (must exist in users table) |
-
-**Example Request:**
-```json
-{
-    "approver_ids": [1, 2, 3]
-}
-```
-
-**Responses:**
-
-- **201 Created:**
-```json
-{
-    "status": "success",
-    "code": 201,
-    "message": "Service request approval created successfully",
-    "data": [ ... ]
-}
-```
-
----
-
 ### PUT /api/service-requests/{serviceRequestId}/approvals
 
 Updates the approvers for a service request (replaces existing approvers).
@@ -1874,9 +1834,9 @@ Approves a vendor request.
 
 ---
 
-### POST /api/service-requests/approved-by-admin/{serviceRequestId}
+### POST /api/service-requests/need-repair/{serviceRequestId}
 
-Approves a request by admin.
+Marks a request as needing repair in workshop.
 
 **Authentication:** Required
 
@@ -1894,6 +1854,32 @@ Approves a request by admin.
     "status": "success",
     "code": 200,
     "message": "Request approved successfully",
+    "data": { ... }
+}
+```
+
+---
+
+### POST /api/service-requests/no-need-repair/{serviceRequestId}
+
+Marks a request as not needing repair in workshop.
+
+**Authentication:** Required
+
+**URL Parameters:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| serviceRequestId | integer | The service request ID |
+
+**Responses:**
+
+- **200 OK:**
+```json
+{
+    "status": "success",
+    "code": 200,
+    "message": "Request rejected successfully",
     "data": { ... }
 }
 ```
@@ -2242,6 +2228,7 @@ Retrieves a paginated list of users.
 | search | string | Search term to filter users |
 | role_id | integer | Filter by role ID |
 | department_id | integer | Filter by department ID |
+| is_active | boolean | Filter by active status (`true`/`false` or `1`/`0`) |
 | page | integer | Page number for pagination |
 | per_page | integer | Number of items per page |
 
@@ -2258,6 +2245,7 @@ Retrieves a paginated list of users.
             "id": 1,
             "name": "John Doe",
             "email": "john.doe@example.com",
+            "is_active": true,
             "role_id": 1,
             "department_id": 1,
             "created_at": "2026-01-22T12:00:00.000000Z",
@@ -2296,6 +2284,7 @@ Retrieves a specific user by ID.
         "id": 1,
         "name": "John Doe",
         "email": "john.doe@example.com",
+        "is_active": true,
         "role_id": 1,
         "department_id": 1,
         "created_at": "2026-01-22T12:00:00.000000Z",
@@ -2321,6 +2310,7 @@ Creates a new user.
 | password | string | Yes | User's password (min: 8 characters) |
 | role_id | integer | Yes | Role ID (must exist in roles table) |
 | department_id | integer | Yes | Department ID (must exist in departments table) |
+| is_active | boolean | No | Active status |
 
 **Example Request:**
 ```json
@@ -2329,7 +2319,8 @@ Creates a new user.
     "email": "jane.doe@example.com",
     "password": "password123",
     "role_id": 2,
-    "department_id": 1
+    "department_id": 1,
+    "is_active": true
 }
 ```
 
@@ -2345,6 +2336,7 @@ Creates a new user.
         "id": 2,
         "name": "Jane Doe",
         "email": "jane.doe@example.com",
+        "is_active": true,
         "role_id": 2,
         "department_id": 1
     }
@@ -2374,6 +2366,7 @@ Updates an existing user.
 | password | string | No | User's password (min: 8 characters) |
 | role_id | integer | No | Role ID |
 | department_id | integer | No | Department ID |
+| is_active | boolean | No | Active status |
 
 **Responses:**
 

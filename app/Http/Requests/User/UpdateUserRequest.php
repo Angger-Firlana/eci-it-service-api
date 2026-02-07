@@ -31,7 +31,8 @@ class UpdateUserRequest extends FormRequest
             ],
             'password' => 'sometimes|string|min:8',
             'role_id' => 'sometimes|exists:roles,id',
-            'department_id' => 'sometimes|exists:departments,id'
+            'department_id' => 'sometimes|exists:departments,id',
+            'is_active' => 'sometimes|boolean'
         ];
     }
 }

@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string $password
  * @property string|null $pin
  * @property string|null $remember_token
+ * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * 
@@ -43,7 +44,8 @@ class User extends Authenticatable
 	protected $table = 'users';
 
 	protected $casts = [
-		'email_verified_at' => 'datetime'
+		'email_verified_at' => 'datetime',
+		'is_active' => 'bool'
 	];
 
 	protected $hidden = [
@@ -59,6 +61,7 @@ class User extends Authenticatable
         'password',
         'pin',
         'remember_token',
+        'is_active',
     ];
 
     public function departments()

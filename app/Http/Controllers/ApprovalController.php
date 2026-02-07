@@ -30,18 +30,18 @@ class ApprovalController extends Controller
     public function rejectVendorRequest(Request $request, $id)
     {
         $serviceRequest = $this->approvalService->rejectVendorRequest($id, $request->all());
-        return APIResponse::success($serviceRequest,200, 'Vendor request rejected successfully');
+        return APIResponse::success($serviceRequest, 200, 'Vendor request rejected successfully');
     }
 
-    public function approveRequestByAdmin(Request $request, $id)
+    public function deviceNeedRepair(Request $request, $id)
     {
-        $serviceRequest = $this->approvalService->approveRequestByAdmin($id, $request->all());
+        $serviceRequest = $this->approvalService->deviceNeedRepair($id, $request->all());
         return APIResponse::success($serviceRequest, 200, 'Request approved successfully');
     }
 
-    public function rejectedRequestByAdmin(Request $request, $id)
+    public function deviceNoNeedRepair(Request $request, $id)
     {
-        $serviceRequest = $this->approvalService->rejectedRequestByAdmin($id, $request->all());
+        $serviceRequest = $this->approvalService->deviceNoNeedRepair($id, $request->all());
         return APIResponse::success($serviceRequest, 200, 'Request rejected successfully');
     }
 }

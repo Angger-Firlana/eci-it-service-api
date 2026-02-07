@@ -29,8 +29,16 @@ class UserService{
             });
         }
 
-        if($request->has('status')){
-            $users->where('status', $request->status);
+        if ($request->has('is_active')) {
+            $isActive = filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($isActive !== null) {
+                $users->where('is_active', $isActive);
+            }
+        } elseif ($request->has('status')) {
+            $isActive = filter_var($request->status, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($isActive !== null) {
+                $users->where('is_active', $isActive);
+            }
         }
 
         if($request->has('sort_by')){
@@ -51,7 +59,8 @@ class UserService{
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'pin' => $data['pin'] ?? null
+            'pin' => $data['pin'] ?? null,
+            'is_active' => $data['is_active'] ?? true
         ]);
 
         if(isset($data['department_id'])){
@@ -88,6 +97,10 @@ class UserService{
         
         if(isset($data['pin'])){
             $updateData['pin'] = $data['pin'];
+        }
+
+        if (array_key_exists('is_active', $data)) {
+            $updateData['is_active'] = $data['is_active'];
         }
 
         $user->update($updateData);

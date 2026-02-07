@@ -172,7 +172,8 @@ Refactor approval-related services for clarity, consistent status codes, and saf
 1. Added proper namespace/DI in `ApprovalService` and removed unused variables.
 2. Normalized status transitions to existing codes (`WAITING_APPROVAL_ABOVE`, `REPAIR_IN_VENDOR`, `BAD_ASSET`).
 3. Refactored `ServiceRequestApprovalService` with shared helpers, consistent transactions, and a `destroy()` method to match controller routes.
-4. Standardized approver lookup to filter by IT department when available.
+4. Renamed workshop endpoints to `need-repair` / `no-need-repair` and removed the unused approvals POST route.
+5. Standardized approver lookup to filter by IT department when available.
 
 ### Files Modified
 - `app/Services/ApprovalService.php`

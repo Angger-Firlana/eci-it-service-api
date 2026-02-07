@@ -37,6 +37,33 @@ class ApprovalService{
         return $approval->load(['approver', 'assigned_by', 'service_request']);
     }
 
+    public function rejectVendorRequest(int $approvalId, array $data): VendorApproval
+    {
+        $approval = VendorApproval::findOrFail($approvalId);
+
+        $oldStatusId = $approval->status_id;
+        $newStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED);
+
+        $approval->update([
+            'approved_at' => now(),
+            'status_id' => $newStatusId,
+        ]);
+
+        $this->auditLogService->createAuditLog([
+            'actor_id' => auth()->id(),
+            'entity_id' => $approval->service_request_id,
+            'entity_type_id' => 2,
+            'old_status_id' => $oldStatusId,
+            'new_status_id' => $newStatusId,
+            'action' => 'REJECT_VENDOR',
+            'notes' => 'Vendor approval rejected',
+        ]);
+
+        $this->checkAndUpdateServiceRequestStatus($approval->service_request);
+
+        return $approval->load(['approver', 'assigned_by', 'service_request']);
+    }
+
     public function deviceNoNeedRepair(int $approvalId, array $data): VendorApproval
     {
         $approval = VendorApproval::findOrFail($approvalId);

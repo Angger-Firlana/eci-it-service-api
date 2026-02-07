@@ -88,11 +88,11 @@ Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
     // Approval (Keep existing or aliased if needed)
     Route::get('/{serviceRequestId}/approver', [ApprovalController::class, 'getApproverByServiceRequestId']);
     Route::get('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'index']);
-    Route::post('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'store']);
     Route::put('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'update']);
     Route::delete('/{serviceRequestId}/approvals/{approvalId}', [ServiceRequestApprovalController::class, 'destroy']);
     Route::post('/approved/{approvalId}', [ApprovalController::class, 'approveVendorRequest']);
-    Route::post('/approved-by-admin/{serviceRequestId}', [ApprovalController::class, 'approveRequestByAdmin']);
+    Route::post('/need-repair/{serviceRequestId}', [ApprovalController::class, 'deviceNeedRepair']);
+    Route::post('/no-need-repair/{serviceRequestId}', [ApprovalController::class, 'deviceNoNeedRepair']);
     Route::post('/rejected/{approvalId}', [ApprovalController::class, 'rejectVendorRequest']);
 
     //Cancellation

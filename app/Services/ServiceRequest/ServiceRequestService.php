@@ -11,6 +11,7 @@ use App\Services\ServiceRequest\DetailServiceRequestService;
 use App\Models\StatusTransition;
 use App\Services\AuditLogService;
 use App\Services\InvoiceService;
+use App\Services\ServiceRequest\ServiceRequestApprovalService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -22,15 +23,18 @@ class ServiceRequestService
     protected DetailServiceRequestService $detailService;
     protected \App\Services\InvoiceService $invoiceService;
     protected AuditLogService $auditLogService;
+    protected ServiceRequestApprovalService $serviceRequestApprovalService;
 
     public function __construct(
         DetailServiceRequestService $detailService,
         \App\Services\InvoiceService $invoiceService,
-        AuditLogService $auditLogService
+        AuditLogService $auditLogService,
+        ServiceRequestApprovalService $serviceRequestApprovalService
     ) {
         $this->detailService = $detailService;
         $this->invoiceService = $invoiceService;
         $this->auditLogService = $auditLogService;
+        $this->serviceRequestApprovalService = $serviceRequestApprovalService;
     }
 
     public function getAllServiceRequest(Request $request): LengthAwarePaginator
@@ -192,6 +196,10 @@ class ServiceRequestService
 
             if ($status->code === ServiceRequestStatusCode::BAD_ASSET->value && $oldStatusId != $newStatusId) {
                 $this->markDevicesAsBadAsset($serviceRequest);
+            }
+
+            if($status->code === ServiceRequestStatusCode::WAITING_APPROVAL_ABOVE->value && $oldStatusId != $newStatusId){
+                $this->serviceRequestApprovalService->createVendorApprovals($serviceRequest->id);
             }
 
             if ($status->code === ServiceRequestStatusCode::REPAIR_IN_WORKSHOP->value && $oldStatusId != $newStatusId) {
