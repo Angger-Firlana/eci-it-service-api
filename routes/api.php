@@ -75,6 +75,7 @@ Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
     Route::get('/{serviceRequestId}/costs', [ServiceRequestCostController::class, 'index']);
     Route::post('/{serviceRequestId}/costs', [ServiceRequestCostController::class, 'store']);
     Route::put('/{serviceRequestId}/costs/{costId}', [ServiceRequestCostController::class, 'update']);
+    Route::get('/{serviceRequestId}/costs/{costId}/attachment', [ServiceRequestCostController::class, 'attachment']);
     Route::delete('/{serviceRequestId}/costs/{costId}', [ServiceRequestCostController::class, 'destroy']);
 
     //Locations

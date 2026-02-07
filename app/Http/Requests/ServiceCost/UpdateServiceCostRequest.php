@@ -26,7 +26,7 @@ class UpdateServiceCostRequest extends FormRequest
             'cost_type_id' => 'sometimes|exists:cost_types,id',
             'amount' => 'sometimes|numeric|min:0',
             'description' => 'sometimes|string',
-            'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            'image' => 'sometimes|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:10240'
         ];
     }
 }

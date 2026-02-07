@@ -26,7 +26,7 @@ class StoreServiceCostRequest extends FormRequest
             'cost_type_id' => 'required|exists:cost_types,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:10240'
         ];
     }
 }

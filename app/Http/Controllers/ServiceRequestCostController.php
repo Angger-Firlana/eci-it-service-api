@@ -39,4 +39,9 @@ class ServiceRequestCostController extends Controller
         $this->costService->removeCost($serviceRequestId, $costId);
         return APIResponse::success(null, 200, 'Cost removed successfully');
     }
+
+    public function attachment($serviceRequestId, $costId)
+    {
+        return $this->costService->getAttachment($serviceRequestId, $costId);
+    }
 }

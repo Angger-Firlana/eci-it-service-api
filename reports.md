@@ -123,3 +123,22 @@ Add a `bad_asset` boolean flag to devices, allow it in device APIs, and automati
 
 ### Notes
 - Automated tests could not run here because the MySQL service was not reachable from the environment.
+
+## Session: 2026-02-07 - Service Cost Attachments (Images + PDF)
+
+### Goal
+Allow teams to upload vendor receipts as attachments when adding/updating service costs, supporting common image formats and PDF.
+
+### Changes
+1. Updated service cost validation to accept `pdf` in addition to image formats and raised the size limit to 10MB.
+2. Added custom attachment filenames for service cost uploads (includes service request ID and timestamp).
+3. Added an endpoint to fetch cost attachments.
+4. Updated documentation for service cost endpoints to include attachment field, size limits, and the new attachment endpoint.
+
+### Files Modified
+- `app/Http/Requests/ServiceCost/StoreServiceCostRequest.php`
+- `app/Http/Requests/ServiceCost/UpdateServiceCostRequest.php`
+- `app/Services/ServiceRequest/ServiceRequestCostService.php`
+- `app/Http/Controllers/ServiceRequestCostController.php`
+- `routes/api.php`
+- `documentation.md`

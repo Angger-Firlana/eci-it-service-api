@@ -1292,6 +1292,7 @@ Retrieves all costs for a service request.
             "cost_type_id": 1,
             "amount": 150000,
             "description": "Spare part replacement",
+            "image_path": "service_costs/receipt-001.pdf",
             "created_at": "2026-01-22T12:00:00.000000Z",
             "updated_at": "2026-01-22T12:00:00.000000Z",
             "cost_type": {
@@ -1325,6 +1326,7 @@ Adds a cost to a service request.
 | cost_type_id | integer | Yes | ID of the cost type |
 | amount | numeric | Yes | Cost amount (min: 0) |
 | description | string | No | Description of the cost |
+| image | file | No | Receipt attachment (`jpg`, `jpeg`, `png`, `gif`, `svg`, `pdf`, max 10MB) |
 
 **Example Request:**
 ```json
@@ -1348,7 +1350,8 @@ Adds a cost to a service request.
         "service_request_id": 1,
         "cost_type_id": 1,
         "amount": 150000,
-        "description": "Screen replacement part"
+        "description": "Screen replacement part",
+        "image_path": "service_costs/receipt-001.jpg"
     }
 }
 ```
@@ -1375,6 +1378,7 @@ Updates a cost entry.
 | cost_type_id | integer | No | ID of the cost type |
 | amount | numeric | No | Cost amount (min: 0) |
 | description | string | No | Description of the cost |
+| image | file | No | Receipt attachment (`jpg`, `jpeg`, `png`, `gif`, `svg`, `pdf`, max 10MB) |
 
 **Responses:**
 
@@ -1389,7 +1393,8 @@ Updates a cost entry.
         "service_request_id": 1,
         "cost_type_id": 1,
         "amount": 175000,
-        "description": "Screen replacement part (updated)"
+        "description": "Screen replacement part (updated)",
+        "image_path": "service_costs/receipt-002.pdf"
     }
 }
 ```
@@ -1419,6 +1424,26 @@ Removes a cost from a service request.
     "message": "Cost removed successfully"
 }
 ```
+
+---
+
+### GET /api/service-requests/{serviceRequestId}/costs/{costId}/attachment
+
+Downloads or previews the cost receipt attachment.
+
+**Authentication:** Required
+
+**URL Parameters:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| serviceRequestId | integer | The service request ID |
+| costId | integer | The cost ID |
+
+**Responses:**
+
+- **200 OK:** Returns the file (image or PDF)
+- **404 Not Found:** Attachment not found
 
 ---
 
