@@ -52,6 +52,23 @@ class ApprovalService{
         return $approval->load(['approver', 'assigned_by', 'service_request']);
     }
 
+    public function deviceNeedRepair($id, array $data): ServiceRequest
+    {
+        $serviceRequest = ServiceRequest::findOrFail($id);
+
+        $oldStatusId = $serviceRequest->status_id;
+        $newStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_WORKSHOP);
+
+        $serviceRequest->update([
+            'status_id' => $newStatusId
+        ]);
+
+        $this->auditLogService->createStatusAuditLog($serviceRequest, $serviceRequest->status, $oldStatusId, $newStatusId, $data);
+        
+
+        return $serviceRequest->load(['approver', 'assigned_by', 'service_request']);
+    }
+
     private function checkAndUpdateServiceRequestStatus(ServiceRequest $serviceRequest): void
     {
         $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
@@ -100,23 +117,6 @@ class ApprovalService{
         }
     }
 
-    public function deviceNeedRepair($id, array $data): ServiceRequest
-    {
-        $serviceRequest = ServiceRequest::findOrFail($id);
-
-        $oldStatusId = $serviceRequest->status_id;
-        $newStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_WORKSHOP);
-
-        $serviceRequest->update([
-            'status_id' => $newStatusId
-        ]);
-
-        $this->auditLogService->createStatusAuditLog($serviceRequest, $serviceRequest->status, $oldStatusId, $newStatusId, $data);
-        
-
-        return $serviceRequest->load(['approver', 'assigned_by', 'service_request']);
-    }
-
     public function getApproverByServiceRequestId($serviceRequestId): array
     {
         $data = [];
@@ -135,9 +135,22 @@ class ApprovalService{
         
         $roleIds = $approvalPolicySteps->pluck('role_id')->unique()->toArray();
 
-        $approvers = User::whereHas('roles', function ($query) use ($roleIds) {
-            $query->whereIn('roles.id', $roleIds);
-        })->get();
+        $approvers = collect();
+
+        foreach ($roleIds as $roleId) {
+            $user = User::whereHas('roles', function ($q) use ($roleId) {
+                    $q->where('roles.id', $roleId);
+                })
+                ->whereHas('departments', function ($q) use ($itDepartmentId) {
+                    $q->where('departments.id', $itDepartmentId);
+                })
+                ->orderBy('id') // atau prioritas lain
+                ->first();
+
+            if ($user) {
+                $approvers->push($user);
+            }
+        }
 
         $data['approvers'] = $approvers;
         $data['approvalPolicy'] = $approvalPolicy;

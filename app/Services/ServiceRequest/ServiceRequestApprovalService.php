@@ -91,9 +91,15 @@ class ServiceRequestApprovalService
         return VendorApproval::where('service_request_id', $serviceRequestId)->with(['approver', 'assigned_by'])->get();
     }
 
-    public function createVendorApprovals(int $serviceRequestId,array $approvals): Collection
+    public function createVendorApprovals(int $serviceRequestId): Collection
     {
         DB::beginTransaction();
+
+        $approvers = $this->getApproverByServiceRequestId($serviceRequestId)['approvers'];
+        $approvals = [
+            'approvers' => $approvers->pluck('id')->toArray()
+        ];
+        
         $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
         $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
         $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
@@ -132,7 +138,6 @@ class ServiceRequestApprovalService
 
         return VendorApproval::where('service_request_id', $serviceRequestId)->with(['approver', 'assigned_by'])->get();
     }    
-
     public function deleteVendorApproval(int $id): void
     {
         $approval = VendorApproval::findOrFail($id);

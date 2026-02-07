@@ -142,3 +142,38 @@ Allow teams to upload vendor receipts as attachments when adding/updating servic
 - `app/Http/Controllers/ServiceRequestCostController.php`
 - `routes/api.php`
 - `documentation.md`
+
+## Session: 2026-02-07 - User Active Flag
+
+### Goal
+Add an `is_active` flag to users to support active/inactive status.
+
+### Changes
+1. Added `is_active` column to `users` (default `true`).
+2. Updated `User` model casts/fillable.
+3. Allowed `is_active` in user create/update requests.
+4. Added filtering by `is_active` (with `status` query param fallback).
+5. Updated user API documentation.
+
+### Files Modified
+- `database/migrations/2026_02_07_000002_add_is_active_to_users_table.php`
+- `app/Models/User.php`
+- `app/Http/Requests/User/StoreUserRequest.php`
+- `app/Http/Requests/User/UpdateUserRequest.php`
+- `app/Services/UserService.php`
+- `documentation.md`
+
+## Session: 2026-02-07 - Approval Services Cleanup
+
+### Goal
+Refactor approval-related services for clarity, consistent status codes, and safer flows.
+
+### Changes
+1. Added proper namespace/DI in `ApprovalService` and removed unused variables.
+2. Normalized status transitions to existing codes (`WAITING_APPROVAL_ABOVE`, `REPAIR_IN_VENDOR`, `BAD_ASSET`).
+3. Refactored `ServiceRequestApprovalService` with shared helpers, consistent transactions, and a `destroy()` method to match controller routes.
+4. Standardized approver lookup to filter by IT department when available.
+
+### Files Modified
+- `app/Services/ApprovalService.php`
+- `app/Services/ServiceRequest/ServiceRequestApprovalService.php`
