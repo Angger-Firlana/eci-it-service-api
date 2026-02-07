@@ -12,7 +12,7 @@ class DeviceService
     //
     public function getAllDevice(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        $devices = Device::select(['id','device_model_id','serial_number'])->with(['device_model:id,brand,model']);
+        $devices = Device::select(['id','device_model_id','serial_number','bad_asset'])->with(['device_model:id,brand,model']);
 
         if($request->has('serial-number')){
             $devices = $devices->where('serial_number', $request->input('serial-number'));
@@ -30,6 +30,13 @@ class DeviceService
             });
         }
 
+        if ($request->has('bad_asset')) {
+            $badAsset = filter_var($request->input('bad_asset'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($badAsset !== null) {
+                $devices = $devices->where('bad_asset', $badAsset);
+            }
+        }
+
         return $devices->paginate($request->get('per_page', 15));
     }
 
@@ -42,7 +49,8 @@ class DeviceService
     public function createDevice(array $data): Device{
         $device = Device::create([
             'device_model_id' => $data['device_model_id'],
-            'serial_number' => $data['serial_number']
+            'serial_number' => $data['serial_number'],
+            'bad_asset' => $data['bad_asset'] ?? false
         ]);
 
         return $device;
@@ -53,7 +61,8 @@ class DeviceService
 
         $device->update([
             'device_model_id' => $data['device_model_id'],
-            'serial_number' => $data['serial_number']
+            'serial_number' => $data['serial_number'],
+            'bad_asset' => $data['bad_asset'] ?? $device->bad_asset
         ]);
 
         return $device;
@@ -68,6 +77,10 @@ class DeviceService
 
         if(isset($data['serial_number'])){
             $device->serial_number = $data['serial_number'];
+        }
+
+        if (isset($data['bad_asset'])) {
+            $device->bad_asset = $data['bad_asset'];
         }
 
         $device->save();

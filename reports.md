@@ -93,3 +93,33 @@ Improve service request filtering (including a keyword search across related dat
 - `app/Models/ServiceRequest.php`
 - `app/Services/AuditLogService.php`
 - `app/Services/ServiceRequest/ServiceRequestService.php`
+
+## Session: 2026-02-07 - Bad Asset Flag + Auto Marking + Docs/Tests
+
+### Goal
+Add a `bad_asset` boolean flag to devices, allow it in device APIs, and automatically mark devices as bad assets when a service request transitions to `BAD_ASSET`.
+
+### Changes
+1. Added `bad_asset` boolean column (default `false`) to `devices`.
+2. Updated `Device` model casts/fillable, and device create/update/patch flows to accept `bad_asset`.
+3. Included `bad_asset` in device list and service request detail responses.
+4. Added auto-marking: when a service request status becomes `BAD_ASSET`, all related devices are updated to `bad_asset = true` (including vendor rejection path).
+5. Added `bad_asset` filter to `GET /api/devices` (`true/false` or `1/0`).
+6. Updated API docs for device endpoints to include `bad_asset`.
+7. Added a feature test to verify the `BAD_ASSET` status auto-flags devices, and updated device tests to include `bad_asset`.
+8. Updated PHPUnit config to use MySQL test DB `eci-service-it_test`.
+
+### Files Modified
+- `database/migrations/2026_02_07_000001_add_bad_asset_to_devices_table.php`
+- `app/Models/Device.php`
+- `app/Services/DeviceService.php`
+- `app/Services/ServiceRequest/ServiceRequestService.php`
+- `app/Services/ApprovalService.php`
+- `app/Http/Requests/Device/StoreDeviceRequest.php`
+- `app/Http/Requests/Device/UpdateDeviceRequest.php`
+- `documentation.md`
+- `tests/Feature/ApiEndpointTest.php`
+- `phpunit.xml`
+
+### Notes
+- Automated tests could not run here because the MySQL service was not reachable from the environment.

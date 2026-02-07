@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\ServiceRequest;
+use App\Models\Device;
 use App\Models\VendorApproval;
 use App\Enums\ServiceRequestStatusCode;
 use App\Enums\VendorApprovalStatusCode;
@@ -71,6 +72,7 @@ class ApprovalService{
             // Any rejection -> REJECTED_BY_ABOVE (6)
             $oldStatusId = $serviceRequest->status_id;
             $serviceRequest->update(['status_id' => $badAsseStatusId]);
+            $this->markDevicesAsBadAsset($serviceRequest);
             $this->auditLogService->createAuditLog([
                 'actor_id' => auth()->id(),
                 'entity_id' => $serviceRequest->id,
@@ -141,5 +143,20 @@ class ApprovalService{
         $data['approvalPolicy'] = $approvalPolicy;
         $data['approvalPolicySteps'] = $approvalPolicySteps;
         return $data;
+    }
+
+    private function markDevicesAsBadAsset(ServiceRequest $serviceRequest): void
+    {
+        $deviceIds = $serviceRequest->service_request_details()
+            ->whereNotNull('device_id')
+            ->pluck('device_id')
+            ->unique()
+            ->values();
+
+        if ($deviceIds->isEmpty()) {
+            return;
+        }
+
+        Device::whereIn('id', $deviceIds)->update(['bad_asset' => true]);
     }
 }

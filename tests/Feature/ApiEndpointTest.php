@@ -11,6 +11,8 @@ use App\Models\Department;
 use App\Models\DeviceType;
 use App\Models\DeviceModel;
 use App\Models\Device;
+use App\Models\ServiceType;
+use App\Enums\ServiceRequestStatusCode;
 use Illuminate\Support\Facades\Hash;
 
 class ApiEndpointTest extends TestCase
@@ -190,7 +192,8 @@ class ApiEndpointTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->postJson('/api/devices', [
                 'device_model_id' => $model->id,
-                'serial_number' => 'SN999888777'
+                'serial_number' => 'SN999888777',
+                'bad_asset' => false
             ]);
         $response->assertStatus(201);
         $deviceId = $response->json('data.id');
@@ -203,7 +206,8 @@ class ApiEndpointTest extends TestCase
         // Update
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->putJson("/api/devices/{$deviceId}", [
-                'serial_number' => 'SN111222333'
+                'serial_number' => 'SN111222333',
+                'bad_asset' => true
             ]);
         $response->assertStatus(200);
 
@@ -211,6 +215,54 @@ class ApiEndpointTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->deleteJson("/api/devices/{$deviceId}");
         $response->assertStatus(200);
+    }
+
+    /** @test */
+    public function it_marks_device_bad_asset_when_service_request_status_is_bad_asset()
+    {
+        $type = DeviceType::create(['name' => 'Laptop']);
+        $model = DeviceModel::create([
+            'device_type_id' => $type->id,
+            'brand' => 'Dell',
+            'model' => 'Latitude'
+        ]);
+
+        $device = Device::create([
+            'device_model_id' => $model->id,
+            'serial_number' => 'SNBADASSET001',
+            'bad_asset' => false
+        ]);
+
+        $serviceType = ServiceType::first();
+        $this->assertNotNull($serviceType);
+
+        $createResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->postJson('/api/service-requests', [
+                'admin_id' => $this->adminUser->id,
+                'request_date' => now()->toDateString(),
+                'status_code' => ServiceRequestStatusCode::REVIEW_IN_WORKSHOP->value,
+                'details' => [
+                    [
+                        'service_type_id' => $serviceType->id,
+                        'device_id' => $device->id,
+                        'complaint' => 'Cannot power on'
+                    ]
+                ]
+            ]);
+
+        $createResponse->assertStatus(200);
+        $serviceRequestId = $createResponse->json('data.id');
+
+        $updateResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->putJson("/api/service-requests/{$serviceRequestId}", [
+                'status_code' => ServiceRequestStatusCode::BAD_ASSET->value,
+                'log_notes' => 'Not repairable'
+            ]);
+
+        $updateResponse->assertStatus(200);
+
+        $device->refresh();
+        $this->assertTrue($device->bad_asset);
     }
 
     /** @test */

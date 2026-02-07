@@ -24,7 +24,8 @@ class StoreDeviceRequest extends FormRequest
         return [
             //
             'device_model_id' => 'required|exists:device_models,id',
-            'serial_number' => 'required|string|unique:devices,serial_number'   
+            'serial_number' => 'required|string|unique:devices,serial_number',
+            'bad_asset' => 'sometimes|boolean'
         ];
     }
 }

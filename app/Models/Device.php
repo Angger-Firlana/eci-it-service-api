@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $id
  * @property int $device_model_id
  * @property string $serial_number
+ * @property bool $bad_asset
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * 
@@ -29,12 +30,14 @@ class Device extends Model
 	protected $table = 'devices';
 
 	protected $casts = [
-		'device_model_id' => 'int'
+		'device_model_id' => 'int',
+		'bad_asset' => 'bool'
 	];
 
 	protected $fillable = [
 		'device_model_id',
-		'serial_number'
+		'serial_number',
+		'bad_asset'
 	];
 
 	public function device_model()

@@ -277,7 +277,10 @@ Retrieves a paginated list of devices.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| search | string | Search term to filter devices |
+| serial-number | string | Filter by exact serial number |
+| brand | string | Filter by device brand |
+| model | string | Filter by device model (partial match) |
+| bad_asset | boolean | Filter by bad asset status (`true`/`false` or `1`/`0`) |
 | page | integer | Page number for pagination |
 | per_page | integer | Number of items per page |
 
@@ -294,8 +297,7 @@ Retrieves a paginated list of devices.
             "id": 1,
             "device_model_id": 1,
             "serial_number": "SN123456789",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z",
+            "bad_asset": false,
             "device_model": {
                 "id": 1,
                 "brand": "Apple",
@@ -341,6 +343,7 @@ Retrieves a specific device by ID.
         "id": 1,
         "device_model_id": 1,
         "serial_number": "SN123456789",
+        "bad_asset": false,
         "created_at": "2026-01-22T12:00:00.000000Z",
         "updated_at": "2026-01-22T12:00:00.000000Z",
         "device_model": {
@@ -375,12 +378,14 @@ Creates a new device.
 |-------|------|----------|-------------|
 | device_model_id | integer | Yes | ID of the device model (must exist in device_models table) |
 | serial_number | string | Yes | Device serial number (must be unique) |
+| bad_asset | boolean | No | Mark device as bad asset |
 
 **Example Request:**
 ```json
 {
     "device_model_id": 1,
-    "serial_number": "SN123456789"
+    "serial_number": "SN123456789",
+    "bad_asset": false
 }
 ```
 
@@ -396,6 +401,7 @@ Creates a new device.
         "id": 1,
         "device_model_id": 1,
         "serial_number": "SN123456789",
+        "bad_asset": false,
         "created_at": "2026-01-22T12:00:00.000000Z",
         "updated_at": "2026-01-22T12:00:00.000000Z"
     }
@@ -434,6 +440,7 @@ Updates an existing device.
 |-------|------|----------|-------------|
 | device_model_id | integer | No | ID of the device model |
 | serial_number | string | No | Device serial number (must be unique) |
+| bad_asset | boolean | No | Mark device as bad asset |
 
 **Responses:**
 
@@ -447,6 +454,7 @@ Updates an existing device.
         "id": 1,
         "device_model_id": 1,
         "serial_number": "SN987654321",
+        "bad_asset": true,
         "created_at": "2026-01-22T12:00:00.000000Z",
         "updated_at": "2026-01-22T13:00:00.000000Z"
     }
@@ -473,6 +481,7 @@ Partially updates an existing device.
 |-------|------|----------|-------------|
 | device_model_id | integer | No | ID of the device model |
 | serial_number | string | No | Device serial number (must be unique) |
+| bad_asset | boolean | No | Mark device as bad asset |
 
 **Responses:**
 

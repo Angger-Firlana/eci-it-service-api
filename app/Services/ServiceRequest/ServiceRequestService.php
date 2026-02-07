@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use App\Models\Role;
+use App\Models\Device;
 
 class ServiceRequestService
 {
@@ -189,7 +190,11 @@ class ServiceRequestService
                 $this->syncDetails($serviceRequest, $data['details']);
             }
 
-            if ($status->code === ServiceRequestStatusCode::IN_PROGRESS->value && $oldStatusId != $newStatusId) {
+            if ($status->code === ServiceRequestStatusCode::BAD_ASSET->value && $oldStatusId != $newStatusId) {
+                $this->markDevicesAsBadAsset($serviceRequest);
+            }
+
+            if ($status->code === ServiceRequestStatusCode::REPAIR_IN_WORKSHOP->value && $oldStatusId != $newStatusId) {
                 $this->invoiceService->createInvoiceForServiceRequest($serviceRequest, $data);
             }
 
@@ -252,7 +257,7 @@ class ServiceRequestService
             'admin.departments:id,name',
             'status:id,name,code',
             'service_request_details:id,service_request_id,service_type_id,device_id,complaint',
-            'service_request_details.device:id,device_model_id,serial_number',
+            'service_request_details.device:id,device_model_id,serial_number,bad_asset',
             'service_request_details.device.device_model:id,device_type_id,brand,model',
             'service_request_details.device.device_model.device_type:id,name',
             'service_request_details.service_type:id,name',
@@ -307,5 +312,20 @@ class ServiceRequestService
     private function getServiceRequestStatusId(ServiceRequestStatusCode|string $code): int
     {
         return Status::idForEntityCode('SERVICE_REQUEST', $code);
+    }
+
+    private function markDevicesAsBadAsset(ServiceRequest $serviceRequest): void
+    {
+        $deviceIds = $serviceRequest->service_request_details()
+            ->whereNotNull('device_id')
+            ->pluck('device_id')
+            ->unique()
+            ->values();
+
+        if ($deviceIds->isEmpty()) {
+            return;
+        }
+
+        Device::whereIn('id', $deviceIds)->update(['bad_asset' => true]);
     }
 }
