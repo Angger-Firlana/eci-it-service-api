@@ -3,6 +3,7 @@
 namespace App\Http\Requests\ServiceRequest;
 
 use App\Models\EntityType;
+use App\Models\Role;
 use App\Models\Status;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -25,14 +26,21 @@ class StoreServiceRequest extends FormRequest
     public function rules(): array
     {
         $serviceRequestEntityTypeId = EntityType::where('code', 'SERVICE_REQUEST')->value('id');
+        $user = $this->user();
+        $isAdmin = $user && $user->roles->contains('id', Role::ADMIN);
 
         return [
-            'admin_id' => 'required|exists:users,id',
-            'user_id' => 'sometimes|exists:users,id',
-            'request_date' => 'required|date',
-            'status_id'  => 'required_without:status_code|exists:statuses,id',
+            // Only admins can create on behalf of another user / assign an admin.
+            'admin_id' => 'sometimes|exists:users,id',
+            'user_id' => $isAdmin ? 'sometimes|exists:users,id' : 'prohibited',
+
+            // Request date is set by the backend if omitted.
+            'request_date' => 'sometimes|date',
+
+            // Status is set by the backend for new requests; accept inputs but don't require them.
+            'status_id'  => 'sometimes|exists:statuses,id',
             'status_code'  => [
-                'required_without:status_id',
+                'sometimes',
                 'string',
                 Rule::exists('statuses', 'code')->where('entity_type_id', $serviceRequestEntityTypeId),
             ],

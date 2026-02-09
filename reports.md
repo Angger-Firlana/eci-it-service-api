@@ -178,3 +178,31 @@ Refactor approval-related services for clarity, consistent status codes, and saf
 ### Files Modified
 - `app/Services/ApprovalService.php`
 - `app/Services/ServiceRequest/ServiceRequestApprovalService.php`
+
+## Session: 2026-02-09 - Service Request Admin Email + Creator Validation
+
+### Goal
+When a user creates a new service request, automatically notify the admin by email with device/model + complaint details and direct links. Prevent users from spoofing `user_id` / creating requests on behalf of others.
+
+### Changes
+1. Added role-aware validation for `POST /api/service-requests`:
+   - Non-admin users cannot submit `user_id` or `admin_id` (both are prohibited).
+   - `request_date` is now optional (backend defaults to `now()` if omitted).
+2. Enforced creator identity in the service layer:
+   - Users can only create requests for themselves.
+   - Admins can create on behalf of another user by providing `user_id`.
+3. Queued an admin notification email after the transaction commits (so emails are not queued for rolled-back requests).
+4. Enriched the admin email content:
+   - Includes service request ID / service number (when available), device/device model, complaints, and links (`FRONTEND_URL` login + service request detail).
+
+### Configuration
+- `ADMIN_MAIL`: recipient admin email (required to actually send).
+- `FRONTEND_URL`: frontend base URL used for links in the email (`/login` and `/service-requests/{id}`).
+
+### Files Modified
+- `app/Http/Requests/ServiceRequest/StoreServiceRequest.php`
+- `app/Services/ServiceRequest/ServiceRequestService.php`
+- `app/Services/ContactAdmin/ContactAdminMailservice.php`
+- `app/Mail/UserContactAdmin.php`
+- `resources/views/mail/user-contact-admin.blade.php`
+- `.env.example`

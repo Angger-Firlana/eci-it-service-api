@@ -11,27 +11,32 @@ use App\Services\ServiceRequest\DetailServiceRequestService;
 use App\Models\StatusTransition;
 use App\Services\AuditLogService;
 use App\Services\InvoiceService;
+use App\Services\ContactAdmin\ContactAdminMailservice;
 use App\Services\ServiceRequest\ServiceRequestApprovalService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use App\Models\Role;
 use App\Models\Device;
+use Throwable;
 
 class ServiceRequestService
 {
     protected DetailServiceRequestService $detailService;
+    protected ContactAdminMailservice $contactAdminMailService;
     protected \App\Services\InvoiceService $invoiceService;
     protected AuditLogService $auditLogService;
     protected ServiceRequestApprovalService $serviceRequestApprovalService;
 
     public function __construct(
         DetailServiceRequestService $detailService,
+        ContactAdminMailservice $contactAdminMailService,
         \App\Services\InvoiceService $invoiceService,
         AuditLogService $auditLogService,
         ServiceRequestApprovalService $serviceRequestApprovalService
     ) {
         $this->detailService = $detailService;
+        $this->contactAdminMailService = $contactAdminMailService;
         $this->invoiceService = $invoiceService;
         $this->auditLogService = $auditLogService;
         $this->serviceRequestApprovalService = $serviceRequestApprovalService;
@@ -78,6 +83,28 @@ class ServiceRequestService
                 'new_status_id' => $serviceRequest->status_id,
             ]);
 
+            $actor = Auth::user();
+
+            $serviceRequestId = $serviceRequest->id;
+            $actorName = $actor->name;
+            $actorEmail = $actor->email;
+
+            DB::afterCommit(function () use ($serviceRequestId, $actorName, $actorEmail) {
+                try {
+                    $this->contactAdminMailService->queue([
+                        'name' => $actorName,
+                        'email' => $actorEmail,
+                        'message' => 'A new service request has been created and requires review.',
+                        'service_request_id' => $serviceRequestId,
+                    ]);
+                } catch (Throwable $e) {
+                    logger()->error('Failed to queue admin notification email for service request.', [
+                        'service_request_id' => $serviceRequestId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            });
+
             return $this->loadRelations($serviceRequest);
         });
     }
@@ -98,19 +125,33 @@ class ServiceRequestService
         $userId = null;
         $user = Auth::user();
 
-        if ($user && $user->roles->contains('id', Role::ADMIN)) {
-            $adminId = $data['admin_id'] ?? null;
+        if (!$user) {
+            throw new \RuntimeException('Unauthenticated.');
         }
 
-        if ($user && $user->roles->contains('id', Role::USER)) {
+        $isAdmin = $user->roles->contains('id', Role::ADMIN);
+        $isUser = $user->roles->contains('id', Role::USER);
+
+        if ($isAdmin) {
+            // Admins can create on behalf of another user.
+            $adminId = $user->id;
+            $userId = isset($data['user_id']) ? (int) $data['user_id'] : null;
+        } elseif ($isUser) {
+            // Users can only create requests for themselves.
+            if (isset($data['user_id']) && (int) $data['user_id'] !== (int) $user->id) {
+                throw new \InvalidArgumentException('You can only create a service request for your own account.');
+            }
+
             $userId = $user->id;
+        } else {
+            throw new \InvalidArgumentException('Your role is not allowed to create service requests.');
         }
 
         return ServiceRequest::create([
             'service_number'   => $this->generateServiceNumber(),
             'admin_id'         => $adminId,
             'user_id'          => $userId,
-            'request_date'     => now(),
+            'request_date'     => $data['request_date'] ?? now(),
             'estimated_date'   => $data['estimated_date'] ?? null,
             'status_id'        => $this->getServiceRequestStatusId(ServiceRequestStatusCode::REVIEW_IN_WORKSHOP),
         ]);

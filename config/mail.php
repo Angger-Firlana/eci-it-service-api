@@ -15,6 +15,7 @@ return [
     */
 
     'default' => env('MAIL_MAILER', 'log'),
+    'admin_email' => env('ADMIN_MAIL', env('MAIL_FROM_ADDRESS')),
 
     /*
     |--------------------------------------------------------------------------
@@ -106,7 +107,7 @@ return [
     |
     | You may wish for all emails sent by your application to be sent from
     | the same address. Here you may specify a name and address that is
-    | used globally for all emails that are sent by your application.
+    | used globally for all emails that are sent by your appli  cation.
     |
     */
 

@@ -27,7 +27,11 @@ use Illuminate\Database\Eloquent\Model;
 class Role extends Model
 {
 	const ADMIN = 1;
-	const USER = 2;
+	const MANAGER = 2;
+	const STAFF = 3;
+
+	// Backward-compatible alias (some services use "USER" to mean a non-admin requester).
+	const USER = self::STAFF;
 
 
 	protected $table = 'roles';

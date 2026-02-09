@@ -19,6 +19,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\CostTypeController;
+use App\Http\Controllers\ContactAdminController;
 use App\Http\Controllers\InboxApprovalController;
 
 Route::get('/user', function (Request $request) {
@@ -157,3 +158,6 @@ Route::prefix('inbox-approvals')->middleware('auth:sanctum')->group(function(){
 });
 
 Route::get('/export-invoice/{id}', [ExportInvoiceController::class, 'download']);
+
+Route::post('/contact-admin', [ContactAdminController::class, 'send']);
+
