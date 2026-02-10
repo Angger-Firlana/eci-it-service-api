@@ -15,8 +15,8 @@ use App\Models\ServiceRequestDetail;
 
 use App\Services\ServiceRequest\DetailServiceRequestService;
 use App\Services\ServiceRequest\ServiceRequestIdempotencyHandler;
-use App\Services\AuditLogService;
-use App\Services\InvoiceService;
+use App\Services\AuditLog\AuditLogService;
+use App\Services\Invoice\InvoiceService;
 use App\Services\ContactAdmin\ContactAdminMailservice;
 use App\Services\ServiceRequest\ServiceRequestApprovalService;
 
@@ -32,7 +32,7 @@ class ServiceRequestService
 {
     protected DetailServiceRequestService $detailService;
     protected ContactAdminMailservice $contactAdminMailService;
-    protected \App\Services\InvoiceService $invoiceService;
+    protected InvoiceService $invoiceService;
     protected AuditLogService $auditLogService;
     protected ServiceRequestApprovalService $serviceRequestApprovalService;
     protected ServiceRequestIdempotencyHandler $serviceRequestIdempotencyHandler;
@@ -41,7 +41,7 @@ class ServiceRequestService
     public function __construct(
         DetailServiceRequestService $detailService,
         ContactAdminMailservice $contactAdminMailService,
-        \App\Services\InvoiceService $invoiceService,
+        InvoiceService $invoiceService,
         AuditLogService $auditLogService,
         ServiceRequestApprovalService $serviceRequestApprovalService,
         ServiceRequestIdempotencyHandler $serviceRequestIdempotencyHandler,
@@ -224,7 +224,7 @@ class ServiceRequestService
             $oldStatusId = $serviceRequest->status_id;
 
             if (isset($data['details'])) {
-                $this->ensureDeviceIdempotency($data['details'], $serviceRequest->id);
+                $this->serviceRequestIdempotencyHandler->ensureDeviceIdempotency($data['details'], $serviceRequest->id);
             }
 
             $newStatusId = $data['status_id'] ?? $serviceRequest->status_id;
@@ -303,7 +303,7 @@ class ServiceRequestService
     //function to load relations 
     private function loadRelations(ServiceRequest $serviceRequest): ServiceRequest
     {
-        return $serviceRequest->load($this->defaultWith());
+        return $serviceRequest->load($this->showRelationsHandler->defaultWith());
     }
 
    
@@ -311,8 +311,9 @@ class ServiceRequestService
     //function to sync details
     private function syncDetails(ServiceRequest $serviceRequest, array $details): void
     {
+
         foreach ($details as $detail) {
-            if (isset($detail['id'])) {
+            if ($detail['device_id'] != $serviceRequest->service_request_details->device_id ) {
                 $this->detailService->updateDetailServiceRequest($detail['id'], $detail);
                 continue;
             }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Vendor;
 
 use App\Models\Vendor;
 use Illuminate\Http\Request;

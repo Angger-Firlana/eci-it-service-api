@@ -6,7 +6,7 @@ use App\Models\ServiceRequestDetail;
 use Illuminate\Http\UploadedFile;
 use App\Models\ComplaintImage;
 use Illuminate\Support\Facades\Storage;
-use App\Services\DeviceService;
+use App\Services\Device\DeviceService;
 
 class DetailServiceRequestService
 {

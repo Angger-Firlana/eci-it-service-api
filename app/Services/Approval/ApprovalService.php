@@ -1,11 +1,13 @@
 <?php
 
+namespace App\Services\AuditLog;
+
 use App\Models\ServiceRequest;
 use App\Models\Device;
 use App\Models\VendorApproval;
 use App\Enums\ServiceRequestStatusCode;
 use App\Enums\VendorApprovalStatusCode;
-use App\Services\AuditLogService;
+use App\Services\AuditLog\AuditLogService;
  
 class ApprovalService{
 

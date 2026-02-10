@@ -4,7 +4,7 @@ namespace App\Helpers\ServiceRequest;
 
 class ShowRelationsHandler{
      //function to get relations for index
-    private function indexWith(): array
+    public function indexWith(): array
     {
         return [
             'user',
@@ -14,7 +14,7 @@ class ShowRelationsHandler{
     }
 
     //function to get relations for show
-    private function showWith(): array
+    public function showWith(): array
     {
         return [
             'user:id,name,email',
@@ -38,7 +38,7 @@ class ShowRelationsHandler{
     }
 
     //function to get default relations
-    private function defaultWith(): array
+    public function defaultWith(): array
     {
         return [
             'user',

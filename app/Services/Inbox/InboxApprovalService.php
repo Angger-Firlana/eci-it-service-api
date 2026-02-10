@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Inbox;
 
 use App\Models\ServiceRequest;
 use App\Models\VendorApproval;

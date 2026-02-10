@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Requests\CostType\StoreCostTypeRequest;
 use App\Http\Requests\CostType\UpdateCostTypeRequest;
-use App\Services\CostTypeService;
+use App\Services\MasterData\CostTypeService;
 use App\Helpers\APIResponse;
 
 class CostTypeController extends Controller

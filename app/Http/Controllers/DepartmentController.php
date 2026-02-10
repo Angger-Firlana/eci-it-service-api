@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\Department\StoreDepartmentRequest;
 use App\Http\Requests\Department\UpdateDepartmentRequest;
 use App\Helpers\APIResponse;
-use App\Services\DepartmentService;
+use App\Services\Department\DepartmentService;
 
 class DepartmentController extends Controller
 {

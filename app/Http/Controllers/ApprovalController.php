@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helpers\APIResponse;
-use App\Services\ApprovalService;
+use App\Services\Approval\ApprovalService;
 
 class ApprovalController extends Controller
 {

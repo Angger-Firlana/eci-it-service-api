@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Device;
 
 use App\Models\DeviceType;
 use Illuminate\Database\Eloquent\Collection;

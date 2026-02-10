@@ -131,11 +131,11 @@ class ServiceRequest extends Model
 				->leftJoin('service_request_details as srd', 'service_requests.id', '=', 'srd.service_request_id')
 				->leftJoin('devices as d', 'srd.device_id', '=', 'd.id')
 				->leftJoin('device_models as dm', 'd.device_model_id', '=', 'dm.id')
-				->leftJoin('service_locations as sl', 'd.service_location_id', '=', 'sl.id')
+				->leftJoin('service_locations as sl', 'service_requests.id', '=', 'sl.service_request_id')
 				->leftJoin('vendors as v', 'sl.vendor_id', '=', 'v.id')
 				->where(function ($q) use ($keyword) {
 					$q->where('u.name', 'like', "%{$keyword}%")
-					->orWhere('dm.name', 'like', "%{$keyword}%")
+					->orWhere('dm.model', 'like', "%{$keyword}%")
 					->orWhere('d.serial_number', 'like', "%{$keyword}%")
 					->orWhere('v.name', 'like', "%{$keyword}%")
 					->orWhere('sl.phone_number', 'like', "%{$keyword}%");	
