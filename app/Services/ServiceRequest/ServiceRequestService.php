@@ -3,21 +3,29 @@
 namespace App\Services\ServiceRequest;
 
 use App\Enums\ServiceRequestStatusCode;
+
+use App\Helpers\ServiceRequest\ShowRelationsHandler;
+
 use App\Models\ServiceRequest;
 use App\Models\Status;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Services\ServiceRequest\DetailServiceRequestService;
 use App\Models\StatusTransition;
+use App\Models\Role;
+use App\Models\Device;
+use App\Models\ServiceRequestDetail;
+
+use App\Services\ServiceRequest\DetailServiceRequestService;
+use App\Services\ServiceRequest\ServiceRequestIdempotencyHandler;
 use App\Services\AuditLogService;
 use App\Services\InvoiceService;
 use App\Services\ContactAdmin\ContactAdminMailservice;
 use App\Services\ServiceRequest\ServiceRequestApprovalService;
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use App\Models\Role;
-use App\Models\Device;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class ServiceRequestService
@@ -27,24 +35,30 @@ class ServiceRequestService
     protected \App\Services\InvoiceService $invoiceService;
     protected AuditLogService $auditLogService;
     protected ServiceRequestApprovalService $serviceRequestApprovalService;
+    protected ServiceRequestIdempotencyHandler $serviceRequestIdempotencyHandler;
+    protected ShowRelationsHandler $showRelationsHandler;
 
     public function __construct(
         DetailServiceRequestService $detailService,
         ContactAdminMailservice $contactAdminMailService,
         \App\Services\InvoiceService $invoiceService,
         AuditLogService $auditLogService,
-        ServiceRequestApprovalService $serviceRequestApprovalService
+        ServiceRequestApprovalService $serviceRequestApprovalService,
+        ServiceRequestIdempotencyHandler $serviceRequestIdempotencyHandler,
+        ShowRelationsHandler $showRelationsHandler
     ) {
         $this->detailService = $detailService;
         $this->contactAdminMailService = $contactAdminMailService;
         $this->invoiceService = $invoiceService;
         $this->auditLogService = $auditLogService;
         $this->serviceRequestApprovalService = $serviceRequestApprovalService;
+        $this->serviceRequestIdempotencyHandler = $serviceRequestIdempotencyHandler;
+        $this->showRelationsHandler = $showRelationsHandler;
     }
 
     public function getAllServiceRequest(Request $request): LengthAwarePaginator
     {
-        return ServiceRequest::with($this->indexWith())
+        return ServiceRequest::with($this->showRelationsHandler->indexWith())
             ->filter($request)
             ->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 15));
@@ -52,7 +66,7 @@ class ServiceRequestService
 
     public function getServiceRequestById(int $id): ServiceRequest
     {
-        $serviceRequest = ServiceRequest::with($this->showWith())->findOrFail($id);
+        $serviceRequest = ServiceRequest::with($this->showRelationsHandler->showWith())->findOrFail($id);
 
         $serviceRequest->makeHidden([
             'created_at',
@@ -69,6 +83,8 @@ class ServiceRequestService
 
     public function createServiceRequest(array $data): ServiceRequest
     {
+        $this->serviceRequestIdempotencyHandler->ensureDeviceIdempotency($data['details'] ?? []);
+
         return DB::transaction(function () use ($data) {
             $serviceRequest = $this->createMainServiceRequest($data);
             $this->createServiceRequestDetails($serviceRequest, $data['details'] ?? []);
@@ -207,6 +223,10 @@ class ServiceRequestService
             $serviceRequest = ServiceRequest::findOrFail($id);
             $oldStatusId = $serviceRequest->status_id;
 
+            if (isset($data['details'])) {
+                $this->ensureDeviceIdempotency($data['details'], $serviceRequest->id);
+            }
+
             $newStatusId = $data['status_id'] ?? $serviceRequest->status_id;
             $status = $this->getServiceRequestStatusOrFail($newStatusId);
 
@@ -286,49 +306,7 @@ class ServiceRequestService
         return $serviceRequest->load($this->defaultWith());
     }
 
-    //function to get relations for index
-    private function indexWith(): array
-    {
-        return [
-            'user',
-            'admin',
-            'status'
-        ];
-    }
-
-    //function to get relations for show
-    private function showWith(): array
-    {
-        return [
-            'user:id,name,email',
-            'user.departments:id,name',
-            'admin:id,name,email',
-            'admin.departments:id,name',
-            'status:id,name,code',
-            'service_request_details:id,service_request_id,service_type_id,device_id,complaint',
-            'service_request_details.device:id,device_model_id,serial_number,bad_asset',
-            'service_request_details.device.device_model:id,device_type_id,brand,model',
-            'service_request_details.device.device_model.device_type:id,name',
-            'service_request_details.service_type:id,name',
-            'service_request_details.complaint_images',
-            'vendor_approvals:id,service_request_id,approver_id,assigned_by,assigned_at,approved_at,status_id,created_at,updated_at',
-            'vendor_approvals.status:id,name,code',
-            'vendor_approvals.approver:id,name',
-            'vendor_approvals.assigned_by:id,name'
-        ];
-
-
-    }
-
-    //function to get default relations
-    private function defaultWith(): array
-    {
-        return [
-            'user',
-            'status',
-            'service_request_details.device',
-        ];
-    }
+   
 
     //function to sync details
     private function syncDetails(ServiceRequest $serviceRequest, array $details): void
