@@ -48,7 +48,8 @@ class AuditLogService
             ->get();
     }
 
-    public function getTimeLineForServiceRequest($auditLogs, ServiceRequest $serviceRequest):array{
+    public function getTimeLineForServiceRequest($auditLogs, ServiceRequest $serviceRequest): array
+    {
         return $auditLogs->map(function ($log) use ($serviceRequest) {
             $label = $log->action === 'CREATE_REQUEST'
                 ? ($serviceRequest->status->name ?? 'Menunggu Approval')
@@ -69,6 +70,6 @@ class AuditLogService
                 'description' => $description,
                 'state' => 'active',
             ];
-        });
+        })->values()->all();
     }
 }
