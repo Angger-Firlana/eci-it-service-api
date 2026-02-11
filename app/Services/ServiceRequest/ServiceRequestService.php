@@ -306,14 +306,11 @@ class ServiceRequestService
         return $serviceRequest->load($this->showRelationsHandler->defaultWith());
     }
 
-   
-
     //function to sync details
     private function syncDetails(ServiceRequest $serviceRequest, array $details): void
     {
-
         foreach ($details as $detail) {
-            if ($detail['device_id'] != $serviceRequest->service_request_details->device_id ) {
+            if (isset($detail['id'])) {
                 $this->detailService->updateDetailServiceRequest($detail['id'], $detail);
                 continue;
             }
