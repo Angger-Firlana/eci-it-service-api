@@ -93,7 +93,10 @@ class ServiceRequestIdempotencyHandler{
         $query = ServiceRequestDetail::query()
             ->whereIn('device_id', $deviceIds)
             ->whereHas('service_request.status', function ($q) {
-                $q->where('code', '!=', ServiceRequestStatusCode::COMPLETED->value)->orWhere('code', '!=', ServiceRequestStatusCode::BAD_ASSET->value)->orWhere('code', '!=', ServiceRequestStatusCode::CANCELLED->value);
+                $q->whereNotIn('code', [
+                    ServiceRequestStatusCode::COMPLETED->value,
+                    ServiceRequestStatusCode::CANCELLED->value
+                ]);
             });
 
         if ($excludeServiceRequestId !== null) {
