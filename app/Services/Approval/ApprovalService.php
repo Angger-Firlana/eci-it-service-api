@@ -1,26 +1,37 @@
 <?php
 
-namespace App\Services\AuditLog;
+namespace App\Services\Approval;
 
-use App\Models\ServiceRequest;
-use App\Models\Device;
-use App\Models\VendorApproval;
 use App\Enums\ServiceRequestStatusCode;
 use App\Enums\VendorApprovalStatusCode;
+use App\Models\ServiceCost;
+use App\Models\ServiceRequest;
+use App\Models\ServiceRequestDetail;
+use App\Models\Status;
+use App\Models\User;
+use App\Models\VendorApproval;
 use App\Services\AuditLog\AuditLogService;
- 
-class ApprovalService{
+use Illuminate\Support\Collection;
+
+class ApprovalService
+{
+    public function __construct(
+        protected ApprovalPolicyService $approvalPolicyService,
+        protected AuditLogService $auditLogService
+    ) {
+    }
 
     public function approveVendorRequest(int $approvalId, array $data): VendorApproval
     {
         $approval = VendorApproval::findOrFail($approvalId);
 
-        $oldStatusId = $approval->status_id;
+        $oldStatusId = (int) $approval->status_id;
         $newStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::APPROVED);
 
         $approval->update([
             'approved_at' => now(),
             'status_id' => $newStatusId,
+            'notes' => $data['notes'] ?? $approval->notes,
         ]);
 
         $this->auditLogService->createAuditLog([
@@ -30,10 +41,9 @@ class ApprovalService{
             'old_status_id' => $oldStatusId,
             'new_status_id' => $newStatusId,
             'action' => 'APPROVE_VENDOR',
-            'notes' => 'Vendor approval completed',
+            'notes' => $data['notes'] ?? 'Vendor approval completed',
         ]);
 
-        // Update service request status if all approvals are done
         $this->checkAndUpdateServiceRequestStatus($approval->service_request);
 
         return $approval->load(['approver', 'assigned_by', 'service_request']);
@@ -43,12 +53,13 @@ class ApprovalService{
     {
         $approval = VendorApproval::findOrFail($approvalId);
 
-        $oldStatusId = $approval->status_id;
+        $oldStatusId = (int) $approval->status_id;
         $newStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED);
 
         $approval->update([
             'approved_at' => now(),
             'status_id' => $newStatusId,
+            'notes' => $data['notes'] ?? $approval->notes,
         ]);
 
         $this->auditLogService->createAuditLog([
@@ -58,7 +69,7 @@ class ApprovalService{
             'old_status_id' => $oldStatusId,
             'new_status_id' => $newStatusId,
             'action' => 'REJECT_VENDOR',
-            'notes' => 'Vendor approval rejected',
+            'notes' => $data['notes'] ?? 'Vendor approval rejected',
         ]);
 
         $this->checkAndUpdateServiceRequestStatus($approval->service_request);
@@ -66,112 +77,132 @@ class ApprovalService{
         return $approval->load(['approver', 'assigned_by', 'service_request']);
     }
 
-    public function deviceNoNeedRepair(int $approvalId, array $data): VendorApproval
+    public function deviceNeedRepair(int $serviceRequestId, array $data): ServiceRequest
     {
-        $approval = VendorApproval::findOrFail($approvalId);
-        
-        $approval->update([
-            'approved_at' => now(),
-            'status_id' => $this->getVendorApprovalStatusId(VendorApprovalStatusCode::COMPLETED),
-            'notes' => $data['notes'] ?? $approval->notes,
-        ]);
+        $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
 
-        $this->checkAndUpdateServiceRequestStatus($approval->service_request);
-
-        return $approval->load(['approver', 'assigned_by', 'service_request']);
-    }
-
-    public function deviceNeedRepair($id, array $data): ServiceRequest
-    {
-        $serviceRequest = ServiceRequest::findOrFail($id);
-
-        $oldStatusId = $serviceRequest->status_id;
+        $oldStatusId = (int) $serviceRequest->status_id;
         $newStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_WORKSHOP);
 
         $serviceRequest->update([
-            'status_id' => $newStatusId
+            'status_id' => $newStatusId,
         ]);
 
-        $this->auditLogService->createStatusAuditLog($serviceRequest, $serviceRequest->status, $oldStatusId, $newStatusId, $data);
-        
+        $this->auditLogService->createAuditLog([
+            'actor_id' => auth()->id(),
+            'entity_id' => $serviceRequest->id,
+            'entity_type_id' => 1,
+            'old_status_id' => $oldStatusId,
+            'new_status_id' => $newStatusId,
+            'action' => 'UPDATE_STATUS',
+            'notes' => $data['notes'] ?? 'Request disetujui untuk perbaikan di workshop',
+        ]);
 
-        return $serviceRequest->load(['approver', 'assigned_by', 'service_request']);
+        return $serviceRequest->load(['status', 'user', 'admin', 'service_request_details']);
+    }
+
+    public function deviceNoNeedRepair(int $serviceRequestId, array $data): ServiceRequest
+    {
+        $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
+
+        $oldStatusId = (int) $serviceRequest->status_id;
+        $newStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::COMPLETED);
+
+        $serviceRequest->update([
+            'status_id' => $newStatusId,
+        ]);
+
+        $this->auditLogService->createAuditLog([
+            'actor_id' => auth()->id(),
+            'entity_id' => $serviceRequest->id,
+            'entity_type_id' => 1,
+            'old_status_id' => $oldStatusId,
+            'new_status_id' => $newStatusId,
+            'action' => 'UPDATE_STATUS',
+            'notes' => $data['notes'] ?? 'Device tidak memerlukan service',
+        ]);
+
+        return $serviceRequest->load(['status', 'user', 'admin', 'service_request_details']);
     }
 
     private function checkAndUpdateServiceRequestStatus(ServiceRequest $serviceRequest): void
     {
         $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
         $vendorRejectedStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED);
-        $cancelledStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::CANCELLED);
-        $repairInVendor = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_VENDOR);
-        $badAsseStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::BAD_ASSET);
+        $repairInVendorStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_VENDOR);
+        $badAssetStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::BAD_ASSET);
 
         $pendingApprovals = $serviceRequest->vendor_approvals()
             ->where('status_id', $vendorPendingStatusId)
             ->count();
-        
+
         $rejectedApprovals = $serviceRequest->vendor_approvals()
             ->where('status_id', $vendorRejectedStatusId)
             ->count();
-        
+
         if ($rejectedApprovals > 0) {
-            $oldStatusId = $serviceRequest->status_id;
-            $serviceRequest->update(['status_id' => $badAsseStatusId]);
+            $oldStatusId = (int) $serviceRequest->status_id;
+            $serviceRequest->update(['status_id' => $badAssetStatusId]);
+            $this->markDevicesAsBadAsset((int) $serviceRequest->id);
+
             $this->auditLogService->createAuditLog([
                 'actor_id' => auth()->id(),
                 'entity_id' => $serviceRequest->id,
                 'entity_type_id' => 1,
                 'old_status_id' => $oldStatusId,
-                'new_status_id' => $badAsseStatusId,
+                'new_status_id' => $badAssetStatusId,
                 'action' => 'STATUS_CHANGE',
                 'notes' => 'Request ditolak oleh atasan',
             ]);
-        } elseif ($pendingApprovals === 0) {
-            // All approved -> APPROVED_BY_ABOVE (5) -> IN_PROGRESS (7)
-            $oldStatusId = $serviceRequest->status_id;
-            
-            // First transition to APPROVED_BY_ABOVE
-            $serviceRequest->update(['status_id' => $repairInVendor]);
+            return;
+        }
+
+        if ($pendingApprovals === 0) {
+            $oldStatusId = (int) $serviceRequest->status_id;
+            $serviceRequest->update(['status_id' => $repairInVendorStatusId]);
+
             $this->auditLogService->createAuditLog([
                 'actor_id' => auth()->id(),
                 'entity_id' => $serviceRequest->id,
                 'entity_type_id' => 1,
                 'old_status_id' => $oldStatusId,
-                'new_status_id' => $repairInVendor,
+                'new_status_id' => $repairInVendorStatusId,
                 'action' => 'STATUS_CHANGE',
                 'notes' => 'Semua atasan sudah menyetujui',
             ]);
         }
     }
 
-    public function getApproverByServiceRequestId($serviceRequestId): array
+    public function getApproverByServiceRequestId(int $serviceRequestId): array
     {
-        $data = [];
         $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
-        
         $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
 
         if (!$approvalPolicy) {
-            return []; // No policy found
+            return [
+                'approvers' => [],
+                'approvalPolicy' => null,
+                'approvalPolicySteps' => [],
+            ];
         }
 
         $approvalPolicySteps = $approvalPolicy->approval_policy_steps;
         if ($approvalPolicySteps->isEmpty()) {
-            return []; // No steps found
+            return [
+                'approvers' => [],
+                'approvalPolicy' => $approvalPolicy,
+                'approvalPolicySteps' => [],
+            ];
         }
-        
-        $roleIds = $approvalPolicySteps->pluck('role_id')->unique()->toArray();
 
-        $approvers = collect();
+        $roleIds = $approvalPolicySteps->pluck('role_id')->filter()->unique()->values();
+        $approvers = new Collection();
 
         foreach ($roleIds as $roleId) {
-            $user = User::whereHas('roles', function ($q) use ($roleId) {
-                    $q->where('roles.id', $roleId);
+            $user = User::whereHas('roles', function ($query) use ($roleId) {
+                    $query->where('roles.id', $roleId);
                 })
-                ->whereHas('departments', function ($q) use ($itDepartmentId) {
-                    $q->where('departments.id', $itDepartmentId);
-                })
-                ->orderBy('id') // atau prioritas lain
+                ->orderBy('id')
                 ->first();
 
             if ($user) {
@@ -179,13 +210,14 @@ class ApprovalService{
             }
         }
 
-        $data['approvers'] = $approvers;
-        $data['approvalPolicy'] = $approvalPolicy;
-        $data['approvalPolicySteps'] = $approvalPolicySteps;
-        return $data;
+        return [
+            'approvers' => $approvers,
+            'approvalPolicy' => $approvalPolicy,
+            'approvalPolicySteps' => $approvalPolicySteps,
+        ];
     }
 
-    private function markDevicesAsBadAsset($serviceRequestId): void
+    private function markDevicesAsBadAsset(int $serviceRequestId): void
     {
         $deviceIds = ServiceRequestDetail::where('service_request_id', $serviceRequestId)
             ->whereNotNull('device_id')
@@ -197,6 +229,17 @@ class ApprovalService{
             return;
         }
 
-        Device::whereIn('id', $deviceIds)->update(['bad_asset' => true]);
+        \App\Models\Device::whereIn('id', $deviceIds)->update(['bad_asset' => true]);
+    }
+
+    private function getServiceRequestStatusId(ServiceRequestStatusCode|string $code): int
+    {
+        return Status::idForEntityCode('SERVICE_REQUEST', $code);
+    }
+
+    private function getVendorApprovalStatusId(VendorApprovalStatusCode|string $code): int
+    {
+        return Status::idForEntityCode('VENDOR_APPROVAL', $code);
     }
 }
+
