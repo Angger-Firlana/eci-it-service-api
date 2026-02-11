@@ -103,7 +103,7 @@ class ApprovalService{
         $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
         $vendorRejectedStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED);
         $cancelledStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::CANCELLED);
-        $repairInVendor = $this->getServiceRequestStatusId(ServiceRequestStatusCode::APPROVED_BY_ABOVE);
+        $repairInVendor = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_VENDOR);
         $badAsseStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::BAD_ASSET);
 
         $pendingApprovals = $serviceRequest->vendor_approvals()
@@ -115,10 +115,8 @@ class ApprovalService{
             ->count();
         
         if ($rejectedApprovals > 0) {
-            // Any rejection -> REJECTED_BY_ABOVE (6)
             $oldStatusId = $serviceRequest->status_id;
             $serviceRequest->update(['status_id' => $badAsseStatusId]);
-            $this->markDevicesAsBadAsset($serviceRequest);
             $this->auditLogService->createAuditLog([
                 'actor_id' => auth()->id(),
                 'entity_id' => $serviceRequest->id,
@@ -187,9 +185,9 @@ class ApprovalService{
         return $data;
     }
 
-    private function markDevicesAsBadAsset(ServiceRequest $serviceRequest): void
+    private function markDevicesAsBadAsset($serviceRequestId): void
     {
-        $deviceIds = $serviceRequest->service_request_details()
+        $deviceIds = ServiceRequestDetail::where('service_request_id', $serviceRequestId)
             ->whereNotNull('device_id')
             ->pluck('device_id')
             ->unique()

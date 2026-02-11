@@ -49,7 +49,7 @@ class ServiceRequestApprovalService
         }
 
         $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
-        $inReviewAboveStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::IN_REVIEW_ABOVE);
+        $waitingApprovalAboveStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::WAITING_APPROVAL_ABOVE);
 
         // Use the 'approvers' key from the validated data
         foreach ($approvalsData['approvers'] as $approverId) {
@@ -74,7 +74,7 @@ class ServiceRequestApprovalService
         }
 
         $oldStatusId = $serviceRequest->status_id;
-        $newStatusId = $inReviewAboveStatusId;
+        $newStatusId = $waitingApprovalAboveStatusId;
 
         $this->auditLogService->createAuditLog([
             'actor_id' => auth()->id(),
@@ -91,25 +91,22 @@ class ServiceRequestApprovalService
         return VendorApproval::where('service_request_id', $serviceRequestId)->with(['approver', 'assigned_by'])->get();
     }
 
-    public function createVendorApprovals(int $serviceRequestId): Collection
+    public function createVendorApprovals($serviceRequestId,array $data): Collection
     {
         DB::beginTransaction();
 
-        $approvers = $this->getApproverByServiceRequestId($serviceRequestId)['approvers'];
-        $approvals = [
-            'approvers' => $approvers->pluck('id')->toArray()
-        ];
+        $approvers = $data['approvers'];
         
         $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
         $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
         $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
 
         $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
-        $inReviewAboveStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::IN_REVIEW_ABOVE);
+        $waitingApprovalAboveStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::WAITING_APPROVAL_ABOVE);
         $oldStatusId = $serviceRequest->status_id;
-        $newStatusId = $inReviewAboveStatusId;
+        $newStatusId = $waitingApprovalAboveStatusId;
         
-        foreach($approvals['approvers'] as $approverId){
+        foreach($approvers as $approverId){
             $approver = User::findOrFail($approverId);
             $approvalPolicyStep = $approvalPolicy->approval_policy_steps->where('role_id', $approver->roles->first()->id)->first();
 

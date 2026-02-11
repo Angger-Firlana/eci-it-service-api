@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\ServiceRequest\ServiceRequestApprovalService;
 use App\Helpers\APIResponse;
 use App\Http\Requests\ServiceApprovals\UpdateApprovalsRequest;
+use App\Http\Requests\ServiceApprovals\StoreApprovalsRequest;
 
 class ServiceRequestApprovalController extends Controller
 {
@@ -26,6 +27,12 @@ class ServiceRequestApprovalController extends Controller
     public function index($serviceRequestId)
     {
         return $this->getByServiceRequestId($serviceRequestId);
+    }
+
+    public function store($serviceRequestId,StoreApprovalsRequest $request)
+    {
+        $data = $this->serviceRequestApprovalService->createVendorApprovals($serviceRequestId, $request->validated());
+        return APIResponse::success($data, 200, 'Service request approval created successfully');
     }
 
     public function getByServiceRequestId($serviceRequestId)
