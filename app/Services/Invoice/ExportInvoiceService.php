@@ -16,10 +16,7 @@ class ExportInvoiceService
     
     // Status codes that are NOT allowed to print invoice
     private const BLOCKED_STATUS_CODES = [
-        ServiceRequestStatusCode::PENDING->value,
-        ServiceRequestStatusCode::IN_REVIEW_ADMIN->value,
-        ServiceRequestStatusCode::REJECTED->value,
-        ServiceRequestStatusCode::CANCELLED->value,
+        ServiceRequestStatusCode::CANCELLED->value
     ];
 
     //function to generate invoice by service request id
