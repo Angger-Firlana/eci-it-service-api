@@ -87,7 +87,7 @@ Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
     Route::delete('/{serviceRequestId}/locations/{locationId}', [ServiceRequestLocationController::class, 'destroy']);
 
     // Approval (Keep existing or aliased if needed)
-    Route::get('/{serviceRequestId}/approver', [ApprovalController::class, 'getApproverByServiceRequestId']);
+    Route::get('/{serviceRequestId}/approvers', [ApprovalController::class, 'getApproversByServiceRequestId']);
     Route::post('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'store']);
     Route::get('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'index']);
     Route::put('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'update']);

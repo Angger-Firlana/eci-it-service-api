@@ -21,7 +21,7 @@ class ApprovalController extends Controller
         return APIResponse::success($serviceRequest, 200, 'Vendor request approved successfully');
     }
     
-    public function getApproverByServiceRequestId($serviceRequestId)
+    public function getApproversByServiceRequestId($serviceRequestId)
     {
         $data = $this->approvalService->getApproverByServiceRequestId($serviceRequestId);
         return APIResponse::success($data, 200, 'Approver retrieved successfully');

@@ -4,6 +4,7 @@ namespace App\Services\Approval;
 
 use App\Enums\ServiceRequestStatusCode;
 use App\Enums\VendorApprovalStatusCode;
+use App\Models\Department;
 use App\Models\ServiceCost;
 use App\Models\ServiceRequest;
 use App\Models\ServiceRequestDetail;
@@ -177,12 +178,12 @@ class ApprovalService
     {
         $serviceCost = ServiceCost::where('service_request_id', $serviceRequestId)->sum('amount');
         $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
+        $itDepartmentId = Department::where('code', 'IT')->first()->id;
 
         if (!$approvalPolicy) {
             return [
                 'approvers' => [],
-                'approvalPolicy' => null,
-                'approvalPolicySteps' => [],
+                'approvalPolicy' => null
             ];
         }
 
@@ -190,30 +191,26 @@ class ApprovalService
         if ($approvalPolicySteps->isEmpty()) {
             return [
                 'approvers' => [],
-                'approvalPolicy' => $approvalPolicy,
-                'approvalPolicySteps' => [],
+                'approvalPolicy' => $approvalPolicy
             ];
         }
 
-        $roleIds = $approvalPolicySteps->pluck('role_id')->filter()->unique()->values();
-        $approvers = new Collection();
+        $roleIds = $approvalPolicy->approval_policy_steps->pluck('role_id')->filter()->unique()->values();
+        
+        $approvers = User::whereHas('roles', fn ($q) =>
+                        $q->whereIn('roles.id', $roleIds)
+                    )
+                    ->whereHas('departments', fn ($q) =>
+                        $q->where('departments.id', $itDepartmentId)
+                    )
+                    ->select('name', 'email')
+                    ->orderBy('id')
+                    ->get(); // ⬅️ WAJIB
 
-        foreach ($roleIds as $roleId) {
-            $user = User::whereHas('roles', function ($query) use ($roleId) {
-                    $query->where('roles.id', $roleId);
-                })
-                ->orderBy('id')
-                ->first();
-
-            if ($user) {
-                $approvers->push($user);
-            }
-        }
 
         return [
             'approvers' => $approvers,
-            'approvalPolicy' => $approvalPolicy,
-            'approvalPolicySteps' => $approvalPolicySteps,
+            'approvalPolicy' => $approvalPolicy
         ];
     }
 
