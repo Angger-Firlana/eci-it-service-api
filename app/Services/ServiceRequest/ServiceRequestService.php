@@ -259,10 +259,6 @@ class ServiceRequestService
                 $this->markDevicesAsBadAsset($serviceRequest);
             }
 
-            if($status->code === ServiceRequestStatusCode::WAITING_APPROVAL_ABOVE->value && $oldStatusId != $newStatusId){
-                $this->serviceRequestApprovalService->createVendorApprovals($serviceRequest->id);
-            }
-
             if ($status->code === ServiceRequestStatusCode::REPAIR_IN_WORKSHOP->value && $oldStatusId != $newStatusId) {
                 $this->invoiceService->createInvoiceForServiceRequest($serviceRequest, $data);
             }
