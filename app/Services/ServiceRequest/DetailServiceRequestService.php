@@ -7,6 +7,7 @@ use Illuminate\Http\UploadedFile;
 use App\Models\ComplaintImage;
 use Illuminate\Support\Facades\Storage;
 use App\Services\Device\DeviceService;
+use Illuminate\Support\Str;
 
 class DetailServiceRequestService
 {
@@ -42,7 +43,8 @@ class DetailServiceRequestService
         if (isset($data['complaint_images']) && is_array($data['complaint_images'])) {
             foreach ($data['complaint_images'] as $image) {
                 if ($image instanceof UploadedFile) {
-                    $fileImageName = random($image->getClientOriginalName());
+
+                    $fileImageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
                     $imagePath = $image->move(public_path('images/'), $fileImageName);
                     ComplaintImage::create([
                         'service_request_detail_id' => $serviceRequestDetail->id,
@@ -84,7 +86,7 @@ class DetailServiceRequestService
         if (isset($data['complaint_images']) && is_array($data['complaint_images'])) {
             foreach ($data['complaint_images'] as $image) {
                 if ($image instanceof UploadedFile) {
-                    $fileImageName = random($image->getClientOriginalName());
+                    $fileImageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
                     $imagePath = $image->move(public_path('images/'), $fileImageName);
                     ComplaintImage::updateOrCreate([
                         'service_request_detail_id' => $serviceRequestDetail->id,
