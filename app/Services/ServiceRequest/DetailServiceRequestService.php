@@ -42,10 +42,11 @@ class DetailServiceRequestService
         if (isset($data['complaint_images']) && is_array($data['complaint_images'])) {
             foreach ($data['complaint_images'] as $image) {
                 if ($image instanceof UploadedFile) {
-                    $imagePath = $image->store('complaint-images', 'public');
+                    $fileImageName = random($image->getClientOriginalName());
+                    $imagePath = $image->move(public_path('images/'), $fileImageName);
                     ComplaintImage::create([
                         'service_request_detail_id' => $serviceRequestDetail->id,
-                        'image_path' => $imagePath,
+                        'image_path' => "images/{$fileImageName}",
                     ]);
                 }
             }
@@ -83,10 +84,11 @@ class DetailServiceRequestService
         if (isset($data['complaint_images']) && is_array($data['complaint_images'])) {
             foreach ($data['complaint_images'] as $image) {
                 if ($image instanceof UploadedFile) {
-                    $imagePath = $image->store('complaint-images', 'public');
+                    $fileImageName = random($image->getClientOriginalName());
+                    $imagePath = $image->move(public_path('images/'), $fileImageName);
                     ComplaintImage::updateOrCreate([
                         'service_request_detail_id' => $serviceRequestDetail->id,
-                        'image_path' => $imagePath,
+                        'image_path' => "images/{$fileImageName}",
                     ]); 
                 }
             }
@@ -103,7 +105,10 @@ class DetailServiceRequestService
         
         // Delete associated images if any
         foreach ($serviceRequestDetail->complaint_images as $image) {
-            Storage::disk('public')->delete($image->image_path);
+            $imagePath = str_replace('images/', '', $image->image_path);
+            if (file_exists(public_path($imagePath))) {
+                unlink(public_path($imagePath));
+            }
             $image->delete();
         }
         

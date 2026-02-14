@@ -73,7 +73,7 @@ class ServiceRequestCostService
             abort(404, 'Attachment not found');
         }
 
-        return Storage::disk('public')->response($path);
+        return response()->file(public_path('images/' . $path));
     }
 
     private function storeCostAttachment(int $serviceRequestId, UploadedFile $file): string
@@ -83,6 +83,8 @@ class ServiceRequestCostService
         $random = Str::lower(Str::random(6));
         $filename = "sr{$serviceRequestId}_receipt_{$timestamp}_{$random}.{$extension}";
 
-        return $file->storeAs('service_costs', $filename, 'public');
+        $file->move(public_path('images/'), $filename);
+
+        return $filename;
     }
 }
