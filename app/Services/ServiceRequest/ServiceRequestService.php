@@ -11,13 +11,13 @@ use App\Models\Status;
 use App\Models\StatusTransition;
 use App\Models\Role;
 use App\Models\Device;
-use App\Models\ServiceRequestDetail;
 
 use App\Services\ServiceRequest\DetailServiceRequestService;
 use App\Services\ServiceRequest\ServiceRequestIdempotencyHandler;
 use App\Services\AuditLog\AuditLogService;
 use App\Services\Invoice\InvoiceService;
 use App\Services\ContactAdmin\ContactAdminMailservice;
+use App\Services\Notification\NotificationService;
 use App\Services\ServiceRequest\ServiceRequestApprovalService;
 
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +25,6 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class ServiceRequestService
@@ -37,6 +36,7 @@ class ServiceRequestService
     protected ServiceRequestApprovalService $serviceRequestApprovalService;
     protected ServiceRequestIdempotencyHandler $serviceRequestIdempotencyHandler;
     protected ShowRelationsHandler $showRelationsHandler;
+    protected NotificationService $notificationService;
 
     public function __construct(
         DetailServiceRequestService $detailService,
@@ -45,7 +45,8 @@ class ServiceRequestService
         AuditLogService $auditLogService,
         ServiceRequestApprovalService $serviceRequestApprovalService,
         ServiceRequestIdempotencyHandler $serviceRequestIdempotencyHandler,
-        ShowRelationsHandler $showRelationsHandler
+        ShowRelationsHandler $showRelationsHandler,
+        NotificationService $notificationService
     ) {
         $this->detailService = $detailService;
         $this->contactAdminMailService = $contactAdminMailService;
@@ -54,6 +55,7 @@ class ServiceRequestService
         $this->serviceRequestApprovalService = $serviceRequestApprovalService;
         $this->serviceRequestIdempotencyHandler = $serviceRequestIdempotencyHandler;
         $this->showRelationsHandler = $showRelationsHandler;
+        $this->notificationService = $notificationService;
     }
 
     public function getAllServiceRequest(Request $request): LengthAwarePaginator
@@ -261,6 +263,10 @@ class ServiceRequestService
 
             if ($status->code === ServiceRequestStatusCode::REPAIR_IN_WORKSHOP->value && $oldStatusId != $newStatusId) {
                 $this->invoiceService->createInvoiceForServiceRequest($serviceRequest, $data);
+            }
+
+            if($status->code === ServiceRequestStatusCode::COMPLETED->value || $status->code === ServiceRequestStatusCode::BAD_ASSET->value || $status->code === ServiceRequestStatusCode::CANCELLED->value){
+                $this->notificationService->createNotificationForServiceRequest($serviceRequest, $status);
             }
 
             return $this->loadRelations($serviceRequest);

@@ -123,8 +123,8 @@ class ServiceRequest extends Model
 			)
 			->select('service_requests.*');
 
-		if ($request->filled('keyword')) {
-			$keyword = addcslashes($request->keyword, '%_');
+		if ($request->filled('search')) {
+			$keyword = addcslashes($request->search, '%_');
 
 			$query
 				->leftJoin('users as u', 'service_requests.user_id', '=', 'u.id')
@@ -135,6 +135,7 @@ class ServiceRequest extends Model
 				->leftJoin('vendors as v', 'sl.vendor_id', '=', 'v.id')
 				->where(function ($q) use ($keyword) {
 					$q->where('u.name', 'like', "%{$keyword}%")
+					->orWhere('service_requests.service_number', 'like', "%{$keyword}%")
 					->orWhere('dm.model', 'like', "%{$keyword}%")
 					->orWhere('d.serial_number', 'like', "%{$keyword}%")
 					->orWhere('v.name', 'like', "%{$keyword}%")

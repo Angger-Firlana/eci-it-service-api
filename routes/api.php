@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DeviceTypeController;
 use App\Http\Controllers\DeviceModelController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\CostTypeController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ContactAdminController;
 use App\Http\Controllers\InboxApprovalController;
 
@@ -151,6 +153,11 @@ Route::prefix('cost-types')->middleware('auth:sanctum')->group(function(){
     Route::post('/', [CostTypeController::class, 'store']);
     Route::put('/{id}', [CostTypeController::class, 'update']);
     Route::delete('/{id}', [CostTypeController::class, 'destroy']);
+});
+
+Route::prefix('notifications')->middleware('auth:sanctum')->group(function(){
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
 });
 
 Route::prefix('inbox-approvals')->middleware('auth:sanctum')->group(function(){

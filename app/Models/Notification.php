@@ -35,6 +35,7 @@ class Notification extends Model
 
 	protected $fillable = [
 		'user_id',
+		'service_request_id',
 		'title',
 		'message',
 		'read_at'
@@ -43,5 +44,9 @@ class Notification extends Model
 	public function user()
 	{
 		return $this->belongsTo(User::class);
+	}
+
+	public function service_request(){
+		return $this->belongsTo(ServiceRequest::class);
 	}
 }

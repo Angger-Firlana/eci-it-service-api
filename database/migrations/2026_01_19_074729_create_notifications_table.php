@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onCascadeDelete();
             $table->string('title', 255);
             $table->string('message', 1000);
-            $table->timestamp('read_at')->userCurrent();
+            $table->timestamp('read_at')->userCurrent()->nullable();
             $table->timestamps();
         });
     }
