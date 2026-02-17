@@ -16,7 +16,7 @@ class ServiceLocationService
             'vendor_id' => $data['vendor_id'] ?? null,
             'address' => $data['address'] ?? null,
             'maps_url' => $data['maps_url'] ?? null,
-            'phone_number' => $data['phone_number'],
+            'phone_number' => $data['phone_number'] ?? null,
             'is_active' => $data['is_active']
         ]);
         
@@ -45,9 +45,9 @@ class ServiceLocationService
             $updateData['address'] = $data['address'];
         }
 
-        if(array_key_exists('phone_number')){
+        if (array_key_exists('phone_number', $data)) {
             $updateData['phone_number'] = $data['phone_number'];
-        };
+        }
 
         if (array_key_exists('maps_url', $data)) {
             $updateData['maps_url'] = $data['maps_url'];
