@@ -131,6 +131,7 @@ class ApprovalService
         $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
         $vendorRejectedStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED);
         $repairInVendorStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_VENDOR);
+        $repairInWorkshopStatusId = $this->getServiceRequestStatusId(getServiceRequestStatusId::REPAIR_IN_WORKSHOP);
         $badAssetStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::BAD_ASSET);
 
         $pendingApprovals = $serviceRequest->vendor_approvals()
@@ -143,8 +144,7 @@ class ApprovalService
 
         if ($rejectedApprovals > 0) {
             $oldStatusId = (int) $serviceRequest->status_id;
-            $serviceRequest->update(['status_id' => $badAssetStatusId]);
-            $this->markDevicesAsBadAsset((int) $serviceRequest->id);
+            $serviceRequest->update(['status_id' => $repairInWorkshopStatusId]);
 
             $this->auditLogService->createAuditLog([
                 'actor_id' => auth()->id(),
