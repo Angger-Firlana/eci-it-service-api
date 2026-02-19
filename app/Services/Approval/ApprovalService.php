@@ -151,7 +151,7 @@ class ApprovalService
                 'entity_id' => $serviceRequest->id,
                 'entity_type_id' => 1,
                 'old_status_id' => $oldStatusId,
-                'new_status_id' => $badAssetStatusId,
+                'new_status_id' => $repairInWorkshopStatusId,
                 'action' => 'STATUS_CHANGE',
                 'notes' => 'Request ditolak oleh atasan',
             ]);
