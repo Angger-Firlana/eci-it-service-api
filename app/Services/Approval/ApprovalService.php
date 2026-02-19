@@ -131,7 +131,7 @@ class ApprovalService
         $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
         $vendorRejectedStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED);
         $repairInVendorStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_VENDOR);
-        $repairInWorkshopStatusId = $this->getServiceRequestStatusId(getServiceRequestStatusId::REPAIR_IN_WORKSHOP);
+        $repairInWorkshopStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_WORKSHOP);
         $badAssetStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::BAD_ASSET);
 
         $pendingApprovals = $serviceRequest->vendor_approvals()
