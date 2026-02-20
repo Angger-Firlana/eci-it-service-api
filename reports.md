@@ -235,3 +235,37 @@ Melengkapi alur update service request detail dengan field `solution`, lalu mera
 - `app/Services/ContactAdmin/ContactAdminMailservice.php`
 - `app/Services/ServiceRequest/ServiceRequestService.php`
 - `reports.md`
+
+## Session: 2026-02-20 - Admin Mail Service Fix
+
+### Goal
+Memperbaiki pemanggilan internal mail queue pada helper notifikasi admin agar tidak error saat kirim email setelah pembuatan service request.
+
+### Changes
+1. Mengganti pemanggilan dari properti yang tidak ada (`$this->contactAdminMailService->queue`) menjadi pemanggilan method service itu sendiri (`$this->queue`) di `sendAdminNotification()`.
+
+### Files Modified
+- `app/Services/ContactAdmin/ContactAdminMailservice.php`
+
+## Session: 2026-02-20 - Approver Update (Manager + Senior Manager)
+
+### Goal
+Menyesuaikan alur approver untuk level manajemen dengan mengganti role `director` menjadi `senior manager` dan menyederhanakan langkah approval policy.
+
+### Changes
+1. Mengubah seed role dari `director` menjadi `senior manager`.
+2. Memperbarui `UserSeeder` untuk akun `Senior Manager` beserta email, role mapping, dan validasi role dependency.
+3. Memperbarui `ApprovalPolicySeeder`:
+   - Mengganti referensi role `director` menjadi `senior manager`.
+   - Menyesuaikan validasi role wajib.
+   - Menyederhanakan step policy 3 (menggunakan `senior manager` di step akhir tanpa step tambahan CEO).
+   - Menyesuaikan superior roles pada policy 4 menjadi `manager` dan `senior manager`.
+4. Menyesuaikan relasi detail pada `ShowRelationsHandler` dengan menghapus pemilihan kolom `service_type_id` di response detail service request.
+5. Menambahkan aset gambar hasil upload pada folder public images.
+
+### Files Modified
+- `app/Helpers/ServiceRequest/ShowRelationsHandler.php`
+- `database/seeders/ApprovalPolicySeeder.php`
+- `database/seeders/RoleSeeder.php`
+- `database/seeders/UserSeeder.php`
+- `public/images/1771560266_0KQRCaOfpU.svg`
