@@ -181,7 +181,7 @@ class ContactAdminMailservice
     public function sendAdminNotification($serviceRequestId, $actorName, $actorEmail):void
     {
         try {
-            $this->contactAdminMailService->queue([
+            $this->queue([
                 'name' => $actorName,
                 'email' => $actorEmail,
                 'message' => 'A new service request has been created and requires review.',
