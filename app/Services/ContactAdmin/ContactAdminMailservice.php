@@ -176,4 +176,22 @@ class ContactAdminMailservice
 
         return [$device, $deviceModel, $damages, $serviceRequestId, $serviceRequestUrl, $serviceNumber, $serviceRequestItems];
     }
+
+
+    public function sendAdminNotification($serviceRequestId, $actorName, $actorEmail):void
+    {
+        try {
+            $this->contactAdminMailService->queue([
+                'name' => $actorName,
+                'email' => $actorEmail,
+                'message' => 'A new service request has been created and requires review.',
+                'service_request_id' => $serviceRequestId,
+            ]);
+        } catch (Throwable $e) {
+            logger()->error('Failed to queue admin notification email for service request.', [
+                'service_request_id' => $serviceRequestId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
 }

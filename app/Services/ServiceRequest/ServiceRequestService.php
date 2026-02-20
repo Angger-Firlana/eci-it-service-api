@@ -5,6 +5,7 @@ namespace App\Services\ServiceRequest;
 use App\Enums\ServiceRequestStatusCode;
 
 use App\Helpers\ServiceRequest\ShowRelationsHandler;
+use App\Helpers\ServiceRequest\StatusHandler;
 
 use App\Models\ServiceRequest;
 use App\Models\Status;
@@ -91,15 +92,7 @@ class ServiceRequestService
             $serviceRequest = $this->createMainServiceRequest($data);
             $this->createServiceRequestDetails($serviceRequest, $data['details'] ?? []);
 
-            $this->auditLogService->createAuditLog([
-                'actor_id' => auth()->id() ?? $serviceRequest->user_id,
-                'entity_id' => $serviceRequest->id,
-                'entity_type_id' => 1,
-                'action' => 'CREATE_REQUEST',
-                'notes' => 'Request dibuat',
-                'old_status_id' => $serviceRequest->status_id,
-                'new_status_id' => $serviceRequest->status_id,
-            ]);
+            $this->auditLogService->createServiceRequestAuditLog($serviceRequest, 'CREATE_REQUEST', 'Request dibuat');
 
             $actor = Auth::user();
 
@@ -108,19 +101,7 @@ class ServiceRequestService
             $actorEmail = $actor->email;
 
             DB::afterCommit(function () use ($serviceRequestId, $actorName, $actorEmail) {
-                try {
-                    $this->contactAdminMailService->queue([
-                        'name' => $actorName,
-                        'email' => $actorEmail,
-                        'message' => 'A new service request has been created and requires review.',
-                        'service_request_id' => $serviceRequestId,
-                    ]);
-                } catch (Throwable $e) {
-                    logger()->error('Failed to queue admin notification email for service request.', [
-                        'service_request_id' => $serviceRequestId,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+                $this->contactAdminMailService->sendAdminNotification($serviceRequestId, $actorName, $actorEmail);
             });
 
             return $this->loadRelations($serviceRequest);
@@ -257,22 +238,22 @@ class ServiceRequestService
                 $this->syncDetails($serviceRequest, $data['details']);
             }
 
-            if ($status->code === ServiceRequestStatusCode::BAD_ASSET->value && $oldStatusId != $newStatusId) {
-                $this->markDevicesAsBadAsset($serviceRequest);
-            }
-
-            if ($status->code === ServiceRequestStatusCode::REPAIR_IN_WORKSHOP->value && $oldStatusId != $newStatusId) {
-                $this->invoiceService->createInvoiceForServiceRequest($serviceRequest, $data);
-            }
-
-            if($status->code === ServiceRequestStatusCode::COMPLETED->value || $status->code === ServiceRequestStatusCode::BAD_ASSET->value || $status->code === ServiceRequestStatusCode::CANCELLED->value){
-                $this->notificationService->createNotificationForServiceRequest($serviceRequest, $status);
-            }
+            StatusHandler::handle($serviceRequest,$status, $serviceRequest->code, $this->notificationService, $this->invoiceService, $this);
 
             return $this->loadRelations($serviceRequest);
         });
     }
 
+    public function addSolution(int $id, array $data): ServiceRequest
+    {
+        $serviceRequest = ServiceRequest::findOrFail($id);
+        
+        $serviceRequest->serviceRequestDetails()->update([
+            'solution' => $data['solution'],
+        ]);
+        
+        return $this->loadRelations($serviceRequest);
+    }
     //function to delete service request
     public function deleteServiceRequest(int $id): ServiceRequest
     {
@@ -341,7 +322,7 @@ class ServiceRequestService
         return Status::idForEntityCode('SERVICE_REQUEST', $code);
     }
 
-    private function markDevicesAsBadAsset(ServiceRequest $serviceRequest): void
+    public function markDevicesAsBadAsset(ServiceRequest $serviceRequest): void
     {
         $deviceIds = $serviceRequest->service_request_details()
             ->whereNotNull('device_id')

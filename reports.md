@@ -206,3 +206,32 @@ When a user creates a new service request, automatically notify the admin by ema
 - `app/Mail/UserContactAdmin.php`
 - `resources/views/mail/user-contact-admin.blade.php`
 - `.env.example`
+
+## Session: 2026-02-20 - Service Request Detail Solution + Status Handler Refactor
+
+### Goal
+Melengkapi alur update service request detail dengan field `solution`, lalu merapikan alur side-effect status (`BAD_ASSET`, invoice, notification) agar dipusatkan ke handler.
+
+### Changes
+1. Menambahkan migration kolom `solution` (nullable, `string(8000)`) pada tabel `service_request_details`.
+2. Menambahkan validasi `details.*.solution` pada request update service request.
+3. Menambahkan cast dan `$fillable` untuk field `solution` pada model `ServiceRequestDetail`.
+4. Memperbarui logic `updateDetailServiceRequest()` agar field `solution` ikut di-update.
+5. Menambahkan `solution` ke relasi detail pada `ShowRelationsHandler` agar ikut tampil di response detail service request.
+6. Menambahkan helper `createServiceRequestAuditLog()` di `AuditLogService` lalu dipakai saat pembuatan service request.
+7. Menambahkan helper `sendAdminNotification()` di `ContactAdminMailservice` lalu dipanggil melalui `DB::afterCommit` saat create service request.
+8. Menambahkan helper baru `StatusHandler` dan memindahkan proses side-effect status di `ServiceRequestService` ke handler tersebut.
+9. Mengubah akses `markDevicesAsBadAsset()` dari `private` ke `public` agar bisa dipanggil dari status handler.
+10. Menambahkan method `addSolution()` pada `ServiceRequestService` untuk update field `solution` pada detail service request.
+
+### Files Modified
+- `database/migrations/2026_02_20_025431_add_solution_to_service_request_table.php`
+- `app/Http/Requests/ServiceRequest/UpdateServiceRequest.php`
+- `app/Models/ServiceRequestDetail.php`
+- `app/Services/ServiceRequest/DetailServiceRequestService.php`
+- `app/Helpers/ServiceRequest/ShowRelationsHandler.php`
+- `app/Helpers/ServiceRequest/StatusHandler.php`
+- `app/Services/AuditLog/AuditLogService.php`
+- `app/Services/ContactAdmin/ContactAdminMailservice.php`
+- `app/Services/ServiceRequest/ServiceRequestService.php`
+- `reports.md`

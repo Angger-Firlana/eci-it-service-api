@@ -78,6 +78,7 @@ class DetailServiceRequestService
             'service_type_id' => $data['service_type_id'] ?? $serviceRequestDetail->service_type_id,
             'device_id' => $data['device_id'] ?? $serviceRequestDetail->device_id,
             'complaint' => $data['complaint'] ?? $serviceRequestDetail->complaint,
+            'solution' => $data['solution'] ?? $serviceRequestDetail->solution
         ];
         
         $serviceRequestDetail->update(array_filter($updateData));

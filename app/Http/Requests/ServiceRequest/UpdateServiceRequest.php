@@ -47,6 +47,7 @@ class UpdateServiceRequest extends FormRequest
             'details.*.model' => 'sometimes|string',
             'details.*.serial_number' => 'sometimes|string',
             'details.*.complaint' => 'sometimes|string',
+            'details.*.solution' => 'sometimes|string',
             'details.*.complaint_images' => 'sometimes|array',
             'details.*.complaint_images.*' => 'sometimes|file|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'log_notes' => 'sometimes|string'

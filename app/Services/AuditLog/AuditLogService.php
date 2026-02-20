@@ -35,6 +35,19 @@ class AuditLogService
         ]);
     }
 
+    public function createServiceRequestAuditLog(ServiceRequest $serviceRequest, string $action, string $notes): void
+    {
+        $this->createAuditLog([
+            'actor_id' => auth()->id() ?? $serviceRequest->user_id,
+            'entity_id' => $serviceRequest->id,
+            'entity_type_id' => 1,
+            'action' => $action,
+            'notes' => $notes,
+            'old_status_id' => $serviceRequest->status_id,
+            'new_status_id' => $serviceRequest->status_id,
+        ]);
+    }
+
 
     public function getAuditLogsForServiceRequest(ServiceRequest $serviceRequest): \Illuminate\Database\Eloquent\Collection
     {
