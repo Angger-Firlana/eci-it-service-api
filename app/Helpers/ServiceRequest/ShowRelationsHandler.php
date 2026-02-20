@@ -22,7 +22,7 @@ class ShowRelationsHandler{
             'admin:id,name,email',
             'admin.departments:id,name',
             'status:id,name,code',
-            'service_request_details:id,service_request_id,service_type_id,device_id,complaint,solution',
+            'service_request_details:id,service_request_id,device_id,complaint,solution',
             'service_request_details.device:id,device_model_id,serial_number,bad_asset',
             'service_request_details.device.device_model:id,device_type_id,brand,model',
             'service_request_details.device.device_model.device_type:id,name',

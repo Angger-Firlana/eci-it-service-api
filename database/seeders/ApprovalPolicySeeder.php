@@ -28,7 +28,7 @@ class ApprovalPolicySeeder extends Seeder
         $technicianRole = Role::where('name', 'technician')->first();
         $supervisorRole = Role::where('name', 'supervisor')->first();
         $managerRole = Role::where('name', 'manager')->first();
-        $directorRole = Role::where('name', 'director')->first();
+        $seniorManagerRole = Role::where('name', 'senior manager')->first();
         $ceoRole = Role::where('name', 'ceo')->first();
 
         if (!$serviceRequestEntityType) {
@@ -39,7 +39,7 @@ class ApprovalPolicySeeder extends Seeder
             throw new RuntimeException('ConditionType not found. Run ConditionTypeDataSeeder + ConditionTypeSeeder first.');
         }
 
-        if (!$adminRole || !$technicianRole || !$supervisorRole || !$managerRole || !$directorRole || !$ceoRole) {
+        if (!$adminRole || !$technicianRole || !$supervisorRole || !$managerRole || !$seniorManagerRole || !$ceoRole) {
             throw new RuntimeException('Required roles not found. Run RoleSeeder first.');
         }
 
@@ -102,11 +102,7 @@ class ApprovalPolicySeeder extends Seeder
         );
         ApprovalPolicyStep::firstOrCreate(
             ['approval_policy_id' => $policy3->id, 'step_order' => 2],
-            ['role_id' => $directorRole->id, 'is_mandatory' => true]
-        );
-        ApprovalPolicyStep::firstOrCreate(
-            ['approval_policy_id' => $policy3->id, 'step_order' => 3],
-            ['role_id' => $ceoRole->id, 'is_mandatory' => true]
+            ['role_id' => $seniorManagerRole->id, 'is_mandatory' => true]
         );
 
         // Policy 4: Approval for service request based on cost range '<1000000'
@@ -122,7 +118,7 @@ class ApprovalPolicySeeder extends Seeder
         );
 
         // Steps For Policy 4
-        $superiorRoles = [$supervisorRole, $managerRole, $directorRole, $ceoRole];
+        $superiorRoles = [ $managerRole, $seniorManagerRole];
         foreach ($superiorRoles as $role) {
             if ($role) {
                 ApprovalPolicyStep::updateOrCreate(
