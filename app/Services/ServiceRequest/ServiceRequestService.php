@@ -71,11 +71,6 @@ class ServiceRequestService
     {
         $serviceRequest = ServiceRequest::with($this->showRelationsHandler->showWith())->findOrFail($id);
 
-        $serviceRequest->makeHidden([
-            'created_at',
-            'updated_at'
-        ]);
-
         $auditLogs = $this->auditLogService->getAuditLogsForServiceRequest($serviceRequest);
         $serviceRequest->audit_logs = $auditLogs;
         $serviceRequest->service_request_approvals = $serviceRequest->vendor_approvals;
@@ -96,13 +91,7 @@ class ServiceRequestService
 
             $actor = Auth::user();
 
-            $serviceRequestId = $serviceRequest->id;
-            $actorName = $actor->name;
-            $actorEmail = $actor->email;
-
-            DB::afterCommit(function () use ($serviceRequestId, $actorName, $actorEmail) {
-                $this->contactAdminMailService->sendAdminNotification($serviceRequestId, $actorName, $actorEmail);
-            });
+            $this->contactAdminMailService->sendAdminNotification($serviceRequest->id, $actor->name, $actor->email);
 
             return $this->loadRelations($serviceRequest);
         });
@@ -123,10 +112,6 @@ class ServiceRequestService
         $adminId = null;
         $userId = null;
         $user = Auth::user();
-
-        if (!$user) {
-            throw new \RuntimeException('Unauthenticated.');
-        }
 
         $isAdmin = $user->roles->contains('id', Role::ADMIN);
         $isUser = $user->roles->contains('id', Role::USER);
@@ -150,7 +135,6 @@ class ServiceRequestService
             'service_number'   => $this->generateServiceNumber(),
             'admin_id'         => $adminId,
             'user_id'          => $userId,
-            'request_date'     => $data['request_date'] ?? now(),
             'estimated_date'   => $data['estimated_date'] ?? null,
             'status_id'        => $this->getServiceRequestStatusId(ServiceRequestStatusCode::REVIEW_IN_WORKSHOP),
         ]);

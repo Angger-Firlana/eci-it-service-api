@@ -18,7 +18,6 @@ use Illuminate\Http\Request;
  * @property int $user_id
  * @property int|null $admin_id
  * @property string $service_number
- * @property Carbon $request_date
  * @property Carbon|null $estimated_date
  * @property int $status_id
  * @property Carbon|null $created_at
@@ -42,7 +41,6 @@ class ServiceRequest extends Model
 	protected $casts = [
 		'user_id' => 'int',
 		'admin_id' => 'int',
-		'request_date' => 'datetime',
 		'estimated_date' => 'datetime',
 		'status_id' => 'int'
 	];
@@ -51,7 +49,6 @@ class ServiceRequest extends Model
 		'user_id',
 		'admin_id',
 		'service_number',
-		'request_date',
 		'estimated_date',
 		'status_id'
 	];
@@ -115,13 +112,9 @@ class ServiceRequest extends Model
 		$query
 			->when(
 				$request->filled('request_date'),
-				fn ($q) => $q->whereDate('service_requests.request_date', $request->request_date)
+				fn ($q) => $q->whereDate('service_requests.created_at', $request->request_date)
 			)
-			->when(
-				$request->filled('estimated_date'),
-				fn ($q) => $q->whereDate('service_requests.estimated_date', $request->estimated_date)
-			)
-			->select('service_requests.*');
+			->select(['id', 'user_id', 'admin_id', 'status_id', 'created_at']);
 
 		if ($request->filled('search')) {
 			$keyword = addcslashes($request->search, '%_');
