@@ -135,7 +135,6 @@ class ServiceRequestService
             'service_number'   => $this->generateServiceNumber(),
             'admin_id'         => $adminId,
             'user_id'          => $userId,
-            'estimated_date'   => $data['estimated_date'] ?? null,
             'status_id'        => $this->getServiceRequestStatusId(ServiceRequestStatusCode::REVIEW_IN_WORKSHOP),
         ]);
     }
@@ -214,8 +213,7 @@ class ServiceRequestService
             }
 
             $serviceRequest->update(array_filter([
-                'estimated_date' => $data['estimated_date'] ?? $serviceRequest->estimated_date,
-                'status_id' => $newStatusId,
+                'status_id' => $newStatusId
             ]));
 
             if (isset($data['details'])) {

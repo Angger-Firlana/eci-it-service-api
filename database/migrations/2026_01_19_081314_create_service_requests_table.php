@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('admin_id')->nullable()->constrained('users');
             $table->foreignId('service_type_id')->constrained('service_types');
             $table->string('service_number')->unique();
-            $table->date('estimated_date')->nullable();
             $table->foreignId('status_id')->constrained('statuses');
             $table->timestamps();
         });

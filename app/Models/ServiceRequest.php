@@ -41,7 +41,6 @@ class ServiceRequest extends Model
 	protected $casts = [
 		'user_id' => 'int',
 		'admin_id' => 'int',
-		'estimated_date' => 'datetime',
 		'status_id' => 'int'
 	];
 
@@ -49,7 +48,6 @@ class ServiceRequest extends Model
 		'user_id',
 		'admin_id',
 		'service_number',
-		'estimated_date',
 		'status_id'
 	];
 
