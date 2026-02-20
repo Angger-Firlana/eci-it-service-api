@@ -45,7 +45,6 @@ class StoreServiceRequest extends FormRequest
                 Rule::exists('statuses', 'code')->where('entity_type_id', $serviceRequestEntityTypeId),
             ],
             'details' => 'required|array',
-            'details.*.service_type_id' => 'required|exists:service_types,id',
             'details.*.device_id' => 'sometimes|exists:devices,id',
             'details.*.device_type_id' =>  'required_without:details.*.device_id|exists:device_types,id',
             'details.*.brand' => 'required_without:details.*.device_id|string',

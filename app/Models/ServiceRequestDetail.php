@@ -32,14 +32,12 @@ class ServiceRequestDetail extends Model
 
 	protected $casts = [
 		'service_request_id' => 'int',
-		'service_type_id' => 'int',
 		'device_id' => 'int',
 		'solution' => 'string'
 	];
 
 	protected $fillable = [
 		'service_request_id',
-		'service_type_id',
 		'device_id',
 		'complaint',
 		'solution'
@@ -53,11 +51,6 @@ class ServiceRequestDetail extends Model
 	public function service_request()
 	{
 		return $this->belongsTo(ServiceRequest::class);
-	}
-
-	public function service_type()
-	{
-		return $this->belongsTo(ServiceType::class);
 	}
 
 	public function complaint_images()

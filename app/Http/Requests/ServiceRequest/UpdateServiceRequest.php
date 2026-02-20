@@ -40,7 +40,6 @@ class UpdateServiceRequest extends FormRequest
             ],
             'details' => 'sometimes|array',
             'details.*.id' => 'sometimes|exists:service_request_details,id',
-            'details.*.service_type_id' => 'sometimes|exists:service_types,id',
             'details.*.device_id' =>  'sometimes|exists:devices,id',
             'details.*.device_type_id' =>  'sometimes|exists:device_types,id',
             'details.*.brand' => 'sometimes|string',
