@@ -207,6 +207,164 @@ When a user creates a new service request, automatically notify the admin by ema
 - `resources/views/mail/user-contact-admin.blade.php`
 - `.env.example`
 
+## Session: 2026-02-11 - Approval Flow Fatal Fix + Need/No-Need Repair Endpoints
+
+### Goal
+Fix fatal errors in approval flow and restore workshop action endpoints with proper audit logging.
+
+### Changes
+1. Corrected `ApprovalService` namespace and dependencies to prevent class redeclare/fatal.
+2. Updated vendor approval approve/reject flows to persist notes and write audit logs with status IDs.
+3. Restored `deviceNeedRepair()` and `deviceNoNeedRepair()` to update service request status and write audit logs.
+4. Standardized status ID resolution helpers and approver retrieval response shape.
+
+### Files Modified
+- `app/Services/Approval/ApprovalService.php`
+- `changes.md`
+
+## Session: 2026-02-12 - Service Location Request Validation Simplify
+
+### Goal
+Simplify required fields for external service locations.
+
+### Changes
+1. Store request now requires `phone_number` for external locations and removes `city`, `province`, `postal_code`, and `maps_url` as required fields.
+2. Update request mirrors the same requirement while keeping `address` required for external updates.
+
+### Files Modified
+- `app/Http/Requests/ServiceLocation/StoreServiceLocationRequest.php`
+- `app/Http/Requests/ServiceLocation/UpdateServiceLocationRequest.php`
+
+## Session: 2026-02-12 - Approver Endpoint Refactor
+
+### Goal
+Rename approver endpoint and return a cleaner approver list filtered to IT department.
+
+### Changes
+1. Renamed route to `GET /api/service-requests/{serviceRequestId}/approvers` and controller method to `getApproversByServiceRequestId`.
+2. Updated `ApprovalService::getApproverByServiceRequestId()` to fetch approvers by role IDs, filter to IT department, and return name/email only.
+3. Simplified response payload to `approvers` and `approvalPolicy`.
+
+### Files Modified
+- `app/Http/Controllers/ApprovalController.php`
+- `app/Services/Approval/ApprovalService.php`
+- `routes/api.php`
+
+## Session: 2026-02-12 - Invoice Export Status Rules
+
+### Goal
+Allow invoice export for most statuses and only block cancelled requests.
+
+### Changes
+1. Reduced `ExportInvoiceService::BLOCKED_STATUS_CODES` to only `CANCELLED`.
+
+### Files Modified
+- `app/Services/Invoice/ExportInvoiceService.php`
+
+## Session: 2026-02-12 - Remove Auto Vendor Approvals on WAITING_APPROVAL_ABOVE
+
+### Goal
+Stop creating vendor approvals when status becomes `WAITING_APPROVAL_ABOVE`.
+
+### Changes
+1. Removed `createVendorApprovals()` call from service request update when status transitions to `WAITING_APPROVAL_ABOVE`.
+
+### Files Modified
+- `app/Services/ServiceRequest/ServiceRequestService.php`
+
+## Session: 2026-02-14 - Shared Hosting Upload Storage + Filename Fix
+
+### Goal
+Store complaint images and service cost attachments in `public/images` for shared hosting and fix filename generation.
+
+### Changes
+1. Complaint images now saved via `move()` to `public/images` with `image_path` as `images/{filename}`, and deletions use `unlink()` on the public path.
+2. Service cost attachments now saved to `public/images`, served via `response()->file(...)`, and return only the filename.
+3. Replaced `random()` filename generation with `time() . '_' . Str::random(10)`.
+
+### Files Modified
+- `app/Services/ServiceRequest/DetailServiceRequestService.php`
+- `app/Services/ServiceRequest/ServiceRequestCostService.php`
+- `public/images/sr5_receipt_20260214_153358_xxk3pj.svg`
+- `public/images/vite.svg`
+
+## Session: 2026-02-17 - Service Location Update 500 Fix
+
+### Goal
+Prevent 500 errors when updating service locations without `phone_number`.
+
+### Changes
+1. `createServiceLocation()` now defaults `phone_number` to null when absent.
+2. Fixed `array_key_exists` usage to check `phone_number` in `$data` before reading.
+
+### Files Modified
+- `app/Services/ServiceRequest/ServiceLocationService.php`
+
+## Session: 2026-02-18 - User Notifications for Service Requests
+
+### Goal
+Add notification feature for frontend and notify users on key status changes.
+
+### Changes
+1. Added `Notification` model, service, and controller with endpoints to list notifications and mark as read.
+2. Added `service_request_id` to notifications and made `read_at` nullable.
+3. Created notifications when service request status becomes `COMPLETED`, `BAD_ASSET`, or `CANCELLED`.
+4. Updated service request search param to `search` and included `service_number` in search criteria.
+5. Added `service_request` relation on notifications.
+
+### Files Modified
+- `app/Http/Controllers/NotificationController.php`
+- `app/Services/Notification/NotificationService.php`
+- `app/Models/Notification.php`
+- `app/Models/ServiceRequest.php`
+- `app/Services/ServiceRequest/ServiceRequestService.php`
+- `database/migrations/2026_01_19_074729_create_notifications_table.php`
+- `database/migrations/2026_02_17_205219_add_service_request_id_on_notifications_table.php`
+- `routes/api.php`
+- `public/images/sr20_receipt_20260217_202446_onjgmx.png`
+
+## Session: 2026-02-19 - Rejection by Above -> Repair In Workshop
+
+### Goal
+When vendor approval is rejected, move the service request to `REPAIR_IN_WORKSHOP` instead of `BAD_ASSET`.
+
+### Changes
+1. Rejection now updates status to `REPAIR_IN_WORKSHOP` and stops auto bad-asset marking.
+2. Audit log now records the correct new status.
+3. Fixed enum typo in status lookup.
+
+### Files Modified
+- `app/Services/Approval/ApprovalService.php`
+
+## Session: 2026-02-20 - Service Request Query Cleanup + Field Removal
+
+### Goal
+Reduce heavy relation loads and remove unused request and estimated date fields.
+
+### Changes
+1. `ShowRelationsHandler` now selects minimal columns for relations and limits complaint image fields to `image_path`.
+2. `ServiceRequest` filter uses `created_at` for `request_date`, removes `estimated_date` filtering, and selects minimal columns.
+3. Removed `request_date` and `estimated_date` from model casts/fillable and from create/update flows.
+4. Updated the base migration for `service_requests` to remove `request_date` and `estimated_date`.
+5. `sendAdminNotification()` is called directly on create (no `DB::afterCommit`), and `getServiceRequestById` no longer hides timestamps.
+
+### Files Modified
+- `app/Helpers/ServiceRequest/ShowRelationsHandler.php`
+- `app/Models/ServiceRequest.php`
+- `app/Services/ServiceRequest/ServiceRequestService.php`
+- `database/migrations/2026_01_19_081314_create_service_requests_table.php`
+
+## Session: 2026-02-20 - User Seeder Gmail Emails
+
+### Goal
+Switch seeded user emails to Gmail addresses.
+
+### Changes
+1. Updated `UserSeeder` default emails to use `@gmail.com`.
+
+### Files Modified
+- `database/seeders/UserSeeder.php`
+
 ## Session: 2026-02-20 - Service Request Detail Solution + Status Handler Refactor
 
 ### Goal
