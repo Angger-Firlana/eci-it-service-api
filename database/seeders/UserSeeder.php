@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
         $users = [
             [
                 'name' => 'Administrator',
-                'email' => 'admin@eci-service.com',
+                'email' => 'admin@gmail.com',
                 'password' => Hash::make('admin123'),
                 'pin' => '1234',
                 'roles' => [$adminRole],
@@ -46,7 +46,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'ALI',
-                'email' => 'it.ali@eci-service.com',
+                'email' => 'it.ali@gmail.com',
                 'password' => Hash::make('ali123'),
                 'pin' => '5678',
                 'roles' => [$operatorRole],
@@ -54,7 +54,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'John Doe',
-                'email' => 'john.doe@company.com',
+                'email' => 'john.doe@gmail.com',
                 'password' => Hash::make('user123'),
                 'pin' => '5678',
                 'roles' => [$userRole],
@@ -62,7 +62,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Jane Smith',
-                'email' => 'jane.smith@company.com',
+                'email' => 'jane.smith@gmail.com',
                 'password' => Hash::make('user123'),
                 'pin' => '9012',
                 'roles' => [$userRole],
@@ -70,7 +70,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Tech Wilson',
-                'email' => 'tech.wilson@eci-service.com',
+                'email' => 'tech.wilson@gmail.com',
                 'password' => Hash::make('tech123'),
                 'pin' => '3456',
                 'roles' => [$technicianRole],
@@ -78,7 +78,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Service Brown',
-                'email' => 'service.brown@eci-service.com',
+                'email' => 'service.brown@gmail.com',
                 'password' => Hash::make('tech123'),
                 'pin' => '7890',
                 'roles' => [$technicianRole],
@@ -86,7 +86,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Supervisor',
-                'email' => 'supervisor@company.com',
+                'email' => 'supervisor@gmail.com',
                 'password' => Hash::make('atasan123'),
                 'pin' => '2468',
                 'roles' => [$supervisorRole],
@@ -94,7 +94,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Manager',
-                'email' => 'manager@company.com',
+                'email' => 'manager@gmail.com',
                 'password' => Hash::make('manager123'),
                 'pin' => '1111',
                 'roles' => [$managerRole],
@@ -102,7 +102,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Senior Manager',
-                'email' => 'senior.manager@company.com',
+                'email' => 'senior.manager@gmail.com',
                 'password' => Hash::make('manager123'),
                 'pin' => '2222',
                 'roles' => [$seniorManagerRole],
@@ -110,7 +110,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'CEO',
-                'email' => 'ceo@company.com',
+                'email' => 'ceo@gmail.com',
                 'password' => Hash::make('ceo123'),
                 'pin' => '3333',
                 'roles' => [$ceoRole],
