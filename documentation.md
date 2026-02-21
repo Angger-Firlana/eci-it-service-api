@@ -1,3139 +1,1527 @@
-# ECI IT Service API Documentation
-
-This document provides comprehensive documentation for all API endpoints in the ECI IT Service application.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Authentication](#authentication)
-- [Devices](#devices)
-- [Device Types](#device-types)
-- [Device Models](#device-models)
-- [Service Requests](#service-requests)
-- [Service Request Costs](#service-request-costs)
-- [Service Request Locations](#service-request-locations)
-- [Service Request Approvals](#service-request-approvals)
-- [Service Request Cancellation](#service-request-cancellation)
-- [Departments](#departments)
-- [Users](#users)
-- [Vendors](#vendors)
-- [Cost Types](#cost-types)
-- [Invoices](#invoices)
-- [Inbox Approvals](#inbox-approvals)
-- [Reference Data](#reference-data)
+# ECI IT Service API - Complete Implementation Documentation
 
----
-
-## Overview
-
-### Base URL
-
-All API endpoints are prefixed with `/api`.
-
-### Authentication
-
-Most endpoints require authentication using Laravel Sanctum. Include the token in the `Authorization` header:
-
-```
-Authorization: Bearer <your-token>
-```
-
-### Response Format
-
-All API responses follow a consistent format:
-
-**Success Response:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Operation successful",
-    "data": { ... }
-}
-```
-
-**Success Response with Pagination:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Operation successful",
-    "data": [ ... ],
-    "meta": {
-        "current_page": 1,
-        "from": 1,
-        "last_page": 10,
-        "path": "http://localhost/api/endpoint",
-        "per_page": 15,
-        "to": 15,
-        "total": 150
-    }
-}
-```
-
-**Error Response:**
-```json
-{
-    "status": "error",
-    "code": 400,
-    "message": "Error message",
-    "errors": { ... }
-}
-```
-
----
-
-## Authentication
-
-### POST /api/auth/login
-
-Authenticates a user and returns a Sanctum token.
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| email | string | Yes | User's email address (must be valid email format) |
-| password | string | Yes | User's password (min: 8 characters) |
-
-**Example Request:**
-```json
-{
-    "email": "user@example.com",
-    "password": "password123"
-}
-```
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Login successful",
-    "data": {
-        "token": "1|abc123xyz..."
-    }
-}
-```
-
-- **401 Unauthorized:**
-```json
-{
-    "status": "error",
-    "code": 401,
-    "message": "Invalid credentials"
-}
-```
-
-- **422 Unprocessable Entity:**
-```json
-{
-    "status": "error",
-    "code": 422,
-    "message": "The given data was invalid.",
-    "errors": {
-        "email": ["The email field is required."],
-        "password": ["The password field is required."]
-    }
-}
-```
-
----
-
-### POST /api/auth/register
-
-Registers a new user account.
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | Yes | User's full name (max: 255 characters) |
-| email | string | Yes | User's email address (must be unique) |
-| password | string | Yes | User's password (min: 8 characters) |
-| pin | string | No | User's PIN (min: 6 characters) |
-| role_id | integer | Yes | ID of the user's role (must exist in roles table) |
-
-**Example Request:**
-```json
-{
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "password": "password123",
-    "pin": "123456",
-    "role_id": 1
-}
-```
-
-**Responses:**
-
-- **201 Created:**
-```json
-{
-    "status": "success",
-    "code": 201,
-    "message": "User registered successfully",
-    "data": {
-        "id": 1,
-        "name": "John Doe",
-        "email": "john.doe@example.com",
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z"
-    }
-}
-```
-
-- **422 Unprocessable Entity:**
-```json
-{
-    "status": "error",
-    "code": 422,
-    "message": "The given data was invalid.",
-    "errors": {
-        "email": ["The email has already been taken."]
-    }
-}
-```
-
----
-
-### POST /api/auth/logout
-
-Logs out the authenticated user by invalidating their token.
-
-**Authentication:** Required
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Logout successful"
-}
-```
-
-- **401 Unauthorized:**
-```json
-{
-    "status": "error",
-    "code": 401,
-    "message": "Unauthenticated."
-}
-```
-
----
-
-### GET /api/auth/me
-
-Retrieves the authenticated user's profile data.
-
-**Authentication:** Required
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "User data retrieved successfully",
-    "data": {
-        "id": 1,
-        "name": "John Doe",
-        "email": "john.doe@example.com",
-        "email_verified_at": null,
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z"
-    }
-}
-```
-
-- **401 Unauthorized:**
-```json
-{
-    "status": "error",
-    "code": 401,
-    "message": "Unauthenticated."
-}
-```
-
----
-
-## Devices
-
-All device endpoints require authentication.
-
-### GET /api/devices
-
-Retrieves a paginated list of devices.
-
-**Authentication:** Required
-
-**Query Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| serial-number | string | Filter by exact serial number |
-| brand | string | Filter by device brand |
-| model | string | Filter by device model (partial match) |
-| bad_asset | boolean | Filter by bad asset status (`true`/`false` or `1`/`0`) |
-| page | integer | Page number for pagination |
-| per_page | integer | Number of items per page |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": [
-        {
-            "id": 1,
-            "device_model_id": 1,
-            "serial_number": "SN123456789",
-            "bad_asset": false,
-            "device_model": {
-                "id": 1,
-                "brand": "Apple",
-                "model": "MacBook Pro 16-inch"
-            }
-        }
-    ],
-    "meta": {
-        "current_page": 1,
-        "from": 1,
-        "last_page": 1,
-        "path": "http://localhost/api/devices",
-        "per_page": 15,
-        "to": 1,
-        "total": 1
-    }
-}
-```
-
----
-
-### GET /api/devices/{id}
-
-Retrieves a specific device by ID.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The device ID |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 1,
-        "device_model_id": 1,
-        "serial_number": "SN123456789",
-        "bad_asset": false,
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z",
-        "device_model": {
-            "id": 1,
-            "brand": "Apple",
-            "model": "MacBook Pro 16-inch"
-        }
-    }
-}
-```
-
-- **404 Not Found:**
-```json
-{
-    "status": "error",
-    "code": 404,
-    "message": "Device not found"
-}
-```
-
----
-
-### POST /api/devices
-
-Creates a new device.
-
-**Authentication:** Required
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| device_model_id | integer | Yes | ID of the device model (must exist in device_models table) |
-| serial_number | string | Yes | Device serial number (must be unique) |
-| bad_asset | boolean | No | Mark device as bad asset |
-
-**Example Request:**
-```json
-{
-    "device_model_id": 1,
-    "serial_number": "SN123456789",
-    "bad_asset": false
-}
-```
-
-**Responses:**
-
-- **201 Created:**
-```json
-{
-    "status": "success",
-    "code": 201,
-    "message": "",
-    "data": {
-        "id": 1,
-        "device_model_id": 1,
-        "serial_number": "SN123456789",
-        "bad_asset": false,
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z"
-    }
-}
-```
-
-- **422 Unprocessable Entity:**
-```json
-{
-    "status": "error",
-    "code": 422,
-    "message": "The given data was invalid.",
-    "errors": {
-        "serial_number": ["The serial number has already been taken."]
-    }
-}
-```
-
----
-
-### PUT /api/devices/{id}
-
-Updates an existing device.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The device ID |
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| device_model_id | integer | No | ID of the device model |
-| serial_number | string | No | Device serial number (must be unique) |
-| bad_asset | boolean | No | Mark device as bad asset |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 1,
-        "device_model_id": 1,
-        "serial_number": "SN987654321",
-        "bad_asset": true,
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T13:00:00.000000Z"
-    }
-}
-```
-
----
-
-### PATCH /api/devices/{id}
-
-Partially updates an existing device.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The device ID |
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| device_model_id | integer | No | ID of the device model |
-| serial_number | string | No | Device serial number (must be unique) |
-| bad_asset | boolean | No | Mark device as bad asset |
-
-**Responses:**
-
-- **200 OK:** Same as PUT response
-
----
-
-### DELETE /api/devices/{id}
-
-Deletes a device.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The device ID |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": ""
-}
-```
-
----
-
-## Device Types
-
-All device type endpoints require authentication.
-
-### GET /api/device-type
-
-Retrieves a paginated list of device types.
-
-**Authentication:** Required
-
-**Query Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| search | string | Search term to filter by name |
-| page | integer | Page number for pagination |
-| per_page | integer | Number of items per page |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Device Type Found",
-    "data": [
-        {
-            "id": 1,
-            "name": "Laptop",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z"
-        }
-    ],
-    "meta": {
-        "current_page": 1,
-        "from": 1,
-        "last_page": 1,
-        "path": "http://localhost/api/device-type",
-        "per_page": 15,
-        "to": 1,
-        "total": 1
-    }
-}
-```
-
----
-
-### GET /api/device-type/{id}
-
-Retrieves a specific device type by ID.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The device type ID |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Device Type Found",
-    "data": {
-        "id": 1,
-        "name": "Laptop",
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z"
-    }
-}
-```
-
-- **404 Not Found:**
-```json
-{
-    "status": "error",
-    "code": 404,
-    "message": "Device Type not found"
-}
-```
-
----
-
-### POST /api/device-type
-
-Creates a new device type.
-
-**Authentication:** Required
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | Yes | Device type name (must be unique) |
-
-**Example Request:**
-```json
-{
-    "name": "Laptop"
-}
-```
-
-**Responses:**
-
-- **201 Created:**
-```json
-{
-    "status": "success",
-    "code": 201,
-    "message": "Device Type Created",
-    "data": {
-        "id": 1,
-        "name": "Laptop"
-    }
-}
-```
-
----
-
-### PUT /api/device-type/{id}
-
-Updates an existing device type.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The device type ID |
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | Yes | Device type name (must be unique) |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Device Type Updated",
-    "data": {
-        "id": 1,
-        "name": "Desktop Computer"
-    }
-}
-```
-
----
-
-### DELETE /api/device-type/{id}
-
-Deletes a device type.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The device type ID |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Device Type Deleted"
-}
-```
-
----
-
-## Device Models
-
-All device model endpoints require authentication.
-
-### GET /api/device-model
-
-Retrieves a paginated list of device models.
-
-**Authentication:** Required
-
-**Query Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| keyword | string | Search term to filter by brand or model |
-| page | integer | Page number for pagination |
-| per_page | integer | Number of items per page |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Device Model Found",
-    "data": [
-        {
-            "id": 1,
-            "device_type_id": 1,
-            "brand": "Apple",
-            "model": "MacBook Pro 16-inch",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z"
-        }
-    ],
-    "meta": {
-        "current_page": 1,
-        "from": 1,
-        "last_page": 1,
-        "path": "http://localhost/api/device-model",
-        "per_page": 15,
-        "to": 1,
-        "total": 1
-    }
-}
-```
-
----
-
-### GET /api/device-model/{id}
-
-Retrieves a specific device model by ID.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The device model ID |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Device Model Found",
-    "data": {
-        "id": 1,
-        "device_type_id": 1,
-        "brand": "Apple",
-        "model": "MacBook Pro 16-inch",
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z"
-    }
-}
-```
-
-- **404 Not Found:**
-```json
-{
-    "status": "error",
-    "code": 404,
-    "message": "Device Model not found"
-}
-```
-
----
-
-### POST /api/device-model
-
-Creates a new device model.
-
-**Authentication:** Required
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| device_type_id | integer | Yes | ID of the device type |
-| brand | string | Yes | Brand name |
-| model | string | Yes | Model name |
-
-**Example Request:**
-```json
-{
-    "device_type_id": 1,
-    "brand": "Apple",
-    "model": "MacBook Pro 16-inch"
-}
-```
-
-**Responses:**
-
-- **201 Created:**
-```json
-{
-    "status": "success",
-    "code": 201,
-    "message": "Device Model Create Successfully",
-    "data": {
-        "id": 1,
-        "device_type_id": 1,
-        "brand": "Apple",
-        "model": "MacBook Pro 16-inch"
-    }
-}
-```
-
----
-
-### PUT /api/device-model/{id}
-
-Updates an existing device model.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The device model ID |
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| device_type_id | integer | No | ID of the device type |
-| brand | string | No | Brand name |
-| model | string | No | Model name |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Device Model Update Successfully",
-    "data": {
-        "id": 1,
-        "device_type_id": 1,
-        "brand": "Apple",
-        "model": "MacBook Pro 16-inch M1"
-    }
-}
-```
-
----
-
-### PATCH /api/device-model/{id}
-
-Partially updates an existing device model.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The device model ID |
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| device_type_id | integer | No | ID of the device type |
-| brand | string | No | Brand name |
-| model | string | No | Model name |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Device Model Patch Successfully",
-    "data": {
-        "id": 1,
-        "device_type_id": 1,
-        "brand": "Apple",
-        "model": "MacBook Pro 16-inch M1"
-    }
-}
-```
-
----
-
-### DELETE /api/device-model/{id}
-
-Deletes a device model.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The device model ID |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Device Model Delete Successfully"
-}
-```
-
----
-
-## Service Requests
-
-All service request endpoints require authentication.
-
-### GET /api/service-requests
-
-Retrieves a paginated list of service requests.
-
-**Authentication:** Required
-
-**Query Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| search | string | Search term to filter requests |
-| status_id | integer | Filter by status ID |
-| page | integer | Page number for pagination |
-| per_page | integer | Number of items per page |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Success",
-    "data": [
-        {
-            "id": 1,
-            "admin_id": 1,
-            "user_id": 2,
-            "service_type_id": 1,
-            "request_date": "2026-01-22",
-            "estimated_date": "2026-01-25",
-            "status_id": 1,
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z",
-            "details": [...],
-            "status": {...},
-            "admin": {...},
-            "user": {...}
-        }
-    ],
-    "meta": {
-        "current_page": 1,
-        "from": 1,
-        "last_page": 1,
-        "path": "http://localhost/api/service-requests",
-        "per_page": 15,
-        "to": 1,
-        "total": 1
-    }
-}
-```
-
----
-
-### GET /api/service-requests/stats
-
-Retrieves statistics about service requests.
-
-**Authentication:** Required
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "total": 100,
-        "pending": 25,
-        "in_progress": 30,
-        "completed": 45
-    }
-}
-```
-
----
-
-### GET /api/service-requests/{id}
-
-Retrieves a specific service request by ID.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The service request ID |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 1,
-        "admin_id": 1,
-        "user_id": 2,
-        "service_type_id": 1,
-        "request_date": "2026-01-22",
-        "estimated_date": "2026-01-25",
-        "status_id": 1,
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z",
-        "details": [
-            {
-                "id": 1,
-                "device_id": 1,
-                "complaint": "Screen flickering issue",
-                "complaint_images": [...]
-            }
-        ],
-        "status": {...},
-        "admin": {...},
-        "user": {...},
-        "costs": [...],
-        "locations": [...],
-        "approvals": [...]
-    }
-}
-```
-
----
-
-### POST /api/service-requests
-
-Creates a new service request.
-
-**Authentication:** Required
-
-**Request Body:**
+Version: code-accurate snapshot (generated from current source)
+Date: 2026-02-21
+Framework: Laravel 12 + Sanctum
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| admin_id | integer | Yes | ID of the admin handling the request |
-| user_id | integer | No | ID of the user submitting the request |
-| service_type_id | integer | No | ID of the service type |
-| request_date | date | Yes | Date of the request (YYYY-MM-DD) |
-| status_id | integer | Yes | Initial status ID |
-| details | array | Yes | Array of service request details |
-| details.*.device_id | integer | Yes | ID of the device |
-| details.*.complaint | string | Yes | Description of the issue |
-| details.*.complaint_images | array | No | Array of image files (jpeg, png, jpg, gif, svg; max 2MB each) |
+This document is intentionally written as a full implementation reference so frontend/backend integrators can work without opening the codebase.
 
-**Example Request:**
-```json
-{
-    "admin_id": 1,
-    "user_id": 2,
-    "service_type_id": 1,
-    "request_date": "2026-01-22",
-    "status_id": 1,
-    "details": [
-        {
-            "device_id": 1,
-            "complaint": "Screen flickering issue"
-        }
-    ]
-}
-```
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 1,
-        "admin_id": 1,
-        "user_id": 2,
-        "service_type_id": 1,
-        "request_date": "2026-01-22",
-        "status_id": 1,
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z"
-    }
-}
-```
-
----
-
-### PUT /api/service-requests/{id}
-
-Updates an existing service request.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The service request ID |
-
-**Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| admin_id | integer | No | ID of the admin |
-| user_id | integer | No | ID of the user |
-| service_type_id | integer | No | ID of the service type |
-| request_date | date | No | Date of the request |
-| estimated_date | date | No | Estimated completion date |
-| status_id | integer | No | Status ID |
-| details | array | No | Array of service request details |
-| details.*.id | integer | No | ID of existing detail to update |
-| details.*.device_id | integer | No | ID of the device |
-| details.*.complaint | string | No | Description of the issue |
-| details.*.complaint_images | array | No | Array of image files |
-| log_notes | string | No | Notes for the audit log |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 1,
-        "admin_id": 1,
-        "user_id": 2,
-        "service_type_id": 1,
-        "request_date": "2026-01-22",
-        "estimated_date": "2026-01-25",
-        "status_id": 2,
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T14:00:00.000000Z"
-    }
-}
-```
-
----
-
-### DELETE /api/service-requests/{id}
-
-Deletes a service request.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The service request ID |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": ""
-}
-```
-
----
-
-### GET /api/service-requests/{id}/allowed-transitions
-
-Retrieves the allowed status transitions for a service request.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The service request ID |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": [
-        {
-            "id": 2,
-            "name": "In Progress",
-            "code": "in_progress"
-        },
-        {
-            "id": 3,
-            "name": "Cancelled",
-            "code": "cancelled"
-        }
-    ]
-}
-```
-
----
-
-### GET /api/service-requests/{id}/download-invoice
-
-Downloads the invoice PDF for a service request.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The service request ID |
-
-**Responses:**
-
-- **200 OK:** Returns PDF file download
-
 ---
-
-## Service Request Costs
-
-Endpoints for managing costs associated with service requests.
-
-### GET /api/service-requests/{serviceRequestId}/costs
 
-Retrieves all costs for a service request.
+## 1. Scope and Important Notes
 
-**Authentication:** Required
+This document covers:
 
-**URL Parameters:**
+1. Full API route catalog (all `/api/*` endpoints).
+2. Request/response contracts based on current code.
+3. Authentication and error envelope behavior.
+4. Current database schema (migrations as source of truth).
+5. All seeders, seeded values, and default test users.
+6. Business workflows (service request lifecycle, approval flow, invoice flow).
+7. Known implementation gaps/bugs that affect integration.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
+Important:
 
-**Responses:**
+- This is a **code-accurate** spec, not idealized behavior.
+- Some endpoints have implementation defects; those are listed explicitly in `Known Gaps` so you can avoid integration surprises.
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": [
-        {
-            "id": 1,
-            "service_request_id": 1,
-            "cost_type_id": 1,
-            "amount": 150000,
-            "description": "Spare part replacement",
-            "image_path": "service_costs/receipt-001.pdf",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z",
-            "cost_type": {
-                "id": 1,
-                "name": "Parts",
-                "code": "PARTS"
-            }
-        }
-    ]
-}
-```
-
 ---
-
-### POST /api/service-requests/{serviceRequestId}/costs
-
-Adds a cost to a service request.
-
-**Authentication:** Required
 
-**URL Parameters:**
+## 2. Quick Start (Local)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
+### 2.1 Prerequisites
 
-**Request Body:**
+- PHP 8.2+
+- Composer
+- MySQL or SQLite (project defaults to SQLite in `.env.example`)
+- Node.js (for Vite assets)
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| cost_type_id | integer | Yes | ID of the cost type |
-| amount | numeric | Yes | Cost amount (min: 0) |
-| description | string | No | Description of the cost |
-| image | file | No | Receipt attachment (`jpg`, `jpeg`, `png`, `gif`, `svg`, `pdf`, max 10MB) |
+### 2.2 Installation
 
-**Example Request:**
-```json
-{
-    "cost_type_id": 1,
-    "amount": 150000,
-    "description": "Screen replacement part"
-}
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
 ```
 
-**Responses:**
+If you use queue mode for email:
 
-- **201 Created:**
-```json
-{
-    "status": "success",
-    "code": 201,
-    "message": "Cost added successfully",
-    "data": {
-        "id": 1,
-        "service_request_id": 1,
-        "cost_type_id": 1,
-        "amount": 150000,
-        "description": "Screen replacement part",
-        "image_path": "service_costs/receipt-001.jpg"
-    }
-}
+```bash
+php artisan queue:work
 ```
-
----
 
-### PUT /api/service-requests/{serviceRequestId}/costs/{costId}
+### 2.3 Required env variables
 
-Updates a cost entry.
+Core:
 
-**Authentication:** Required
+- `APP_NAME`
+- `APP_ENV`
+- `APP_KEY`
+- `APP_DEBUG`
+- `APP_URL`
+- `FRONTEND_URL`
 
-**URL Parameters:**
+Database:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
-| costId | integer | The cost ID |
+- `DB_CONNECTION`
+- `DB_HOST`
+- `DB_PORT`
+- `DB_DATABASE`
+- `DB_USERNAME`
+- `DB_PASSWORD`
 
-**Request Body:**
+Mail:
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| cost_type_id | integer | No | ID of the cost type |
-| amount | numeric | No | Cost amount (min: 0) |
-| description | string | No | Description of the cost |
-| image | file | No | Receipt attachment (`jpg`, `jpeg`, `png`, `gif`, `svg`, `pdf`, max 10MB) |
+- `MAIL_MAILER`
+- `MAIL_HOST`
+- `MAIL_PORT`
+- `MAIL_USERNAME`
+- `MAIL_PASSWORD`
+- `MAIL_FROM_ADDRESS`
+- `MAIL_FROM_NAME`
+- `ADMIN_MAIL` (critical for `/api/contact-admin` and admin notification email)
 
-**Responses:**
+Queue:
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Cost updated successfully",
-    "data": {
-        "id": 1,
-        "service_request_id": 1,
-        "cost_type_id": 1,
-        "amount": 175000,
-        "description": "Screen replacement part (updated)",
-        "image_path": "service_costs/receipt-002.pdf"
-    }
-}
-```
+- `QUEUE_CONNECTION`
 
 ---
 
-### DELETE /api/service-requests/{serviceRequestId}/costs/{costId}
+## 3. API Conventions
 
-Removes a cost from a service request.
+### 3.1 Base URL
 
-**Authentication:** Required
+All business endpoints are under:
 
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
-| costId | integer | The cost ID |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Cost removed successfully"
-}
+```text
+{BASE_URL}/api
 ```
-
----
-
-### GET /api/service-requests/{serviceRequestId}/costs/{costId}/attachment
-
-Downloads or previews the cost receipt attachment.
-
-**Authentication:** Required
-
-**URL Parameters:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
-| costId | integer | The cost ID |
+Example local base URL:
 
-**Responses:**
-
-- **200 OK:** Returns the file (image or PDF)
-- **404 Not Found:** Attachment not found
-
----
-
-## Service Request Locations
-
-Endpoints for managing service locations (internal or external vendors).
-
-### GET /api/service-requests/{serviceRequestId}/locations
-
-Retrieves all locations for a service request.
-
-**Authentication:** Required
-
-**URL Parameters:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
-
-**Responses:**
-
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Service locations retrieved successfully",
-    "data": [
-        {
-            "id": 1,
-            "service_request_id": 1,
-            "location_type": "external",
-            "vendor_id": 1,
-            "is_active": true,
-            "address": "123 Main Street",
-            "city": "Jakarta",
-            "province": "DKI Jakarta",
-            "postal_code": "12345",
-            "maps_url": "https://maps.google.com/?q=-6.2088,106.8456",
-            "vendor": {
-                "id": 1,
-                "name": "Tech Repair Co"
-            }
-        }
-    ]
-}
+```text
+http://localhost:8000/api
 ```
-
----
-
-### GET /api/service-requests/{serviceRequestId}/locations/{locationId}
-
-Retrieves a specific location.
-
-**Authentication:** Required
 
-**URL Parameters:**
+### 3.2 Authentication
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
-| locationId | integer | The location ID |
+- API uses Laravel Sanctum token (Bearer token).
+- Most endpoints use `auth:sanctum` middleware.
 
-**Responses:**
+Header:
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Service location retrieved successfully",
-    "data": {
-        "id": 1,
-        "service_request_id": 1,
-        "location_type": "external",
-        "vendor_id": 1,
-        "is_active": true,
-        "address": "123 Main Street",
-        "city": "Jakarta",
-        "province": "DKI Jakarta",
-        "postal_code": "12345",
-        "maps_url": "https://maps.google.com/?q=-6.2088,106.8456"
-    }
-}
+```http
+Authorization: Bearer {token}
+Accept: application/json
 ```
-
----
-
-### POST /api/service-requests/{serviceRequestId}/locations
-
-Creates or updates the active location for a service request.
-
-**Authentication:** Required
 
-**URL Parameters:**
+### 3.3 Response envelope types
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
+There are multiple response styles in this codebase:
 
-**Request Body:**
+1. Standard helper (`APIResponse::success/error`):
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| location_type | string | Yes | Either "internal" or "external" |
-| vendor_id | integer | Conditional | Required if location_type is "external" |
-| is_active | boolean | Yes | Whether this location is active |
-| address | string | Conditional | Required if location_type is "external" |
-| city | string | Conditional | Required if location_type is "external" |
-| province | string | Conditional | Required if location_type is "external" |
-| postal_code | string | Conditional | Required if location_type is "external" |
-| maps_url | string (URL) | Conditional | Required if location_type is "external" |
-
-**Example Request (External):**
 ```json
 {
-    "location_type": "external",
-    "vendor_id": 1,
-    "is_active": true,
-    "address": "123 Main Street",
-    "city": "Jakarta",
-    "province": "DKI Jakarta",
-    "postal_code": "12345",
-    "maps_url": "https://maps.google.com/?q=-6.2088,106.8456"
+  "success": true,
+  "data": {},
+  "message": "...",
+  "meta": {}
 }
 ```
 
-**Example Request (Internal):**
-```json
-{
-    "location_type": "internal",
-    "is_active": true
-}
-```
+2. Raw JSON from controller (not wrapped), especially in `VendorController`.
 
-**Responses:**
+3. Custom JSON for contact-admin endpoint:
 
-- **201 Created:**
 ```json
 {
-    "status": "success",
-    "code": 201,
-    "message": "Service location set successfully",
-    "data": { ... }
+  "message": "Message queued successfully",
+  "mode": "queue"
 }
 ```
 
-- **200 OK (if updating existing):**
+4. Binary/file response (invoice PDF, attachment file).
+
+### 3.4 Global error handling (bootstrap/app.php)
+
+Central exception rendering maps to:
+
+- `404`: `{"success":false,"message":"Data Not Found"}`
+- `405`: `Method Not Allowed`
+- `401`: `Unauthorized`
+- `403`: `Forbidden`
+- `422`: `Validation Error` + `errors`
+- `500`: database/internal server errors with exception message appended
+
+### 3.5 Pagination
+
+For endpoints using `APIResponse::formatPagination`:
+
 ```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Service location updated successfully",
-    "data": { ... }
+"meta": {
+  "current_page": 1,
+  "last_page": 10,
+  "per_page": 15,
+  "total": 150,
+  "from": 1,
+  "to": 15
 }
 ```
 
----
+### 3.6 Timezone
 
-### PUT /api/service-requests/{serviceRequestId}/locations/{locationId}
+- Application timezone: `UTC` (`config/app.php`).
 
-Updates an existing location.
+---
 
-**Authentication:** Required
+## 4. Full API Route Catalog
 
-**URL Parameters:**
+### 4.1 Public routes (no `auth:sanctum` middleware)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
-| locationId | integer | The location ID |
+- `POST /api/auth/login`
+- `POST /api/auth/register`
+- `POST /api/auth/logout` (public route, but meaningful only with auth token)
+- `POST /api/contact-admin`
+- `GET /api/export-invoice/{id}`
 
-**Request Body:** Same as POST
+### 4.2 Authenticated routes
 
-**Responses:**
+Auth:
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Service location updated successfully",
-    "data": { ... }
-}
-```
+- `GET /api/auth/me`
 
-- **400 Bad Request (if location doesn't belong to service request):**
-```json
-{
-    "status": "error",
-    "code": 400,
-    "message": "Location does not belong to this service request"
-}
-```
+Device types:
 
----
+- `GET /api/device-type`
+- `GET /api/device-type/{id}`
+- `POST /api/device-type`
+- `PUT /api/device-type/{id}`
+- `DELETE /api/device-type/{id}`
 
-### DELETE /api/service-requests/{serviceRequestId}/locations/{locationId}
+Device models:
 
-Deletes a location.
+- `GET /api/device-model`
+- `GET /api/device-model/{id}`
+- `POST /api/device-model`
+- `PUT /api/device-model/{id}`
+- `PATCH /api/device-model/{id}`
+- `DELETE /api/device-model/{id}`
 
-**Authentication:** Required
+Devices:
 
-**URL Parameters:**
+- `GET /api/devices`
+- `GET /api/devices/{id}`
+- `POST /api/devices`
+- `PUT /api/devices/{id}`
+- `PATCH /api/devices/{id}`
+- `DELETE /api/devices/{id}`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
-| locationId | integer | The location ID |
+Service requests core:
 
-**Responses:**
+- `GET /api/service-requests`
+- `GET /api/service-requests/stats`
+- `GET /api/service-requests/{id}`
+- `POST /api/service-requests`
+- `PUT /api/service-requests/{id}`
+- `DELETE /api/service-requests/{id}`
+- `GET /api/service-requests/{id}/allowed-transitions`
+- `GET /api/service-requests/{id}/download-invoice`
+- `GET /api/service-requests/{id}/preview-invoice`
+- `GET /api/service-requests/{id}/can-print-invoice`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Service location deleted successfully"
-}
-```
+Service request approvals/actions:
 
----
+- `POST /api/service-requests/{serviceRequestId}/approvals`
+- `GET /api/service-requests/{serviceRequestId}/approvals`
+- `PUT /api/service-requests/{serviceRequestId}/approvals`
+- `DELETE /api/service-requests/{serviceRequestId}/approvals/{approvalId}`
+- `GET /api/service-requests/{serviceRequestId}/approvers`
+- `POST /api/service-requests/approved/{approvalId}`
+- `POST /api/service-requests/rejected/{approvalId}`
+- `POST /api/service-requests/need-repair/{serviceRequestId}`
+- `POST /api/service-requests/no-need-repair/{serviceRequestId}`
 
-## Service Request Approvals
+Service request costs:
 
-Endpoints for managing approvals for service requests.
+- `GET /api/service-requests/{serviceRequestId}/costs`
+- `POST /api/service-requests/{serviceRequestId}/costs`
+- `PUT /api/service-requests/{serviceRequestId}/costs/{costId}`
+- `DELETE /api/service-requests/{serviceRequestId}/costs/{costId}`
+- `GET /api/service-requests/{serviceRequestId}/costs/{costId}/attachment`
 
-### GET /api/service-requests/{serviceRequestId}/approver
+Service request locations:
 
-Retrieves the approvers for a service request.
+- `GET /api/service-requests/{serviceRequestId}/locations`
+- `POST /api/service-requests/{serviceRequestId}/locations`
+- `GET /api/service-requests/{serviceRequestId}/locations/{locationId}`
+- `PUT /api/service-requests/{serviceRequestId}/locations/{locationId}`
+- `DELETE /api/service-requests/{serviceRequestId}/locations/{locationId}`
 
-**Authentication:** Required
+Service request cancellation:
 
-**URL Parameters:**
+- `GET /api/service-requests/{serviceRequestId}/cancellation`
+- `POST /api/service-requests/{serviceRequestId}/cancellation`
+- `PUT /api/service-requests/{serviceRequestId}/cancellation/{cancellationId}`
+- `DELETE /api/service-requests/{serviceRequestId}/cancellation/{cancellationId}`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
+Reference:
 
-**Responses:**
+- `GET /api/references/service-types`
+- `POST /api/references/service-types`
+- `GET /api/references/statuses`
+- `GET /api/references/vendors`
+- `GET /api/references/roles`
+- `GET /api/references/departments`
+- `GET /api/references/cost-types`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Approvers retrieved successfully",
-    "data": [
-        {
-            "id": 1,
-            "name": "Manager User",
-            "email": "manager@example.com"
-        }
-    ]
-}
-```
+Master data CRUD:
 
----
+- Departments: `GET/POST/GET{id}/PUT{id}/DELETE{id} /api/departments`
+- Users: `GET/POST/GET{id}/PUT{id}/DELETE{id} /api/users`
+- Vendors: `GET/POST/GET{id}/PUT{id}/DELETE{id} /api/vendors`
+- Cost Types: `GET/POST/GET{id}/PUT{id}/DELETE{id} /api/cost-types`
 
-### GET /api/service-requests/{serviceRequestId}/approvals
+Invoices:
 
-Retrieves all approvals for a service request.
+- `GET /api/invoices`
+- `GET /api/invoices/{id}`
+- `GET /api/invoices/{id}/print`
+- `GET /api/invoices/{id}/download` (route exists; implementation gap, see Known Gaps)
 
-**Authentication:** Required
+Notifications:
 
-**URL Parameters:**
+- `GET /api/notifications`
+- `PUT /api/notifications/{id}/read`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
+Inbox approvals:
 
-**Responses:**
+- `GET /api/inbox-approvals/{statusId}`
+- `PUT /api/inbox-approvals/{id}/read`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Service request approvals retrieved successfully",
-    "data": [
-        {
-            "id": 1,
-            "service_request_id": 1,
-            "approver_id": 1,
-            "status": "pending",
-            "approved_at": null,
-            "notes": null,
-            "approver": {
-                "id": 1,
-                "name": "Manager User"
-            }
-        }
-    ]
-}
-```
+Misc:
 
+- `GET /api/user` (default closure: returns authenticated user object)
+
 ---
 
-### PUT /api/service-requests/{serviceRequestId}/approvals
+## 5. Data Model (Current Schema)
 
-Updates the approvers for a service request (replaces existing approvers).
+This section describes current schema based on migration files.
 
-**Authentication:** Required
+### 5.1 Core/auth/framework tables
 
-**URL Parameters:**
+#### `users`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
+- `id` (PK)
+- `name` (string)
+- `email` (string, unique)
+- `email_verified_at` (timestamp nullable)
+- `password` (string)
+- `pin` (string nullable)
+- `remember_token` (nullable)
+- `is_active` (boolean, default true)
+- `created_at`, `updated_at`
 
-**Request Body:**
+#### `password_reset_tokens`
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| approvers | array | Yes | Array of user IDs |
-| approvers.* | integer | Yes | User ID (must exist in users table) |
+- `email` (PK)
+- `token`
+- `created_at`
 
-**Example Request:**
-```json
-{
-    "approvers": [1, 4, 5]
-}
-```
+#### `sessions`
 
-**Responses:**
+- `id` (PK)
+- `user_id` (indexed, nullable)
+- `ip_address`
+- `user_agent`
+- `payload`
+- `last_activity` (indexed)
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Service request approval updated successfully",
-    "data": [ ... ]
-}
-```
+#### `personal_access_tokens`
 
----
+- Standard Sanctum table (`tokenable_type`, `tokenable_id`, `token`, abilities, expiry fields)
 
-### DELETE /api/service-requests/{serviceRequestId}/approvals/{approvalId}
+#### Queue/cache infra tables
 
-Deletes a specific approval.
+- `jobs`, `job_batches`, `failed_jobs`
+- `cache`, `cache_locks`
 
-**Authentication:** Required
+### 5.2 Master data and workflow tables
 
-**URL Parameters:**
+#### `roles`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
-| approvalId | integer | The approval ID |
+- `id` (PK)
+- `name`
+- timestamps
 
-**Responses:**
+#### `user_roles`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Service request approval deleted successfully"
-}
-```
+- `id` (PK)
+- `user_id` (FK -> `users.id`)
+- `role_id` (FK -> `roles.id`)
+- timestamps
 
----
+#### `departments`
 
-### POST /api/service-requests/approved/{approvalId}
+- `id` (PK)
+- `name`
+- `code` (nullable)
+- timestamps
 
-Approves a vendor request.
+#### `user_departments`
 
-**Authentication:** Required
+- `id` (PK)
+- `user_id` (FK, cascade delete)
+- `department_id` (FK, cascade delete)
+- timestamps
 
-**URL Parameters:**
+#### `entity_types`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| approvalId | integer | The approval ID |
+- `id` (PK)
+- `code` (unique)
+- `name`
 
-**Responses:**
+#### `statuses`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Vendor request approved successfully",
-    "data": { ... }
-}
-```
+- `id` (PK)
+- `entity_type_id` (FK -> `entity_types.id`)
+- `code`
+- `name`
+- timestamps
+- unique composite: `(entity_type_id, code)`
 
----
+#### `status_transitions`
 
-### POST /api/service-requests/need-repair/{serviceRequestId}
+- `id`
+- `code`
+- `from_status_id` (FK -> statuses)
+- `to_status_id` (FK -> statuses)
+- `description`
+- timestamps
 
-Marks a request as needing repair in workshop.
+#### `status_transition_roles`
 
-**Authentication:** Required
+- `id`
+- `status_transition_id` (FK)
+- `role_id` (FK)
+- timestamps
 
-**URL Parameters:**
+#### `audit_logs`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
+- `id`
+- `actor_id` (FK -> users)
+- `entity_id` (unsigned bigint)
+- `entity_type_id` (FK -> entity_types)
+- `action` (string)
+- `notes` (nullable text)
+- `old_status_id` (nullable FK -> statuses, `nullOnDelete`)
+- `new_status_id` (nullable FK -> statuses, `nullOnDelete`)
+- `created_at` (timestamp)
+- no `updated_at`
 
-**Responses:**
+#### `device_types`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Request approved successfully",
-    "data": { ... }
-}
-```
+- `id`
+- `name`
+- timestamps
 
----
+#### `device_models`
 
-### POST /api/service-requests/no-need-repair/{serviceRequestId}
+- `id`
+- `device_type_id` (FK -> `device_types.id`)
+- `brand`
+- `model`
+- timestamps
 
-Marks a request as not needing repair in workshop.
+#### `devices`
 
-**Authentication:** Required
+- `id`
+- `device_model_id` (FK)
+- `serial_number` (unique)
+- `bad_asset` (boolean default false)
+- timestamps
 
-**URL Parameters:**
+#### `service_types`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
+- `id`
+- `name`
+- timestamps
 
-**Responses:**
+#### `service_requests`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Request rejected successfully",
-    "data": { ... }
-}
-```
+- `id`
+- `user_id` (nullable FK -> users)
+- `admin_id` (nullable FK -> users)
+- `service_number` (unique)
+- `status_id` (FK -> statuses)
+- timestamps
 
----
+Important:
 
-### POST /api/service-requests/rejected/{approvalId}
+- Column `service_type_id` was removed from this table.
+- Columns `request_date` and `estimated_date` are not present in migration schema.
 
-Rejects a vendor request.
+#### `service_request_details`
 
-**Authentication:** Required
+- `id`
+- `service_request_id` (FK)
+- `device_id` (FK)
+- `complaint` (text)
+- `solution` (nullable string length 8000)
+- timestamps
 
-**URL Parameters:**
+#### `complaint_images`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| approvalId | integer | The approval ID |
+- `id`
+- `service_request_detail_id` (FK, cascade delete)
+- `image_path` (string)
+- timestamps
 
-**Responses:**
+#### `vendors`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Vendor request rejected successfully",
-    "data": { ... }
-}
-```
+- `id`
+- `name`
+- `maps_url` nullable
+- `description` nullable
+- timestamps
 
----
+#### `service_locations`
 
-## Service Request Cancellation
+- `id`
+- `service_request_id` (FK)
+- `vendor_id` (nullable FK)
+- `location_type` (`internal|external` expected by validation)
+- `address` nullable
+- `phone_number` (required at DB level in latest migration)
+- `is_active` boolean default true
+- timestamps
 
-Endpoints for managing service request cancellations.
+Note: older columns (`city`, `province`, `postal_code`, `maps_url`) were dropped by migration.
 
-### GET /api/service-requests/{serviceRequestId}/cancellation
+#### `service_cancellations`
 
-Retrieves the cancellation details for a service request.
+- `id`
+- `service_request_id` (FK)
+- `cancelled_by` (FK -> users)
+- `reason` (text)
+- timestamps
 
-**Authentication:** Required
+#### `cost_types`
 
-**URL Parameters:**
+- `id`
+- `code` (unique)
+- `name`
+- timestamps
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
+#### `service_costs`
 
-**Responses:**
+- `id`
+- `service_request_id` (FK)
+- `cost_type_id` (FK)
+- `amount` decimal(15,2)
+- `description` nullable
+- `image_path` string(1000) (added later; migration defines non-null)
+- timestamps
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 1,
-        "service_request_id": 1,
-        "reason": "Customer requested cancellation",
-        "canceled_by": 1,
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z",
-        "canceler": {
-            "id": 1,
-            "name": "Admin User"
-        }
-    }
-}
-```
+#### `condition_type_data`
 
----
+- `id`
+- `type_data`
+- timestamps
 
-### POST /api/service-requests/{serviceRequestId}/cancellation
+#### `condition_types`
 
-Cancels a service request.
+- `id`
+- `condition_type_data_id` (FK)
+- `code` unique
+- `name`
+- timestamps
 
-**Authentication:** Required
+#### `approval_policies`
 
-**URL Parameters:**
+- `id`
+- `entity_type_id` (FK)
+- `condition_type_id` (FK)
+- `condition_value`
+- `is_active` boolean default true
+- timestamps
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
+#### `approval_policy_steps`
 
-**Request Body:**
+- `id`
+- `approval_policy_id` (FK)
+- `step_order` int
+- `role_id` (FK)
+- `is_mandatory` boolean default true
+- timestamps
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| reason | string | Yes | Reason for cancellation |
+#### `vendor_approvals`
 
-**Example Request:**
-```json
-{
-    "reason": "Customer no longer needs the service"
-}
-```
+- `id`
+- `approval_policy_id` (FK)
+- `approval_policy_step_id` (FK)
+- `service_request_id` (FK)
+- `approver_id` (FK -> users)
+- `approved_at` nullable timestamp
+- `assigned_by` (FK -> users)
+- `assigned_at` timestamp
+- `status_id` (FK -> statuses)
+- `read_at` nullable datetime
+- timestamps
 
-**Responses:**
+#### `invoices`
 
-- **201 Created:**
-```json
-{
-    "status": "success",
-    "code": 201,
-    "message": "Service request cancelled successfully",
-    "data": {
-        "id": 1,
-        "service_request_id": 1,
-        "reason": "Customer no longer needs the service",
-        "canceled_by": 1
-    }
-}
-```
+- `id`
+- `invoice_number` unique
+- `service_request_id` (FK)
+- `issue_date` (date)
+- `due_date` (date)
+- `total_amount` decimal(15,2)
+- `status_id` (FK -> statuses)
+- timestamps
 
+#### `notifications`
+
+- `id`
+- `user_id` (FK -> users, cascade delete)
+- `service_request_id` nullable (FK -> service_requests, cascade delete)
+- `title`
+- `message`
+- `read_at` nullable timestamp
+- timestamps
+
 ---
 
-### PUT /api/service-requests/{serviceRequestId}/cancellation
+## 6. Seeder Reference (All Seeders)
 
-Updates the cancellation reason.
+Seeder run order from `DatabaseSeeder`:
 
-**Authentication:** Required
+1. `RoleSeeder`
+2. `EntityTypeSeeder`
+3. `StatusSeeder`
+4. `StatusTransitionSeeder`
+5. `DeviceTypeSeeder`
+6. `DeviceModelSeeder`
+7. `ServiceTypeSeeder`
+8. `CostTypeSeeder`
+9. `ConditionTypeDataSeeder`
+10. `ConditionTypeSeeder`
+11. `ApprovalPolicySeeder`
+12. `VendorSeeder`
+13. `DepartmentSeeder`
+14. `UserSeeder`
 
-**URL Parameters:**
+### 6.1 `RoleSeeder`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| serviceRequestId | integer | The service request ID |
+Seeded roles (fresh DB typical IDs):
 
-**Request Body:**
+1. `admin`
+2. `operator`
+3. `user`
+4. `technician`
+5. `supervisor`
+6. `manager`
+7. `senior manager`
+8. `ceo`
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| reason | string | Yes | Updated reason for cancellation |
+### 6.2 `EntityTypeSeeder`
 
-**Responses:**
+1. `SERVICE_REQUEST`
+2. `VENDOR_APPROVAL`
+3. `INVOICE`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": { ... }
-}
-```
+### 6.3 `StatusSeeder`
 
----
+Service request statuses:
 
-## Departments
+1. `REVIEW_IN_WORKSHOP` -> Requested
+2. `REPAIR_IN_WORKSHOP` -> Repair in Workshop
+3. `REPAIR_IN_VENDOR` -> Repair in Vendor
+4. `WAITING_APPROVAL_ABOVE` -> Waiting Approval Above
+5. `COMPLETED` -> Completed
+6. `BAD_ASSET` -> Bad Asset
+7. `CANCELLED` -> Cancelled
 
-All department endpoints require authentication.
+Vendor approval statuses:
 
-### GET /api/departments
+8. `PENDING`
+9. `APPROVED`
+10. `REJECTED`
 
-Retrieves a paginated list of departments.
+Invoice statuses:
 
-**Authentication:** Required
+11. `DRAFT`
+12. `SENT`
+13. `PAID`
+14. `OVERDUE`
 
-**Query Parameters:**
+### 6.4 `StatusTransitionSeeder`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| search | string | Search term to filter departments |
-| page | integer | Page number for pagination |
-| per_page | integer | Number of items per page |
+Transitions seeded:
 
-**Responses:**
+- `REVIEW_IN_WORKSHOP -> REPAIR_IN_WORKSHOP` (`START_REPAIR_WORKSHOP`) roles: admin, technician, operator
+- `REVIEW_IN_WORKSHOP -> COMPLETED` (`COMPLETE_AFTER_REVIEW`) roles: admin, technician, operator
+- `REVIEW_IN_WORKSHOP -> BAD_ASSET` (`MARK_BAD_ASSET`) roles: admin, technician, operator
+- `REVIEW_IN_WORKSHOP -> CANCELLED` (`CANCEL_REQUEST`) roles: user, admin, operator
+- `WAITING_APPROVAL_ABOVE -> REPAIR_IN_VENDOR` (`APPROVE_QUOTE_ABOVE`) role: first available superior (`supervisor/manager/director/ceo`; in current seeds typically `supervisor`)
+- `WAITING_APPROVAL_ABOVE -> REVIEW_IN_WORKSHOP` (`REJECT_QUOTE_ABOVE`) same superior role
+- `REPAIR_IN_WORKSHOP -> REPAIR_IN_VENDOR` (`MOVE_TO_VENDOR`) roles: admin, technician, operator
+- `REPAIR_IN_WORKSHOP -> COMPLETED` (`COMPLETE_WORK`) roles: admin, technician, operator
+- `REPAIR_IN_WORKSHOP -> BAD_ASSET` (`MARK_BAD_ASSET`) roles: admin, technician, operator
+- `REPAIR_IN_VENDOR -> WAITING_APPROVAL_ABOVE` (`REQUEST_APPROVAL_ABOVE`) roles: admin, operator
+- `REPAIR_IN_VENDOR -> COMPLETED` (`COMPLETE_VENDOR_WORK`) roles: admin, operator
+- `REPAIR_IN_VENDOR -> BAD_ASSET` (`MARK_BAD_ASSET`) roles: admin, operator
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": [
-        {
-            "id": 1,
-            "name": "IT Department",
-            "code": "IT",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z"
-        }
-    ],
-    "meta": {
-        "current_page": 1,
-        "from": 1,
-        "last_page": 1,
-        "path": "http://localhost/api/departments",
-        "per_page": 15,
-        "to": 1,
-        "total": 1
-    }
-}
-```
+### 6.5 `DeviceTypeSeeder`
 
----
+Seeded names:
 
-### GET /api/departments/{id}
+- Laptop, Desktop, Printer, Scanner, Monitor, Server, Router, Switch, Mobile Phone, Tablet
 
-Retrieves a specific department by ID.
+### 6.6 `DeviceModelSeeder`
 
-**Authentication:** Required
+Seeded combinations include:
 
-**URL Parameters:**
+- Laptop: Dell Latitude 5420, HP EliteBook 840 G8, Lenovo ThinkPad T14, Apple MacBook Pro 14"
+- Desktop: Dell OptiPlex 7090, HP EliteDesk 800 G6, Lenovo ThinkCentre M70q
+- Printer: HP LaserJet Pro M404n, Canon imageCLASS MF244dw, Brother HL-L2350DW
+- Monitor: Dell UltraSharp U2422H, HP EliteDisplay E243, LG 27UL850-W
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The department ID |
+### 6.7 `ServiceTypeSeeder`
 
-**Responses:**
+- Hardware Repair
+- Software Installation
+- Network Setup
+- Data Recovery
+- System Maintenance
+- Equipment Installation
+- Troubleshooting
+- Upgrade Service
+- Security Audit
+- Backup Setup
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 1,
-        "name": "IT Department",
-        "code": "IT",
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z"
-    }
-}
-```
+### 6.8 `CostTypeSeeder`
 
----
+- `SPAREPART` -> Sparepart
+- `SERVICE_FEE` -> Service Fee
+- `CANCELLATION` -> Cancellation
+- `TRANSPORT` -> Transport
+- `OTHER` -> Other
 
-### POST /api/departments
+### 6.9 `ConditionTypeDataSeeder`
 
-Creates a new department.
+- Device Type
+- Service Type
+- Cost Range
 
-**Authentication:** Required
+### 6.10 `ConditionTypeSeeder`
 
-**Request Body:**
+- `DEVICE_TYPE`
+- `SERVICE_TYPE`
+- `COST_RANGE`
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | Yes | Department name (max: 255, must be unique) |
-| code | string | Yes | Department code (max: 255, must be unique) |
+### 6.11 `ApprovalPolicySeeder`
 
-**Example Request:**
-```json
-{
-    "name": "IT Department",
-    "code": "IT"
-}
-```
+Policies seeded:
 
-**Responses:**
+1. Condition: Device Type = `Laptop`
+   - Step 1: supervisor (mandatory)
+   - Step 2: manager (mandatory)
 
-- **201 Created:**
-```json
-{
-    "status": "success",
-    "code": 201,
-    "message": "",
-    "data": {
-        "id": 1,
-        "name": "IT Department",
-        "code": "IT"
-    }
-}
-```
+2. Condition: Service Type = `Software Installation`
+   - Step 1: supervisor (mandatory)
 
----
+3. Condition: Cost Range = `>1000000`
+   - Step 1: manager (mandatory)
+   - Step 2: senior manager (mandatory)
 
-### PUT /api/departments/{id}
+4. Condition: Cost Range = `<1000000`
+   - manager (non-mandatory, step_order 1)
+   - senior manager (non-mandatory, step_order 1)
 
-Updates an existing department.
+### 6.12 `VendorSeeder`
 
-**Authentication:** Required
+Seeded vendors:
 
-**URL Parameters:**
+- Tech Solutions Inc.
+- Hardware Pro Services
+- Network Experts LLC
+- Software Masters
+- IT Support Plus
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The department ID |
+### 6.13 `DepartmentSeeder`
 
-**Request Body:**
+- IT, HR, FIN, GA, OPS
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | No | Department name (max: 255) |
-| code | string | No | Department code (max: 255) |
+### 6.14 `UserSeeder` (default local credentials)
 
-**Responses:**
+Important:
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 1,
-        "name": "Information Technology",
-        "code": "IT"
-    }
-}
-```
+- Passwords are hashed in seeder from plaintext shown below.
+- `pin` in seeder is inserted as plaintext string.
 
+| Name | Email | Plain Password | Role | Department |
+|---|---|---|---|---|
+| Administrator | admin@gmail.com | admin123 | admin | IT |
+| ALI | it.ali@gmail.com | ali123 | operator | IT |
+| John Doe | john.doe@gmail.com | user123 | user | HR |
+| Jane Smith | jane.smith@gmail.com | user123 | user | FIN |
+| Tech Wilson | tech.wilson@gmail.com | tech123 | technician | IT |
+| Service Brown | service.brown@gmail.com | tech123 | technician | IT |
+| Supervisor | supervisor@gmail.com | atasan123 | supervisor | GA |
+| Manager | manager@gmail.com | manager123 | manager | IT |
+| Senior Manager | senior.manager@gmail.com | manager123 | senior manager | IT |
+| CEO | ceo@gmail.com | ceo123 | ceo | IT |
+
 ---
 
-### DELETE /api/departments/{id}
+## 7. Business Workflow Details
 
-Deletes a department.
+### 7.1 Service request creation
 
-**Authentication:** Required
+Source: `ServiceRequestService::createServiceRequest`.
 
-**URL Parameters:**
+Flow:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The department ID |
+1. Validate payload (`StoreServiceRequest`).
+2. Enforce device idempotency (`ServiceRequestIdempotencyHandler`).
+3. Create service request header:
+   - `service_number`: auto format `SR{YYYYMMDD}{0001..}`
+   - `status_id`: forced to status `REVIEW_IN_WORKSHOP`
+   - Admin role handling:
+     - admin user can set `user_id`
+     - normal user only for self
+4. Create detail rows and optional complaint images.
+5. Write audit log `CREATE_REQUEST`.
+6. Queue admin email notification.
 
-**Responses:**
+### 7.2 Device idempotency rules
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": ""
-}
-```
+`ServiceRequestIdempotencyHandler` prevents:
 
----
+- duplicate same device in one request (`device_id` or same `serial_number`)
+- using a device that is still attached to another active service request
+  - active means status is not `COMPLETED` and not `CANCELLED`
 
-## Users
+Validation errors are returned under `details` key.
 
-All user endpoints require authentication.
+### 7.3 Status transitions by role
 
-### GET /api/users
+Allowed transitions endpoint reads `status_transitions` + `status_transition_roles` and current authenticated user roles.
 
-Retrieves a paginated list of users.
+### 7.4 Approval flow
 
-**Authentication:** Required
+`ServiceRequestApprovalService`:
 
-**Query Parameters:**
+- Selects approval policy by total service cost using `COST_RANGE` condition:
+  - `>1000000` or `<1000000`
+- Creates `vendor_approvals` for selected approvers with status `PENDING`.
+- Approve/reject handled in `ApprovalService` updates `vendor_approvals.status_id` and service request status.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| search | string | Search term to filter users |
-| role_id | integer | Filter by role ID |
-| department_id | integer | Filter by department ID |
-| is_active | boolean | Filter by active status (`true`/`false` or `1`/`0`) |
-| page | integer | Page number for pagination |
-| per_page | integer | Number of items per page |
+### 7.5 Notification generation
 
-**Responses:**
+`NotificationService::createNotificationForServiceRequest` sends user notification when status code is:
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": [
-        {
-            "id": 1,
-            "name": "John Doe",
-            "email": "john.doe@example.com",
-            "is_active": true,
-            "role_id": 1,
-            "department_id": 1,
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z",
-            "role": { ... },
-            "department": { ... }
-        }
-    ],
-    "meta": { ... }
-}
-```
+- `COMPLETED`
+- `BAD_ASSET`
+- `CANCELLED`
 
+### 7.6 Invoice behavior
+
+Invoice-related logic exists in:
+
+- `InvoiceService`
+- `ExportInvoiceService`
+
+PDF export endpoints return generated PDF from Blade templates in `resources/views/invoice/*`.
+
+### 7.7 File storage behavior
+
+- Complaint images: saved to `public/images`, path stored as `images/{filename}`.
+- Service cost attachments: saved to `public/images`, `image_path` stores filename.
+
 ---
 
-### GET /api/users/{id}
+## 8. Endpoint Contract Details
 
-Retrieves a specific user by ID.
+## 8.1 Authentication
 
-**Authentication:** Required
+### `POST /api/auth/login`
 
-**URL Parameters:**
+- Auth: no
+- Body:
+  - `email` required email
+  - `password` required string
+- Success: `200`
+  - returns user profile (`id,name,email,role,department,created_at,updated_at`) + token
+- Invalid credentials: `401`
+  - message `Invalid credentials`
+- Validation error: `422`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The user ID |
+Note:
 
-**Responses:**
+- Due controller condition bug, auth errors are returned via `APIResponse::success` envelope (`success: true`) but with HTTP 4xx.
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 1,
-        "name": "John Doe",
-        "email": "john.doe@example.com",
-        "is_active": true,
-        "role_id": 1,
-        "department_id": 1,
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z"
-    }
-}
-```
+### `POST /api/auth/register`
 
----
+- Auth: no
+- Body:
+  - `name` required max 255
+  - `email` required unique
+  - `password` required min 8
+  - `pin` optional min 6
+  - `role_id` required exists roles
+- Success: `201`
+  - user + token
 
-### POST /api/users
+### `POST /api/auth/logout`
 
-Creates a new user.
+- Auth middleware: no (public route)
+- Behavior:
+  - if token valid user found -> delete all user tokens
+  - otherwise -> 401 `Unauthenticated`
 
-**Authentication:** Required
+### `GET /api/auth/me`
 
-**Request Body:**
+- Auth: yes
+- Returns authenticated user profile with first role and first department.
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | Yes | User's full name (max: 255) |
-| email | string | Yes | User's email (must be unique) |
-| password | string | Yes | User's password (min: 8 characters) |
-| role_id | integer | Yes | Role ID (must exist in roles table) |
-| department_id | integer | Yes | Department ID (must exist in departments table) |
-| is_active | boolean | No | Active status |
+## 8.2 Contact Admin
 
-**Example Request:**
-```json
-{
-    "name": "Jane Doe",
-    "email": "jane.doe@example.com",
-    "password": "password123",
-    "role_id": 2,
-    "department_id": 1,
-    "is_active": true
-}
-```
+### `POST /api/contact-admin`
 
-**Responses:**
+- Auth: no
+- Body:
+  - `name` required
+  - `email` required
+  - `message` required
+  - `attachmentPath` optional string (not file upload)
+  - `mode` optional: `queue` (default) or `sync`
+  - optional context: `device`, `device_model`/`deviceModel`, `damages[]`, `service_request_id`, `service_request_url`
+- Responses:
+  - `202` queue mode
+  - `200` sync mode
+  - `500` if send fails
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 2,
-        "name": "Jane Doe",
-        "email": "jane.doe@example.com",
-        "is_active": true,
-        "role_id": 2,
-        "department_id": 1
-    }
-}
-```
+## 8.3 Device Types
 
----
+### `GET /api/device-type`
 
-### PUT /api/users/{id}
+- Auth: yes
+- Query: `search`, `page`, `per_page`
+- Returns paginated array + `meta`.
 
-Updates an existing user.
+### `GET /api/device-type/{id}`
 
-**Authentication:** Required
+- Auth: yes
+- Returns single device type.
 
-**URL Parameters:**
+### `POST /api/device-type`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The user ID |
+- Auth: yes
+- Body: `name` required unique
+- Returns `201`.
 
-**Request Body:**
+### `PUT /api/device-type/{id}`
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | No | User's full name (max: 255) |
-| email | string | No | User's email (must be unique, except current user) |
-| password | string | No | User's password (min: 8 characters) |
-| role_id | integer | No | Role ID |
-| department_id | integer | No | Department ID |
-| is_active | boolean | No | Active status |
+- Auth: yes
+- Body: `name` required unique
+- Returns `200`.
 
-**Responses:**
+### `DELETE /api/device-type/{id}`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": { ... }
-}
-```
+- Auth: yes
+- Returns `200`, `data: null`.
 
----
+## 8.4 Device Models
 
-### DELETE /api/users/{id}
+### `GET /api/device-model`
 
-Deletes a user.
+- Auth: yes
+- Query: `keyword` (search by model only), `page`, `per_page`
 
-**Authentication:** Required
+### `GET /api/device-model/{id}`
 
-**URL Parameters:**
+- Auth: yes
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The user ID |
+### `POST /api/device-model`
 
-**Responses:**
+- Auth: yes
+- Body:
+  - `device_type_id` required
+  - `brand` required
+  - `model` required
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": ""
-}
-```
+### `PUT /api/device-model/{id}`
 
----
+- Auth: yes
+- Body all optional (`device_type_id`, `brand`, `model`)
 
-## Vendors
+### `PATCH /api/device-model/{id}`
 
-All vendor endpoints require authentication.
+- Auth: yes
+- Body same optional fields.
 
-### GET /api/vendors
+Known behavior:
 
-Retrieves a list of vendors.
+- Patch implementation updates in-memory attributes but does not `save()`, so changes are not persisted.
 
-**Authentication:** Required
+### `DELETE /api/device-model/{id}`
 
-**Query Parameters:**
+- Auth: yes
 
-| Field | Type | Description |
-|-------|------|-------------|
-| search | string | Search term to filter vendors |
+## 8.5 Devices
 
-**Responses:**
+### `GET /api/devices`
 
-- **200 OK:**
-```json
-{
-    "data": [
-        {
-            "id": 1,
-            "name": "Tech Repair Co",
-            "maps_url": "https://maps.google.com/?q=-6.2088,106.8456",
-            "description": "Professional IT repair services",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z"
-        }
-    ]
-}
-```
+- Auth: yes
+- Query:
+  - `serial-number` exact match
+  - `brand` exact match via relation
+  - `model` partial match via relation
+  - `bad_asset` boolean (`true/false/1/0`)
+  - `per_page` (default 15)
+- Returns paginated list with `device_model` summary.
 
----
+### `GET /api/devices/{id}`
 
-### GET /api/vendors/{id}
+- Auth: yes
 
-Retrieves a specific vendor by ID.
+### `POST /api/devices`
 
-**Authentication:** Required
+- Auth: yes
+- Body:
+  - `device_model_id` required
+  - `serial_number` required unique
+  - `bad_asset` optional boolean
 
-**URL Parameters:**
+### `PUT /api/devices/{id}`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The vendor ID |
+- Auth: yes
+- Body optional:
+  - `device_model_id`
+  - `serial_number` (unique)
+  - `bad_asset`
 
-**Responses:**
+### `PATCH /api/devices/{id}`
 
-- **200 OK:**
-```json
-{
-    "id": 1,
-    "name": "Tech Repair Co",
-    "maps_url": "https://maps.google.com/?q=-6.2088,106.8456",
-    "description": "Professional IT repair services",
-    "created_at": "2026-01-22T12:00:00.000000Z",
-    "updated_at": "2026-01-22T12:00:00.000000Z"
-}
-```
+- Auth: yes
+- Partial update equivalent.
 
----
+### `DELETE /api/devices/{id}`
 
-### POST /api/vendors
+- Auth: yes
 
-Creates a new vendor.
+## 8.6 Service Requests (Core)
 
-**Authentication:** Required
+### `GET /api/service-requests`
 
-**Request Body:**
+- Auth: yes
+- Query filters:
+  - `user_id`
+  - `admin_id`
+  - `status_id`
+  - `request_date` (applied against `created_at` date)
+  - `search` (keyword against user name, service number, device model, serial number, vendor name, location phone)
+  - `per_page`
+- Returns paginated with relations:
+  - user/admin/status
+  - detail + device + device model
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | Yes | Vendor name (max: 255) |
-| maps_url | string (URL) | Yes | Google Maps URL for vendor location |
-| description | string | Yes | Vendor description |
+### `GET /api/service-requests/stats`
 
-**Example Request:**
-```json
-{
-    "name": "Tech Repair Co",
-    "maps_url": "https://maps.google.com/?q=-6.2088,106.8456",
-    "description": "Professional IT repair services"
-}
-```
+- Auth: yes
+- Returns:
+  - `total`
+  - `by_status[]` with status name/code/count
+  - `recent` top 5 by `created_at`
 
-**Responses:**
+### `GET /api/service-requests/{id}`
 
-- **201 Created:**
-```json
-{
-    "id": 1,
-    "name": "Tech Repair Co",
-    "maps_url": "https://maps.google.com/?q=-6.2088,106.8456",
-    "description": "Professional IT repair services"
-}
-```
+- Auth: yes
+- Returns full detail with:
+  - user + department
+  - admin + department
+  - status
+  - details + device + model + complaint_images
+  - vendor approvals
+  - audit logs
+  - computed `timeline`
 
----
+### `POST /api/service-requests`
+
+- Auth: yes
+- Body:
+  - `admin_id` optional
+  - `user_id` optional for admin; prohibited for non-admin
+  - `request_date` optional (validated, not persisted in current schema)
+  - `status_id` optional
+  - `status_code` optional (mapped to `status_id`)
+  - `details` required array
+  - `details.*.device_id` optional existing device
+  - if no `device_id`, require:
+    - `details.*.device_type_id`
+    - `details.*.brand`
+    - `details.*.model`
+    - `details.*.serial_number`
+  - `details.*.complaint` required
+  - `details.*.complaint_images[]` optional files (`jpeg/png/jpg/gif/svg`, max 2MB each)
+
+Behavior:
+
+- Service number auto-generated.
+- Status forced to `REVIEW_IN_WORKSHOP`.
+- Device idempotency checks executed.
 
-### PUT /api/vendors/{id}
+### `PUT /api/service-requests/{id}`
 
-Updates an existing vendor.
+- Auth: yes
+- Body optional:
+  - `admin_id`, `user_id`, `request_date`, `estimated_date`
+  - `status_id` or `status_code`
+  - `details[]` with optional `id`, `device_id`, `device_type_id`, `brand`, `model`, `serial_number`, `complaint`, `solution`, `complaint_images[]`
+  - `log_notes`
 
-**Authentication:** Required
+### `DELETE /api/service-requests/{id}`
 
-**URL Parameters:**
+- Auth: yes
+- Rule: cannot delete if current status is `COMPLETED`.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The vendor ID |
+### `GET /api/service-requests/{id}/allowed-transitions`
 
-**Request Body:**
+- Auth: yes
+- Returns statuses reachable from current status based on current user roles.
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | No | Vendor name (max: 255) |
-| maps_url | string (URL) | No | Google Maps URL |
-| description | string | No | Vendor description |
+### `GET /api/service-requests/{id}/can-print-invoice`
 
-**Responses:**
+- Auth: yes
+- Returns:
 
-- **200 OK:**
 ```json
 {
-    "id": 1,
-    "name": "Tech Repair Services",
-    "maps_url": "https://maps.google.com/?q=-6.2088,106.8456",
-    "description": "Updated description"
+  "success": true,
+  "data": {
+    "can_print": true
+  },
+  "message": "Success"
 }
 ```
 
----
-
-### DELETE /api/vendors/{id}
+### `GET /api/service-requests/{id}/download-invoice`
 
-Deletes a vendor.
+- Auth: yes
+- Returns binary PDF download.
 
-**Authentication:** Required
+### `GET /api/service-requests/{id}/preview-invoice`
 
-**URL Parameters:**
+- Auth: yes
+- Returns preview PDF.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The vendor ID |
+### `GET /api/export-invoice/{id}`
 
-**Responses:**
+- Auth: no
+- Public invoice download route (same export service).
 
-- **204 No Content:** (empty response)
+## 8.7 Service Request Costs
 
----
+### `GET /api/service-requests/{serviceRequestId}/costs`
 
-## Cost Types
+- Auth: yes
+- Returns all costs with `cost_type` relation.
 
-All cost type endpoints require authentication.
+### `POST /api/service-requests/{serviceRequestId}/costs`
 
-### GET /api/cost-types
+- Auth: yes
+- Body:
+  - `cost_type_id` required
+  - `amount` required numeric min 0
+  - `description` nullable
+  - `image` nullable file (`jpeg/png/jpg/gif/svg/pdf`, max 10MB)
 
-Retrieves a list of cost types.
+### `PUT /api/service-requests/{serviceRequestId}/costs/{costId}`
 
-**Authentication:** Required
+- Auth: yes
+- Body same as store but optional.
 
-**Query Parameters:**
+### `DELETE /api/service-requests/{serviceRequestId}/costs/{costId}`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| search | string | Search term to filter cost types |
+- Auth: yes
 
-**Responses:**
+### `GET /api/service-requests/{serviceRequestId}/costs/{costId}/attachment`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Cost types retrieved successfully",
-    "data": [
-        {
-            "id": 1,
-            "code": "PARTS",
-            "name": "Parts & Components",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z"
-        },
-        {
-            "id": 2,
-            "code": "LABOR",
-            "name": "Labor Cost",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z"
-        }
-    ]
-}
-```
+- Auth: yes
+- Returns attached image/pdf file.
 
----
+## 8.8 Service Request Locations
 
-### GET /api/cost-types/{id}
+### `GET /api/service-requests/{serviceRequestId}/locations`
 
-Retrieves a specific cost type by ID.
+- Auth: yes
+- Returns all locations for that request.
 
-**Authentication:** Required
+### `GET /api/service-requests/{serviceRequestId}/locations/{locationId}`
 
-**URL Parameters:**
+- Auth: yes
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The cost type ID |
+### `POST /api/service-requests/{serviceRequestId}/locations`
 
-**Responses:**
+- Auth: yes
+- Behavior:
+  - if active location already exists, endpoint updates it (200)
+  - else creates new location (201)
+- Body rules:
+  - `location_type` required `internal|external`
+  - `vendor_id` required if external
+  - `is_active` required boolean
+  - `address` required if external
+  - `phone_number` required if external
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Cost type retrieved successfully",
-    "data": {
-        "id": 1,
-        "code": "PARTS",
-        "name": "Parts & Components",
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z"
-    }
-}
-```
+### `PUT /api/service-requests/{serviceRequestId}/locations/{locationId}`
 
----
+- Auth: yes
+- Body similar to store; `is_active` required in request validation.
 
-### POST /api/cost-types
+### `DELETE /api/service-requests/{serviceRequestId}/locations/{locationId}`
 
-Creates a new cost type.
+- Auth: yes
 
-**Authentication:** Required
+## 8.9 Service Request Approvals and Approval Actions
 
-**Request Body:**
+### `GET /api/service-requests/{serviceRequestId}/approvers`
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| code | string | Yes | Cost type code (max: 255) |
-| name | string | Yes | Cost type name (max: 255) |
+- Auth: yes
+- Returns:
+  - `approvers`: users filtered by approval policy roles + IT department
+  - `approvalPolicy`: selected policy object
 
-**Example Request:**
-```json
-{
-    "code": "SHIPPING",
-    "name": "Shipping & Handling"
-}
-```
+### `GET /api/service-requests/{serviceRequestId}/approvals`
 
-**Responses:**
+- Auth: yes
+- Returns all `vendor_approvals` for request.
 
-- **201 Created:**
-```json
-{
-    "status": "success",
-    "code": 201,
-    "message": "Cost type created successfully",
-    "data": {
-        "id": 3,
-        "code": "SHIPPING",
-        "name": "Shipping & Handling"
-    }
-}
-```
+### `POST /api/service-requests/{serviceRequestId}/approvals`
 
----
+- Auth: yes
+- Body:
+  - `approvers` required array of user IDs
 
-### PUT /api/cost-types/{id}
+### `PUT /api/service-requests/{serviceRequestId}/approvals`
 
-Updates an existing cost type.
+- Auth: yes
+- Body same as POST.
+- Behavior: delete existing approvals and recreate.
 
-**Authentication:** Required
+### `DELETE /api/service-requests/{serviceRequestId}/approvals/{approvalId}`
 
-**URL Parameters:**
+- Auth: yes
+- Intended to delete one approval.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The cost type ID |
+### `POST /api/service-requests/approved/{approvalId}`
 
-**Request Body:**
+- Auth: yes
+- Optional body: `notes`
+- Marks vendor approval approved and may advance service request status.
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| code | string | Yes | Cost type code (max: 255) |
-| name | string | Yes | Cost type name (max: 255) |
+### `POST /api/service-requests/rejected/{approvalId}`
 
-**Responses:**
+- Auth: yes
+- Optional body: `notes`
+- Marks vendor approval rejected and may move request to `REPAIR_IN_WORKSHOP`.
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Cost type updated successfully",
-    "data": {
-        "id": 1,
-        "code": "PARTS",
-        "name": "Parts & Accessories"
-    }
-}
-```
+### `POST /api/service-requests/need-repair/{serviceRequestId}`
 
----
+- Auth: yes
+- Optional body: `notes`
+- Sets service request status to `REPAIR_IN_WORKSHOP`.
 
-### DELETE /api/cost-types/{id}
+### `POST /api/service-requests/no-need-repair/{serviceRequestId}`
 
-Deletes a cost type.
+- Auth: yes
+- Optional body: `notes`
+- Sets service request status to `COMPLETED`.
 
-**Authentication:** Required
+## 8.10 Service Request Cancellation
 
-**URL Parameters:**
+### `GET /api/service-requests/{serviceRequestId}/cancellation`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The cost type ID |
+- Auth: yes
+- Intended: list/get cancellation records for request.
 
-**Responses:**
+### `POST /api/service-requests/{serviceRequestId}/cancellation`
 
-- **204 No Content:**
-```json
-{
-    "status": "success",
-    "code": 204,
-    "message": "Cost type deleted successfully"
-}
-```
+- Auth: yes
+- Body:
+  - `reason` required string
+- Creates cancellation and updates service request status to `CANCELLED`.
 
----
+### `PUT /api/service-requests/{serviceRequestId}/cancellation/{cancellationId}`
 
-## Invoices
+- Auth: yes
+- Intended body:
+  - `reason` required string
 
-All invoice endpoints require authentication.
+### `DELETE /api/service-requests/{serviceRequestId}/cancellation/{cancellationId}`
 
-### GET /api/invoices
+- Auth: yes
+- Intended: delete cancellation and set request back to pending.
 
-Retrieves a paginated list of invoices.
+## 8.11 Reference Data
 
-**Authentication:** Required
+### `GET /api/references/service-types`
 
-**Query Parameters:**
+- Auth: yes
+- Returns `id,name` for service types.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| search | string | Search term to filter invoices |
-| page | integer | Page number for pagination |
-| per_page | integer | Number of items per page |
+### `POST /api/references/service-types`
 
-**Responses:**
+- Auth: yes
+- Body: `name` required unique.
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "Success",
-    "data": [
-        {
-            "id": 1,
-            "invoice_number": "INV-2026-0001",
-            "service_request_id": 1,
-            "total_amount": 500000,
-            "status": "paid",
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "updated_at": "2026-01-22T12:00:00.000000Z",
-            "service_request": { ... }
-        }
-    ],
-    "meta": { ... }
-}
-```
+### `GET /api/references/statuses`
 
----
+- Auth: yes
+- Query optional: `entity_type_id`
 
-### GET /api/invoices/{id}
+### `GET /api/references/vendors`
 
-Retrieves a specific invoice by ID.
+- Auth: yes
+- Returns `id,name,description`.
 
-**Authentication:** Required
+### `GET /api/references/roles`
 
-**URL Parameters:**
+- Auth: yes
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The invoice ID |
+### `GET /api/references/departments`
 
-**Responses:**
+- Auth: yes
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 1,
-        "invoice_number": "INV-2026-0001",
-        "service_request_id": 1,
-        "total_amount": 500000,
-        "status": "paid",
-        "created_at": "2026-01-22T12:00:00.000000Z",
-        "updated_at": "2026-01-22T12:00:00.000000Z",
-        "service_request": { ... },
-        "items": [ ... ]
-    }
-}
-```
+### `GET /api/references/cost-types`
 
----
+- Auth: yes
 
-### GET /api/invoices/{id}/print
+## 8.12 Departments
 
-Retrieves invoice data formatted for printing.
+### `GET /api/departments`
 
-**Authentication:** Required
+- Auth: yes
+- Query: `search`, `sort_by`, `sort_order`, `per_page`
 
-**URL Parameters:**
+### `POST /api/departments`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The invoice ID |
+- Auth: yes
+- Body:
+  - `name` required unique
+  - `code` required unique
 
-**Responses:**
+### `GET /api/departments/{id}` / `PUT /api/departments/{id}` / `DELETE /api/departments/{id}`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "invoice": { ... },
-        "company": { ... },
-        "items": [ ... ],
-        "totals": { ... }
-    }
-}
-```
+- Auth: yes
+- Update body optional `name`, `code`.
 
----
+## 8.13 Users
 
-## Inbox Approvals
+### `GET /api/users`
 
-Endpoints for managing the approval inbox for the authenticated user.
+- Auth: yes
+- Query:
+  - `search`
+  - `role_id`
+  - `department_id`
+  - `is_active` or `status` (boolean parse)
+  - `sort_by`, `sort_order`, `per_page`
 
-### GET /api/inbox-approvals/{statusId}
+### `POST /api/users`
 
-Retrieves inbox approvals filtered by status.
+- Auth: yes
+- Body:
+  - `name`, `email`, `password`
+  - `role_id` exists
+  - `department_id` exists
+  - `is_active` optional boolean
 
-**Authentication:** Required
+### `GET /api/users/{id}`
 
-**URL Parameters:**
+- Auth: yes
 
-| Field | Type | Description |
-|-------|------|-------------|
-| statusId | integer | Filter by approval status ID |
+### `PUT /api/users/{id}`
 
-**Responses:**
+- Auth: yes
+- Body optional:
+  - `name`
+  - `email` (unique ignore current id)
+  - `password` min 8
+  - `role_id`
+  - `department_id`
+  - `is_active`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": [
-        {
-            "id": 1,
-            "service_request_id": 1,
-            "approver_id": 1,
-            "status": "pending",
-            "is_read": false,
-            "created_at": "2026-01-22T12:00:00.000000Z",
-            "service_request": {
-                "id": 1,
-                "request_date": "2026-01-22",
-                "status": { ... }
-            }
-        }
-    ]
-}
-```
+### `DELETE /api/users/{id}`
 
----
+- Auth: yes
 
-### PUT /api/inbox-approvals/{id}/read
+### `GET /api/user`
 
-Marks an inbox approval as read.
+- Auth: yes
+- Returns default Laravel user object (closure), not APIResponse wrapper.
 
-**Authentication:** Required
+## 8.14 Vendors
 
-**URL Parameters:**
+### `GET /api/vendors`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The approval inbox ID |
+- Auth: yes
+- Query:
+  - `search`
+  - `per_page`
+- Response is raw Laravel paginator JSON (not APIResponse wrapper).
 
-**Responses:**
+### `POST /api/vendors`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": {
-        "id": 1,
-        "is_read": true,
-        "updated_at": "2026-01-22T14:00:00.000000Z"
-    }
-}
-```
+- Auth: yes
+- Body required:
+  - `name`
+  - `maps_url` (valid URL)
+  - `description`
+- Returns raw vendor JSON with `201`.
 
----
+### `GET /api/vendors/{id}` / `PUT /api/vendors/{id}` / `DELETE /api/vendors/{id}`
 
-## Reference Data
+- Auth: yes
+- Update body optional: `name`, `maps_url`, `description`.
+- Delete returns `204` empty body.
 
-Endpoints for retrieving reference/lookup data used throughout the application.
+## 8.15 Cost Types
 
-### GET /api/references/service-types
+### `GET /api/cost-types`
 
-Retrieves all service types.
+- Auth: yes
+- Query optional: `code`, `name`
+- Returns collection, not paginated.
 
-**Authentication:** Required
+### `POST /api/cost-types`
 
-**Responses:**
+- Auth: yes
+- Body required: `code`, `name`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": [
-        {
-            "id": 1,
-            "name": "Repair"
-        },
-        {
-            "id": 2,
-            "name": "Maintenance"
-        },
-        {
-            "id": 3,
-            "name": "Installation"
-        }
-    ]
-}
-```
+### `GET /api/cost-types/{id}` / `PUT /api/cost-types/{id}` / `DELETE /api/cost-types/{id}`
 
----
+- Auth: yes
+- Update body required in validation (`code`, `name`).
+- Delete returns APIResponse with HTTP `204` and message.
 
-### GET /api/references/statuses
+## 8.16 Invoices
 
-Retrieves all statuses, optionally filtered by entity type.
+### `GET /api/invoices`
 
-**Authentication:** Required
+- Auth: yes
+- Query optional:
+  - `service_request_id`
+  - `status`
+  - `vendor_id` (present in code filter but table has no `vendor_id`)
+  - `start_date` + `end_date`
+  - `search` (invoice_number)
+  - `per_page` default 10
 
-**Query Parameters:**
+### `GET /api/invoices/{id}`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| entity_type_id | integer | Filter by entity type ID |
+- Auth: yes
 
-**Responses:**
+### `GET /api/invoices/{id}/print`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": [
-        {
-            "id": 1,
-            "name": "Pending",
-            "code": "pending",
-            "entity_type_id": 1
-        },
-        {
-            "id": 2,
-            "name": "In Progress",
-            "code": "in_progress",
-            "entity_type_id": 1
-        },
-        {
-            "id": 3,
-            "name": "Completed",
-            "code": "completed",
-            "entity_type_id": 1
-        }
-    ]
-}
-```
+- Auth: yes
+- Returns transformed print data object (not binary PDF).
 
----
+### `GET /api/invoices/{id}/download`
 
-### GET /api/references/vendors
+- Auth: yes
+- Route exists but no method implementation in `InvoiceController`.
 
-Retrieves all vendors (minimal data).
+## 8.17 Notifications
 
-**Authentication:** Required
+### `GET /api/notifications`
 
-**Responses:**
+- Auth: yes
+- Returns notifications for current user, ordered latest first.
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": [
-        {
-            "id": 1,
-            "name": "Tech Repair Co",
-            "description": "Professional IT repair services"
-        }
-    ]
-}
-```
+### `PUT /api/notifications/{id}/read`
 
----
+- Auth: yes
+- Marks notification as read if current user owns it.
 
-### GET /api/references/roles
+## 8.18 Inbox Approvals
 
-Retrieves all roles.
+### `GET /api/inbox-approvals/{statusId}`
 
-**Authentication:** Required
+- Auth: yes
+- Returns `vendor_approvals` for current approver filtered by `status_id`.
 
-**Responses:**
+### `PUT /api/inbox-approvals/{id}/read`
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": [
-        {
-            "id": 1,
-            "name": "Admin"
-        },
-        {
-            "id": 2,
-            "name": "Manager"
-        },
-        {
-            "id": 3,
-            "name": "Staff"
-        }
-    ]
-}
-```
+- Auth: yes
+- Sets `read_at = now()`.
 
 ---
 
-### GET /api/references/departments
+## 9. Known Gaps and Integration Caveats
 
-Retrieves all departments (minimal data).
+These are code-level issues currently present and important for clients:
 
-**Authentication:** Required
+1. Auth controller error branch condition is incorrect (`if(!$result['code'] >= 200...)`), so auth failures are often returned through success envelope with HTTP 4xx.
+2. `GET /api/invoices/{id}/download` route points to `InvoiceController@download`, but method does not exist.
+3. Service cancellation controller/service mismatch:
+   - `index()` calls non-existing service method `getCancellationByServiceRequest`.
+   - `update()` and `destroy()` signatures do not match route params.
+4. Service request approval delete endpoint calls service `destroy()` method that does not exist.
+5. `PATCH /api/device-model/{id}` does not persist changes (`save()` missing).
+6. `ServiceRequestStatusHandler` uses `$serviceRequest->code` instead of status code, and references undefined `$data` in one branch.
+7. `ServiceRequestDetail` does not define `service_type` relation, but invoice preview loads `service_request_details.service_type`.
+8. `service_requests` schema currently does not include `request_date` and `estimated_date`, while some logic/templates still reference those fields.
+9. Service cost attachment storage check uses `Storage::disk('public')` while files are moved to `public/images`; attachment retrieval may fail depending on stored path.
+10. Vendor endpoints return raw JSON while most endpoints use APIResponse wrapper (response shape inconsistency).
 
-**Responses:**
+Recommendation for integrators:
 
-- **200 OK:**
-```json
-{
-    "status": "success",
-    "code": 200,
-    "message": "",
-    "data": [
-        {
-            "id": 1,
-            "name": "IT Department",
-            "code": "IT"
-        },
-        {
-            "id": 2,
-            "name": "Human Resources",
-            "code": "HR"
-        }
-    ]
-}
-```
+- Treat this section as mandatory before implementing production client logic.
+- Build defensive client parsing for inconsistent envelopes.
 
 ---
 
-## Export Invoice
+## 10. Test and Verification Commands
 
-### GET /api/export-invoice/{id}
+Run tests:
 
-Downloads an invoice as a PDF file.
+```bash
+php artisan test
+```
 
-**URL Parameters:**
+List routes:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | integer | The service request ID |
+```bash
+php artisan route:list
+php artisan route:list --json
+```
 
-**Responses:**
+Reset DB and reseed:
 
-- **200 OK:** Returns PDF file download
+```bash
+php artisan migrate:fresh --seed
+```
 
 ---
+
+## 11. Implementation Checklist (Frontend/Consumer)
+
+Before go-live, make sure your client handles:
 
-## Error Codes
-
-| Code | Description |
-|------|-------------|
-| 200 | Success |
-| 201 | Created successfully |
-| 204 | No content (successful deletion) |
-| 400 | Bad request |
-| 401 | Unauthenticated |
-| 403 | Forbidden |
-| 404 | Not found |
-| 422 | Validation error |
-| 500 | Server error |
+1. Bearer token management and retry/login on 401.
+2. Mixed response envelopes (`APIResponse`, raw JSON, binary file).
+3. Pagination meta parsing when present.
+4. Multipart form upload for complaint images and service cost attachment.
+5. Service request duplicate-device validation errors from `details` key.
+6. Known gaps listed in section 9.
 
 ---
 
-## Notes
-
-1. All dates should be in the format `YYYY-MM-DD`
-2. All timestamps are returned in ISO 8601 format
-3. Pagination is available on list endpoints via `page` and `per_page` query parameters
-4. Most endpoints require Bearer token authentication
-5. File uploads should use `multipart/form-data` content type
-6. Image uploads are limited to 2MB per file and must be jpeg, png, jpg, gif, or svg format
+If you need this document converted into OpenAPI/Swagger format, it can be generated from this same source-of-truth structure.
