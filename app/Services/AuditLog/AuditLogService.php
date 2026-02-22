@@ -5,17 +5,9 @@ namespace App\Services\AuditLog;
 use App\Models\AuditLog;
 use App\Models\ServiceRequest;
 use App\Models\Status;
-use App\Services\ServiceRequest\ServiceRequestApprovalService;
 
 class AuditLogService
 {
-    protected $serviceRequestApprovalService;
-
-    public function __construct(ServiceRequestApprovalService $serviceRequestApprovalService)
-    {
-        $this->serviceRequestApprovalService = $serviceRequestApprovalService;
-    }
-
     public function createAuditLog(array $data): AuditLog
     {
         return AuditLog::create($data);
@@ -59,25 +51,14 @@ class AuditLogService
 
     public function getAuditLogsForServiceRequest(ServiceRequest $serviceRequest): \Illuminate\Database\Eloquent\Collection
     {
-        return AuditLog::where(function ($query) use ($serviceRequest) {
-            $query->where(function ($q) use ($serviceRequest) {
-                $q->where('entity_type_id', 1)
-                ->where('entity_id', $serviceRequest->id);
-            })->orWhere(function ($q) use ($serviceRequest) {
-                $q->where('entity_type_id', 2)
-                ->whereIn(
-                    'entity_id',
-                    $this->serviceRequestApprovalService
-                        ->getIdsByServiceRequestId($serviceRequest->id)
-                );
-            });
-        })
-        ->with([
-            'actor:id,name',
-            'actor.departments:id,name'
-        ])
-        ->orderBy('created_at', 'desc')
-        ->get();
+        return AuditLog::where('entity_type_id', 1)
+            ->where('entity_id', $serviceRequest->id)
+            ->with([
+                'actor:id,name',
+                'actor.departments:id,name'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     public function getTimeLineForServiceRequest($auditLogs, ServiceRequest $serviceRequest): array
