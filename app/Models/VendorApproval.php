@@ -45,6 +45,7 @@ class VendorApproval extends Model
 		'assigned_by' => 'int',
 		'assigned_at' => 'datetime',
 		'status_id' => 'int',
+		'notes' => 'string',
 		'read_at' => 'datetime'
 	];
 
@@ -57,6 +58,7 @@ class VendorApproval extends Model
 		'assigned_by',
 		'assigned_at',
 		'status_id',
+		'notes',
 		'read_at'
 	];
 

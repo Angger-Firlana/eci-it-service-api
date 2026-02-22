@@ -4,9 +4,6 @@ namespace App\Services\ServiceRequest;
 
 use App\Enums\ServiceRequestStatusCode;
 use App\Enums\VendorApprovalStatusCode;
-use App\Models\ApprovalPolicy;
-use App\Models\ApprovalPolicyStep;
-use App\Models\ConditionType;
 use App\Models\ServiceCost;
 use App\Models\Status;
 use App\Models\User;
@@ -158,7 +155,10 @@ class ServiceRequestApprovalService
         return $approvals;
     }
 
-   
+    public function getIdsByServiceRequestId(int $serviceRequestId): array
+    {
+        return VendorApproval::where('service_request_id', $serviceRequestId)->pluck('id')->toArray();
+    }
 
     private function getServiceRequestStatusId(ServiceRequestStatusCode|string $code): int
     {

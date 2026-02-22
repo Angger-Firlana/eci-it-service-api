@@ -30,7 +30,7 @@ class ShowRelationsHandler{
             'service_request_details.device.device_model:id,device_type_id,brand,model',
             'service_request_details.device.device_model.device_type:id,name',
             'service_request_details.complaint_images:image_path',
-            'vendor_approvals:id,service_request_id,approver_id,assigned_by,assigned_at,approved_at,status_id',
+            'vendor_approvals:id,service_request_id,approver_id,assigned_by,assigned_at,approved_at,status_id,notes',
             'vendor_approvals.status:id,name,code',
             'vendor_approvals.approver:id,name',
             'vendor_approvals.assigned_by:id,name'

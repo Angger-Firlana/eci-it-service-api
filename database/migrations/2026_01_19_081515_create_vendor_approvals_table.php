@@ -21,6 +21,7 @@ return new class extends Migration
             $table->foreignId('assigned_by')->constrained('users');
             $table->timestamp('assigned_at')->useCurrent();
             $table->foreignId('status_id')->constrained('statuses');
+            $table->text('notes');
             $table->timestamps();
         });
     }
