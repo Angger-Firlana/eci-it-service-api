@@ -1,7 +1,7 @@
 # ECI IT Service API - Complete Implementation Documentation
 
 Version: code-accurate snapshot (generated from current source)
-Date: 2026-02-21
+Date: 2026-02-22
 Framework: Laravel 12 + Sanctum
 
 This document is intentionally written as a full implementation reference so frontend/backend integrators can work without opening the codebase.
@@ -570,6 +570,7 @@ Note: older columns (`city`, `province`, `postal_code`, `maps_url`) were dropped
 - `assigned_by` (FK -> users)
 - `assigned_at` timestamp
 - `status_id` (FK -> statuses)
+- `notes` text (required)
 - `read_at` nullable datetime
 - timestamps
 
@@ -821,6 +822,7 @@ Allowed transitions endpoint reads `status_transitions` + `status_transition_rol
   - `>1000000` or `<1000000`
 - Creates `vendor_approvals` for selected approvers with status `PENDING`.
 - Approve/reject handled in `ApprovalService` updates `vendor_approvals.status_id` and service request status.
+- Audit logs for service request detail now include vendor approval actions (entity type `VENDOR_APPROVAL`), so timeline includes approval activity.
 
 ### 7.5 Notification generation
 
@@ -1048,9 +1050,13 @@ Known behavior:
   - admin + department
   - status
   - details + device + model + complaint_images
-  - vendor approvals
-  - audit logs
-  - computed `timeline`
+- vendor approvals
+- audit logs
+- computed `timeline`
+
+Notes:
+
+- `audit_logs` and `timeline` include vendor approval actions, not only service request status changes.
 
 ### `POST /api/service-requests`
 
@@ -1202,6 +1208,7 @@ Behavior:
 
 - Auth: yes
 - Returns all `vendor_approvals` for request.
+- Each approval includes `notes` (text), `status`, `approver`, `assigned_by`, `assigned_at`, `approved_at`, and `read_at` when present.
 
 ### `POST /api/service-requests/{serviceRequestId}/approvals`
 

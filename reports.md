@@ -427,3 +427,22 @@ Menyesuaikan alur approver untuk level manajemen dengan mengganti role `director
 - `database/seeders/RoleSeeder.php`
 - `database/seeders/UserSeeder.php`
 - `public/images/1771560266_0KQRCaOfpU.svg`
+
+## Session: 2026-02-22 - Vendor Approval Notes + Audit Logs Include Approvals
+
+### Goal
+Expose vendor approval notes consistently and ensure audit logs/timeline include approval actions (not only service request status changes).
+
+### Changes
+1. Added `notes` and `read_at` handling on `VendorApproval` model (casts/fillable) so notes are readable/writable via API responses.
+2. Included `notes` in service request detail payload by expanding `ShowRelationsHandler` vendor approvals fields.
+3. Updated `AuditLogService::getAuditLogsForServiceRequest()` to include audit logs for `vendor_approvals` (entity type `VENDOR_APPROVAL`) so timeline reflects approval actions.
+4. Ensured vendor approval IDs can be resolved for audit log lookup.
+5. Updated vendor approvals migration to reflect `notes` field in schema.
+
+### Files Modified
+- `app/Helpers/ServiceRequest/ShowRelationsHandler.php`
+- `app/Models/VendorApproval.php`
+- `app/Services/AuditLog/AuditLogService.php`
+- `app/Services/ServiceRequest/ServiceRequestApprovalService.php`
+- `database/migrations/2026_01_19_081515_create_vendor_approvals_table.php`
