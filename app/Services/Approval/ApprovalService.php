@@ -12,14 +12,19 @@ use App\Models\Status;
 use App\Models\User;
 use App\Models\VendorApproval;
 use App\Services\AuditLog\AuditLogService;
+use App\Services\Invoice\InvoiceService;
+use App\Services\Approval\ApprovalPolicyService;
 use Illuminate\Support\Collection;
 
 class ApprovalService
 {
+
     public function __construct(
         protected ApprovalPolicyService $approvalPolicyService,
-        protected AuditLogService $auditLogService
+        protected AuditLogService $auditLogService,
+        protected InvoiceService $invoiceService
     ) {
+        $this->invoiceService = $invoiceService;
     }
 
     public function approveVendorRequest(int $approvalId, array $data): VendorApproval
@@ -89,7 +94,7 @@ class ApprovalService
             'status_id' => $newStatusId,
         ]);
 
-        $invoiceService->createInvoiceForServiceRequest($serviceRequest);
+        $this->invoiceService->createInvoiceForServiceRequest($serviceRequest);
 
         $this->auditLogService->createAuditLog([
             'actor_id' => auth()->id(),

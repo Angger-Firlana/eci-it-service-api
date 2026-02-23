@@ -102,9 +102,9 @@
             <td class="label-col">Request Date</td>
             <td style="width: 10px; border-right: none;">:</td>
             <td style="border-left: none;">
-                {{ $serviceRequest->request_date->format('d') }} / 
-                {{ $serviceRequest->request_date->format('m') }} / 
-                {{ $serviceRequest->request_date->format('Y') }}
+                {{ $serviceRequest->created_at->format('d') }} / 
+                {{ $serviceRequest->created_at->format('m') }} / 
+                {{ $serviceRequest->created_at->format('Y') }}
             </td>
             <td class="label-col" style="text-align: right;">Form No :</td>
             <td>{{ $invoice->invoice_number }}</td>
@@ -168,26 +168,7 @@
             <td class="label-col">Type</td>
             <td style="width: 10px; border-right: none;">:</td>
             <td colspan="2" style="border-left: none;">
-                @php
-                    $currentType = $serviceRequest->service_request_details->first()->service_type->name ?? '';
-                    // Standard types based on typical IT services, or static from form
-                    $types = ['New', 'Modification', 'Cancellation', 'Fix Bugs'];
-                @endphp
                 
-                @foreach($types as $type)
-                    <div style="display: inline-block; margin-right: 20px;">
-                        <span class="checkbox-rect">
-                            {{ (stripos($currentType, $type) !== false) ? 'X' : '' }}
-                        </span> {{ $type }}
-                    </div>
-                @endforeach
-                
-                <!-- Fallback if type isn't standard -->
-                @if(!in_array($currentType, $types) && $currentType)
-                     <div style="display: inline-block; margin-right: 20px;">
-                        <span class="checkbox-rect">X</span> {{ $currentType }}
-                    </div>
-                @endif
             </td>
         </tr>
         <tr>
@@ -215,12 +196,12 @@
                 <table style="border: none; width: 100%;">
                     <tr style="border: none;">
                         <td style="border: none; width: 150px;">
-                            {{ $serviceRequest->request_date->diffInDays($serviceRequest->estimated_date) }} day(s)
+                            {{ $serviceRequest->created_at->diffInDays($serviceRequest->updated_at) }} day(s)
                         </td>
                         <td class="label-col" style="border: none; width: 60px;">Actual</td>
                         <td style="border: none; width: 10px;">:</td>
                         <td style="border: none;">
-                             {{ $serviceRequest->request_date->diffInDays($invoice->issue_date) }} day(s)
+                             {{ $serviceRequest->created_at->diffInDays($invoice->issue_date) }} day(s)
                         </td>
                          <td class="label-col" style="border: none; width: 60px;">Test Doc</td>
                         <td style="border: none; width: 10px;">:</td>
@@ -238,12 +219,12 @@
                 <table style="border: none; width: 100%;">
                     <tr style="border: none;">
                         <td style="border: none; width: 150px;">
-                             {{ $serviceRequest->request_date->format('d M Y') }}
+                             {{ $serviceRequest->created_at->format('d M Y') }}
                         </td>
                         <td class="label-col" style="border: none; width: 60px;">Target</td>
                         <td style="border: none; width: 10px;">:</td>
                         <td style="border: none;">
-                             {{ $serviceRequest->estimated_date ? $serviceRequest->estimated_date->format('d M Y') : '-' }}
+                             {{  '-' }}
                         </td>
                          <td class="label-col" style="border: none; width: 60px;">Finish</td>
                         <td style="border: none; width: 10px;">:</td>
@@ -296,7 +277,7 @@
             <td class="signature-box">
                 <br><br>
                 <div style="font-weight: bold; text-decoration: underline;">{{ $user->name }}</div>
-                <div>Date: {{ $serviceRequest->request_date->format('d/m/Y') }}</div>
+                <div>Date: {{ $serviceRequest->created_at->format('d/m/Y') }}</div>
             </td>
             <!-- Review IT Manager -->
             <td class="signature-box">

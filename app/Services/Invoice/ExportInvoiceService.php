@@ -59,8 +59,7 @@ class ExportInvoiceService
             'user',
             'admin',
             'status',
-            'service_request_details.device.device_model',
-            'service_request_details.service_type',
+            'service_request_details.device.device_model'
         ])->findOrFail($serviceRequestId);
 
         // Check if status allows invoice generation
