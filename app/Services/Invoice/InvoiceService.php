@@ -138,11 +138,6 @@ class InvoiceService
     //function to create invoice for service request
     public function createInvoiceForServiceRequest(ServiceRequest $serviceRequest, array $data): void
     {
-        $adminId = $data['admin_id'] ?? $serviceRequest->admin_id;
-        if (!$adminId) {
-            throw new \Exception('Admin wajib diisi untuk mengubah status menjadi selesai/invoice.');
-        }
-
         $totalAmount = $serviceRequest->service_costs()->sum('amount');
 
         $this->createInvoice([
