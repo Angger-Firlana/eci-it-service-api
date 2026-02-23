@@ -1,7 +1,7 @@
 # ECI IT Service API - Complete Implementation Documentation
 
 Version: code-accurate snapshot (generated from current source)
-Date: 2026-02-22
+Date: 2026-02-23
 Framework: Laravel 12 + Sanctum
 
 This document is intentionally written as a full implementation reference so frontend/backend integrators can work without opening the codebase.
@@ -570,7 +570,7 @@ Note: older columns (`city`, `province`, `postal_code`, `maps_url`) were dropped
 - `assigned_by` (FK -> users)
 - `assigned_at` timestamp
 - `status_id` (FK -> statuses)
-- `notes` text (required)
+- `notes` text (nullable)
 - `read_at` nullable datetime
 - timestamps
 

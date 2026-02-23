@@ -14,3 +14,7 @@ changes 2 =
 - Added robust status resolution via `Status::idForEntityCode(...)` and audit log writes for status/approval transitions.
 - Effect: IT action buttons (service / tidak service) no longer crash due backend fatal error and can proceed to normal API response handling.
 -----------
+changes 3 =
+- Updated `vendor_approvals.notes` column in base migration to nullable (`$table->text('notes')->nullable();`).
+- Effect: vendor approval records can be created/updated without mandatory notes while still supporting optional notes from approval actions.
+-----------

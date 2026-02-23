@@ -446,3 +446,15 @@ Expose vendor approval notes consistently and ensure audit logs/timeline include
 - `app/Services/AuditLog/AuditLogService.php`
 - `app/Services/ServiceRequest/ServiceRequestApprovalService.php`
 - `database/migrations/2026_01_19_081515_create_vendor_approvals_table.php`
+
+## Session: 2026-02-23 - Vendor Approval Notes Nullable (Migration)
+
+### Goal
+Make vendor approval notes optional at database level so approval records are not blocked when notes are omitted.
+
+### Changes
+1. Updated `vendor_approvals` base migration column `notes` from required text to nullable text.
+2. Keeps compatibility with existing approval actions that still accept/store notes when provided.
+
+### Files Modified
+- `database/migrations/2026_01_19_081515_create_vendor_approvals_table.php`
