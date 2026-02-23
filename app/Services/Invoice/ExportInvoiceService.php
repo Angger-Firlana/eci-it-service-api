@@ -3,6 +3,7 @@
 namespace App\Services\Invoice;
 
 use App\Enums\ServiceRequestStatusCode;
+use App\Models\AuditLog;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\ServiceCost;
@@ -29,6 +30,7 @@ class ExportInvoiceService
         ])->where('service_request_id', $serviceRequestId)->firstOrFail();
 
         $serviceRequest = $invoice->service_request;
+        $completedAt = $this->getCompletedAt($serviceRequest);
 
         $user = $serviceRequest->user;
         
@@ -42,6 +44,7 @@ class ExportInvoiceService
             'user' => $user,
             'admin' => $serviceRequest->admin,
             'device' => $serviceRequest->service_request_details->first()->device ?? null,
+            'completedAt' => $completedAt,
         ];
 
         $pdf = PDF::loadView('invoice.template', $data);
@@ -93,6 +96,7 @@ class ExportInvoiceService
             'device' => $serviceRequest->service_request_details->first()->device ?? null,
             'costs' => $costs,
             'isPreview' => true,
+            'completedAt' => $this->getCompletedAt($serviceRequest),
         ];
 
         $pdf = PDF::loadView('invoice.preview-template', $data);
@@ -112,5 +116,24 @@ class ExportInvoiceService
 
         $statusCode = $serviceRequest->status?->code;
         return !in_array($statusCode, self::BLOCKED_STATUS_CODES);
+    }
+
+    private function getCompletedAt(ServiceRequest $serviceRequest): ?\Carbon\Carbon
+    {
+        $completedLog = AuditLog::where('entity_type_id', 1)
+            ->where('entity_id', $serviceRequest->id)
+            ->whereHas('new_status', function ($query) {
+                $query->where('code', ServiceRequestStatusCode::COMPLETED->value);
+            })
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$completedLog?->created_at) {
+            return null;
+        }
+
+        return $completedLog->created_at instanceof \Carbon\Carbon
+            ? $completedLog->created_at
+            : \Carbon\Carbon::parse($completedLog->created_at);
     }
 }

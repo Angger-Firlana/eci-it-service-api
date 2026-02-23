@@ -165,13 +165,6 @@
             <td colspan="4" class="section-header">Fill In by IT / MIS team after check the Request from user / requester</td>
         </tr>
         <tr>
-            <td class="label-col">Type</td>
-            <td style="width: 10px; border-right: none;">:</td>
-            <td colspan="2" style="border-left: none;">
-                
-            </td>
-        </tr>
-        <tr>
             <td class="label-col" style="vertical-align: top;">Action</td>
             <td style="width: 10px; border-right: none; vertical-align: top;">:</td>
             <td colspan="2" style="border-left: none; height: 120px; vertical-align: top;">
@@ -185,7 +178,7 @@
                 
                 @if($serviceRequest->service_costs->isEmpty())
                     <li>Check and Verification</li>
-                @endif
+                @endif  
                 </ul>
             </td>
         </tr>
@@ -221,15 +214,10 @@
                         <td style="border: none; width: 150px;">
                              {{ $serviceRequest->created_at->format('d M Y') }}
                         </td>
-                        <td class="label-col" style="border: none; width: 60px;">Target</td>
+                        <td class="label-col" style="border: none; width: 60px;">Finish</td>
                         <td style="border: none; width: 10px;">:</td>
                         <td style="border: none;">
-                             {{  '-' }}
-                        </td>
-                         <td class="label-col" style="border: none; width: 60px;">Finish</td>
-                        <td style="border: none; width: 10px;">:</td>
-                        <td style="border: none;">
-                             {{ $invoice->issue_date->format('d M Y') }}
+                             {{ $completedAt ? $completedAt->format('d M Y') : '-' }}
                         </td>
                     </tr>
                 </table>

@@ -29,7 +29,7 @@ class ShowRelationsHandler{
             'service_request_details.device:id,device_model_id,serial_number,bad_asset',
             'service_request_details.device.device_model:id,device_type_id,brand,model',
             'service_request_details.device.device_model.device_type:id,name',
-            'service_request_details.complaint_images:image_path',
+            'service_request_details.complaint_images:id,service_request_detail_id,image_path',
             'vendor_approvals:id,service_request_id,approver_id,assigned_by,assigned_at,approved_at,status_id,notes',
             'vendor_approvals.status:id,name,code',
             'vendor_approvals.approver:id,name',
