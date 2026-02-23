@@ -7,8 +7,6 @@ use App\Models\Invoice;
 use App\Models\ServiceRequest;
 use App\Models\Status;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class InvoiceService
 {
@@ -136,7 +134,7 @@ class InvoiceService
     }
 
     //function to create invoice for service request
-    public function createInvoiceForServiceRequest(ServiceRequest $serviceRequest, array $data): void
+    public function createInvoiceForServiceRequest(ServiceRequest $serviceRequest): void
     {
         $totalAmount = $serviceRequest->service_costs()->sum('amount');
 

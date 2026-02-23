@@ -89,6 +89,8 @@ class ApprovalService
             'status_id' => $newStatusId,
         ]);
 
+        $invoiceService->createInvoiceForServiceRequest($serviceRequest);
+
         $this->auditLogService->createAuditLog([
             'actor_id' => auth()->id(),
             'entity_id' => $serviceRequest->id,

@@ -38,6 +38,7 @@ class ServiceRequestService
     protected ServiceRequestIdempotencyHandler $serviceRequestIdempotencyHandler;
     protected ShowRelationsHandler $showRelationsHandler;
     protected NotificationService $notificationService;
+    protected StatusHandler $statusHandler;
 
     public function __construct(
         DetailServiceRequestService $detailService,
@@ -47,7 +48,8 @@ class ServiceRequestService
         ServiceRequestApprovalService $serviceRequestApprovalService,
         ServiceRequestIdempotencyHandler $serviceRequestIdempotencyHandler,
         ShowRelationsHandler $showRelationsHandler,
-        NotificationService $notificationService
+        NotificationService $notificationService,
+        StatusHandler $statusHandler
     ) {
         $this->detailService = $detailService;
         $this->contactAdminMailService = $contactAdminMailService;
@@ -57,6 +59,7 @@ class ServiceRequestService
         $this->serviceRequestIdempotencyHandler = $serviceRequestIdempotencyHandler;
         $this->showRelationsHandler = $showRelationsHandler;
         $this->notificationService = $notificationService;
+        $this->statusHandler = $statusHandler;
     }
 
     public function getAllServiceRequest(Request $request): LengthAwarePaginator
@@ -220,7 +223,7 @@ class ServiceRequestService
                 $this->syncDetails($serviceRequest, $data['details']);
             }
 
-            StatusHandler::handle($serviceRequest,$status, $serviceRequest->code, $this->notificationService, $this->invoiceService, $this);
+            $this->statusHandler->handle($serviceRequest,$status,$status->code,$this->notificationService, $this->invoiceService, $this, $data);
 
             return $this->loadRelations($serviceRequest);
         });
