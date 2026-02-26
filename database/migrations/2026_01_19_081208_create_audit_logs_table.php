@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('action');
             $table->foreignId('old_status_id')->constrained('statuses');
             $table->foreignId('new_status_id')->constrained('statuses');
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
         });
     }
 

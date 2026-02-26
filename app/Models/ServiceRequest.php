@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
  * 
  * @property int $id
  * @property int $user_id
- * @property int|null $admin_id
+ * @property int|null $operator_id
  * @property string $service_number
  * @property Carbon|null $estimated_date
  * @property int $status_id
@@ -40,13 +40,13 @@ class ServiceRequest extends Model
 
 	protected $casts = [
 		'user_id' => 'int',
-		'admin_id' => 'int',
+		'operator_id' => 'int',
 		'status_id' => 'int'
 	];
 
 	protected $fillable = [
 		'user_id',
-		'admin_id',
+		'operator_id',
 		'service_number',
 		'status_id'
 	];
@@ -56,9 +56,9 @@ class ServiceRequest extends Model
 		return $this->belongsTo(User::class);
 	}
 
-	public function admin()
+	public function operator()
 	{
-		return $this->belongsTo(User::class, 'admin_id', 'id');
+		return $this->belongsTo(User::class, 'operator_id', 'id');
 	}
 
 	public function status()
@@ -98,7 +98,7 @@ class ServiceRequest extends Model
 
 	public function scopeFilter($query, $request)
 	{
-		$equalFilters = ['user_id', 'admin_id', 'status_id'];
+		$equalFilters = ['user_id', 'operator_id', 'status_id'];
 
 		foreach ($equalFilters as $field) {
 			$query->when(
@@ -112,7 +112,7 @@ class ServiceRequest extends Model
 				$request->filled('request_date'),
 				fn ($q) => $q->whereDate('service_requests.created_at', $request->request_date)
 			)
-			->select(['id', 'user_id', 'admin_id', 'status_id', 'created_at']);
+			->select(['id', 'user_id', 'operator_id', 'status_id', 'created_at']);
 
 		if ($request->filled('search')) {
 			$keyword = addcslashes($request->search, '%_');

@@ -91,6 +91,7 @@ class ApprovalService
         $newStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_WORKSHOP);
 
         $serviceRequest->update([
+            'operator_id' => auth()->id(),
             'status_id' => $newStatusId,
         ]);
 
@@ -106,7 +107,7 @@ class ApprovalService
             'notes' => $data['notes'] ?? 'Request disetujui untuk perbaikan di workshop',
         ]);
 
-        return $serviceRequest->load(['status', 'user', 'admin', 'service_request_details']);
+        return $serviceRequest->load(['status', 'user', 'operator', 'service_request_details']);
     }
 
     public function deviceNoNeedRepair(int $serviceRequestId, array $data): ServiceRequest
@@ -117,6 +118,7 @@ class ApprovalService
         $newStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::COMPLETED);
 
         $serviceRequest->update([
+            'operator_id' => auth()->id(),
             'status_id' => $newStatusId,
         ]);
 
@@ -130,7 +132,7 @@ class ApprovalService
             'notes' => $data['notes'] ?? 'Device tidak memerlukan service',
         ]);
 
-        return $serviceRequest->load(['status', 'user', 'admin', 'service_request_details']);
+        return $serviceRequest->load(['status', 'user', 'operator', 'service_request_details']);
     }
 
     private function checkAndUpdateServiceRequestStatus(ServiceRequest $serviceRequest): void

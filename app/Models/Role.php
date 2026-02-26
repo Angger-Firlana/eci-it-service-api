@@ -27,7 +27,8 @@ use Illuminate\Database\Eloquent\Model;
 class Role extends Model
 {
 	const ADMIN = 1;
-	const MANAGER = 2;
+	const OPERATOR = 2;
+	const MANAGER = 6;
 	const STAFF = 3;
 
 	// Backward-compatible alias (some services use "USER" to mean a non-admin requester).

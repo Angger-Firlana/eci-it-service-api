@@ -28,7 +28,7 @@ class UpdateServiceRequest extends FormRequest
 
         return [
             //
-            'admin_id' => 'sometimes|exists:users,id',
+            'operator_id' => 'sometimes|exists:users,id',
             'user_id' => 'sometimes|exists:users,id',
             'request_date' => 'sometimes|date',
             'estimated_date' => 'sometimes|date',

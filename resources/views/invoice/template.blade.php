@@ -254,11 +254,9 @@
     <table style="border-top: none;">
         <tr>
             <th style="width: 16%;">Requester by,<br>User/Supervisor</th>
-            <th style="width: 16%;">Review by,<br>IT Manager</th>
-            <th style="width: 16%;">Approved by,<br>Director</th>
-            <th style="width: 16%;">Approved by,<br>Director</th>
-            <th style="width: 16%;">Tested,</th>
-            <th style="width: 20%;">Executed by,</th>
+            <th style="width: 16%;">Review by,<br>Manager</th>
+            <th style="width: 16%;">Approved by,<br>Senior Manager</th>
+            <th style="width: 20%;">Executed by</th>
         </tr>
         <tr>
             <!-- Requester -->
@@ -267,27 +265,15 @@
                 <div style="font-weight: bold; text-decoration: underline;">{{ $user->name }}</div>
                 <div>Date: {{ $serviceRequest->created_at->format('d/m/Y') }}</div>
             </td>
-            <!-- Review IT Manager -->
+            <!-- Approved Manager -->
             <td class="signature-box">
                  <br><br>
                  <div style="border-bottom: 1px solid #aaa; width: 80%; margin: 0 auto;"></div>
                  <div>Date:</div>
             </td>
-             <!-- Approved Director 1 -->
+             <!-- Approved Senior Manager -->
             <td class="signature-box">
-                 <br><br>
-                 <div style="border-bottom: 1px solid #aaa; width: 80%; margin: 0 auto;"></div>
-                 <div>Date:</div>
-            </td>
-             <!-- Approved Director 2 -->
-            <td class="signature-box">
-                 <br><br>
-                 <div style="border-bottom: 1px solid #aaa; width: 80%; margin: 0 auto;"></div>
-                 <div>Date:</div>
-            </td>
-             <!-- Tested -->
-            <td class="signature-box">
-                 <br><br>
+                 <br><br> 
                  <div style="border-bottom: 1px solid #aaa; width: 80%; margin: 0 auto;"></div>
                  <div>Date:</div>
             </td>

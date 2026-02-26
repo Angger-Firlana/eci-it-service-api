@@ -77,8 +77,7 @@ class ServiceRequestService
         $auditLogs = $this->auditLogService->getAuditLogsForServiceRequest($serviceRequest);
         $serviceRequest->audit_logs = $auditLogs;
         $serviceRequest->service_request_approvals = $serviceRequest->vendor_approvals;
-        $serviceRequest->timeline = $this->auditLogService->getTimeLineForServiceRequest($auditLogs, $serviceRequest);
-
+    
         return $serviceRequest;
     }
 
@@ -112,16 +111,16 @@ class ServiceRequestService
     //
     private function createMainServiceRequest(array $data): ServiceRequest
     {
-        $adminId = null;
+        $operatorId = null;
         $userId = null;
         $user = Auth::user();
 
-        $isAdmin = $user->roles->contains('id', Role::ADMIN);
+        $isOperator = $user->roles->contains('id', Role::OPERATOR);
         $isUser = $user->roles->contains('id', Role::USER);
 
-        if ($isAdmin) {
-            // Admins can create on behalf of another user.
-            $adminId = $user->id;
+        if ($isOperator) {
+            // Operators can create on behalf of another user.
+            $operatorId = $user->id;
             $userId = isset($data['user_id']) ? (int) $data['user_id'] : null;
         } elseif ($isUser) {
             // Users can only create requests for themselves.
@@ -136,7 +135,7 @@ class ServiceRequestService
 
         return ServiceRequest::create([
             'service_number'   => $this->generateServiceNumber(),
-            'admin_id'         => $adminId,
+            'operator_id'         => $operatorId,
             'user_id'          => $userId,
             'status_id'        => $this->getServiceRequestStatusId(ServiceRequestStatusCode::REVIEW_IN_WORKSHOP),
         ]);
@@ -209,9 +208,9 @@ class ServiceRequestService
                 'new_status_id' => $newStatusId,
             ]);
 
-            if(auth()->user()->roles->contains('id', Role::ADMIN)){
+            if(auth()->user()->roles->contains('id', Role::OPERATOR)){
                 $serviceRequest->update([
-                    'admin_id' => $data['admin_id'] ?? $serviceRequest->admin_id,
+                    'operator_id' => $data['operator_id'] ?? $serviceRequest->operator_id,
                 ]);
             }
 

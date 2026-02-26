@@ -8,7 +8,7 @@ class ShowRelationsHandler{
     {
         return [
             'user:id,name,email',
-            'admin:id,name,email',
+            'operator:id,name,email',
             'status:id,name,code',
             'service_request_details:id,service_request_id,device_id,complaint',
             'service_request_details.device:id,device_model_id,serial_number',
@@ -22,8 +22,8 @@ class ShowRelationsHandler{
         return [
             'user:id,name,email',
             'user.departments:id,name',
-            'admin:id,name,email',
-            'admin.departments:id,name',
+            'operator:id,name,email',
+            'operator.departments:id,name',
             'status:id,name,code',
             'service_request_details:id,service_request_id,device_id,complaint,solution',
             'service_request_details.device:id,device_model_id,serial_number,bad_asset',
