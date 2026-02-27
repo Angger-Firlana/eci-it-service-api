@@ -70,7 +70,7 @@ class ApprovalService
 
         $this->auditLogService->createAuditLog([
             'actor_id' => auth()->id(),
-            'entity_id' => $approval->service_request_id,
+            'entity_id' => $approval->id,
             'entity_type_id' => 2,
             'old_status_id' => $oldStatusId,
             'new_status_id' => $newStatusId,
@@ -78,7 +78,7 @@ class ApprovalService
             'notes' => $data['notes'] ?? 'Vendor approval rejected',
         ]);
 
-        $this->checkAndUpdateServiceRequestStatus($approval->service_request, $data['notes'] ?? null);
+        $this->updateServiceRequestOnRejection($approval->service_request, $data['notes'] ?? null);
 
         return $approval->load(['approver', 'assigned_by', 'service_request']);
     }
@@ -152,22 +152,6 @@ class ApprovalService
             ->where('status_id', $vendorRejectedStatusId)
             ->count();
 
-        if ($rejectedApprovals > 0) {
-            $oldStatusId = (int) $serviceRequest->status_id;
-            $serviceRequest->update(['status_id' => $cancelledStatusId]);
-
-            $this->auditLogService->createAuditLog([
-                'actor_id' => auth()->id(),
-                'entity_id' => $serviceRequest->id,
-                'entity_type_id' => 1,
-                'old_status_id' => $oldStatusId,
-                'new_status_id' => $cancelledStatusId,
-                'action' => 'STATUS_CHANGE',
-                'notes' => $notes ?? 'Request ditolak oleh atasan',
-            ]);
-            return;
-        }
-
         if ($pendingApprovals === 0) {
             $oldStatusId = (int) $serviceRequest->status_id;
             $serviceRequest->update(['status_id' => $repairInVendorStatusId]);
@@ -182,6 +166,23 @@ class ApprovalService
                 'notes' => 'Semua atasan sudah menyetujui',
             ]);
         }
+    }
+
+    private function updateServiceRequestOnRejection(ServiceRequest $serviceRequest, ?string $notes = null): void
+    {
+        $oldStatusId = (int) $serviceRequest->status_id;
+        $cancelledStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::CANCELLED);
+        $serviceRequest->update(['status_id' => $cancelledStatusId]);
+
+        $this->auditLogService->createAuditLog([
+            'actor_id' => auth()->id(),
+            'entity_id' => $serviceRequest->id,
+            'entity_type_id' => 1,
+            'old_status_id' => $oldStatusId,
+            'new_status_id' => $cancelledStatusId,
+            'action' => 'ABOVES_REJECTED',
+            'notes' => $notes ?? 'Salah satu atasan menolak permintaan, status request dibatalkan',
+        ]);
     }
 
     public function getApproverByServiceRequestId(int $serviceRequestId): array
