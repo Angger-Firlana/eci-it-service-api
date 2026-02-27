@@ -76,7 +76,6 @@ class ServiceRequestService
 
         $auditLogs = $this->auditLogService->getAuditLogsForServiceRequest($serviceRequest);
         $serviceRequest->audit_logs = $auditLogs;
-        $serviceRequest->service_request_approvals = $serviceRequest->vendor_approvals;
     
         return $serviceRequest;
     }

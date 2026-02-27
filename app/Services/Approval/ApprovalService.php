@@ -78,7 +78,7 @@ class ApprovalService
             'notes' => $data['notes'] ?? 'Vendor approval rejected',
         ]);
 
-        $this->checkAndUpdateServiceRequestStatus($approval->service_request);
+        $this->checkAndUpdateServiceRequestStatus($approval->service_request, $data['notes'] ?? null);
 
         return $approval->load(['approver', 'assigned_by', 'service_request']);
     }
@@ -135,11 +135,12 @@ class ApprovalService
         return $serviceRequest->load(['status', 'user', 'operator', 'service_request_details']);
     }
 
-    private function checkAndUpdateServiceRequestStatus(ServiceRequest $serviceRequest): void
+    private function checkAndUpdateServiceRequestStatus(ServiceRequest $serviceRequest, ?string $notes = null): void
     {
         $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
         $vendorRejectedStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED);
         $repairInVendorStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_VENDOR);
+        $cancelledStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::CANCELLED);
         $repairInWorkshopStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::REPAIR_IN_WORKSHOP);
         $badAssetStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::BAD_ASSET);
 
@@ -153,16 +154,16 @@ class ApprovalService
 
         if ($rejectedApprovals > 0) {
             $oldStatusId = (int) $serviceRequest->status_id;
-            $serviceRequest->update(['status_id' => $repairInWorkshopStatusId]);
+            $serviceRequest->update(['status_id' => $cancelledStatusId]);
 
             $this->auditLogService->createAuditLog([
                 'actor_id' => auth()->id(),
                 'entity_id' => $serviceRequest->id,
                 'entity_type_id' => 1,
                 'old_status_id' => $oldStatusId,
-                'new_status_id' => $repairInWorkshopStatusId,
+                'new_status_id' => $cancelledStatusId,
                 'action' => 'STATUS_CHANGE',
-                'notes' => 'Request ditolak oleh atasan',
+                'notes' => $notes ?? 'Request ditolak oleh atasan',
             ]);
             return;
         }
@@ -177,7 +178,7 @@ class ApprovalService
                 'entity_type_id' => 1,
                 'old_status_id' => $oldStatusId,
                 'new_status_id' => $repairInVendorStatusId,
-                'action' => 'STATUS_CHANGE',
+                'action' => 'ABOVES_APPROVED',
                 'notes' => 'Semua atasan sudah menyetujui',
             ]);
         }
