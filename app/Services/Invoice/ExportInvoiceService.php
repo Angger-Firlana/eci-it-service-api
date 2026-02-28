@@ -12,8 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ExportInvoiceService
 {
-    // Minimum status_id required to print invoice (APPROVED_BY_ADMIN = 3)
-    private const MIN_STATUS_FOR_INVOICE = 3;
+    private const MIN_STATUS_FOR_INVOICE = 1;
     
     // Status codes that are NOT allowed to print invoice
     private const BLOCKED_STATUS_CODES = [
@@ -25,7 +24,7 @@ class ExportInvoiceService
     {
         $invoice = \App\Models\Invoice::with([
             'service_request.user.departments', 
-            'service_request.admin', 
+            'service_request.operator', 
             'service_request.service_request_details.device.device_model'
         ])->where('service_request_id', $serviceRequestId)->firstOrFail();
 
@@ -35,14 +34,14 @@ class ExportInvoiceService
         $user = $serviceRequest->user;
         
         if(!isset($user)){
-            $user = $serviceRequest->admin;
+            $user = $serviceRequest->operator;
         }
 
         $data = [
             'invoice' => $invoice,
             'serviceRequest' => $serviceRequest,
             'user' => $user,
-            'admin' => $serviceRequest->admin,
+            'operator' => $serviceRequest->operator,
             'device' => $serviceRequest->service_request_details->first()->device ?? null,
             'completedAt' => $completedAt,
         ];
@@ -60,7 +59,7 @@ class ExportInvoiceService
     {
         $serviceRequest = ServiceRequest::with([
             'user',
-            'admin',
+            'operator',
             'status',
             'service_request_details.device.device_model'
         ])->findOrFail($serviceRequestId);
@@ -68,13 +67,13 @@ class ExportInvoiceService
         // Check if status allows invoice generation
         $statusCode = $serviceRequest->status?->code;
         if (in_array($statusCode, self::BLOCKED_STATUS_CODES)) {
-            throw new \Exception('Invoice tidak dapat dicetak. Status request belum disetujui admin.');
+            throw new \Exception('Invoice tidak dapat dicetak. Status request belum disetujui operator.');
         }
 
         $user = $serviceRequest->user;
         
         if(!isset($user)){
-            $user = $serviceRequest->admin;
+            $user = $serviceRequest->operator;
         }
 
         // Get costs for this service request
@@ -92,7 +91,7 @@ class ExportInvoiceService
             'invoice' => $invoice,
             'serviceRequest' => $serviceRequest,
             'user' => $user,
-            'admin' => $serviceRequest->admin,
+            'operator' => $serviceRequest->operator,
             'device' => $serviceRequest->service_request_details->first()->device ?? null,
             'costs' => $costs,
             'isPreview' => true,

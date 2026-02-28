@@ -230,12 +230,12 @@
                 <table style="border: none; width: 100%;">
                     <tr style="border: none;">
                         <td style="border: none; width: 40%;">
-                             {{ $admin->name ?? '-' }}
+                             {{ $operator->name ?? '-' }}
                         </td>
                         <td class="label-col" style="border: none; width: 60px;">Analyst</td>
                         <td style="border: none; width: 10px;">:</td>
                         <td style="border: none;">
-                             {{ $admin->name ?? '-' }}
+                             {{ $operator->name ?? '-' }}
                         </td>
                     </tr>
                 </table>
@@ -280,7 +280,7 @@
              <!-- Executed -->
             <td class="signature-box">
                  <br><br>
-                 <div style="font-weight: bold; text-decoration: underline;">{{ $admin->name ?? 'Admin' }}</div>
+                 <div style="font-weight: bold; text-decoration: underline;">{{ $operator->name ?? 'Operator' }}</div>
                  <div>Date: {{ $invoice->issue_date->format('d/m/Y') }}</div>
             </td>
         </tr>
