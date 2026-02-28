@@ -72,16 +72,6 @@ class ServiceRequestApprovalService
 
         $oldStatusId = $serviceRequest->status_id;
         $newStatusId = $waitingApprovalAboveStatusId;
-
-        $this->auditLogService->createAuditLog([
-            'actor_id' => auth()->id(),
-            'entity_id' => $serviceRequestId,
-            'entity_type_id' => 1, // Assuming 1 is the entity type for VendorApproval
-            'old_status_id' => $oldStatusId,
-            'new_status_id' => $newStatusId,
-            'action' => 'UPDATE_VENDOR_APPROVAL', // Action reflects re-creation
-            'notes' => 'Vendor approvals re-created for service request ' . $serviceRequestId,
-        ]);
         
         DB::commit();
 
