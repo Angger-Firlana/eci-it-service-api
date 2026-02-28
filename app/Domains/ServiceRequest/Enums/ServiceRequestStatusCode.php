@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Enums;
+namespace App\Domains\ServiceRequest\Enums;
 
 enum ServiceRequestStatusCode: string
 {

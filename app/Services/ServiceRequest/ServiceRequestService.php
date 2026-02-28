@@ -4,8 +4,8 @@ namespace App\Services\ServiceRequest;
 
 use App\Enums\ServiceRequestStatusCode;
 
-use App\Helpers\ServiceRequest\ShowRelationsHandler;
-use App\Helpers\ServiceRequest\StatusHandler;
+use App\Domains\ServiceRequest\Support\ShowRelationsHandler;
+use App\Domains\ServiceRequest\Support\StatusHandler;
 
 use App\Models\ServiceRequest;
 use App\Models\Status;
@@ -14,7 +14,7 @@ use App\Models\Role;
 use App\Models\Device;
 
 use App\Services\ServiceRequest\DetailServiceRequestService;
-use App\Services\ServiceRequest\ServiceRequestIdempotencyHandler;
+use App\Domains\ServiceRequest\Support\EnsureDeviceIsNotActiveInOtherRequest;
 use App\Services\AuditLog\AuditLogService;
 use App\Services\Invoice\InvoiceService;
 use App\Services\ContactAdmin\ContactAdminMailservice;
@@ -35,7 +35,7 @@ class ServiceRequestService
     protected InvoiceService $invoiceService;
     protected AuditLogService $auditLogService;
     protected ServiceRequestApprovalService $serviceRequestApprovalService;
-    protected ServiceRequestIdempotencyHandler $serviceRequestIdempotencyHandler;
+    protected EnsureDeviceIsNotActiveInOtherRequest $ensureDeviceIsNotActiveInOtherRequest;
     protected ShowRelationsHandler $showRelationsHandler;
     protected NotificationService $notificationService;
     protected StatusHandler $statusHandler;
@@ -46,17 +46,17 @@ class ServiceRequestService
         InvoiceService $invoiceService,
         AuditLogService $auditLogService,
         ServiceRequestApprovalService $serviceRequestApprovalService,
-        ServiceRequestIdempotencyHandler $serviceRequestIdempotencyHandler,
+        EnsureDeviceIsNotActiveInOtherRequest $ensureDeviceIsNotActiveInOtherRequest,
         ShowRelationsHandler $showRelationsHandler,
         NotificationService $notificationService,
         StatusHandler $statusHandler
     ) {
         $this->detailService = $detailService;
+        $this->ensureDeviceIsNotActiveInOtherRequest = $ensureDeviceIsNotActiveInOtherRequest;
         $this->contactAdminMailService = $contactAdminMailService;
         $this->invoiceService = $invoiceService;
         $this->auditLogService = $auditLogService;
         $this->serviceRequestApprovalService = $serviceRequestApprovalService;
-        $this->serviceRequestIdempotencyHandler = $serviceRequestIdempotencyHandler;
         $this->showRelationsHandler = $showRelationsHandler;
         $this->notificationService = $notificationService;
         $this->statusHandler = $statusHandler;
@@ -82,7 +82,7 @@ class ServiceRequestService
 
     public function createServiceRequest(array $data): ServiceRequest
     {
-        $this->serviceRequestIdempotencyHandler->ensureDeviceIdempotency($data['details'] ?? []);
+                $this->ensureDeviceIsNotActiveInOtherRequest->execute($data['details'] ?? []);
 
         return DB::transaction(function () use ($data) {
             $serviceRequest = $this->createMainServiceRequest($data);
@@ -183,50 +183,6 @@ class ServiceRequestService
         ];
     }
 
-    //function to update service request
-    public function updateServiceRequest(int $id, array $data): ServiceRequest
-    {
-        return DB::transaction(function () use ($id, $data) {
-            $serviceRequest = ServiceRequest::findOrFail($id);
-            $oldStatusId = $serviceRequest->status_id;
-
-            if (isset($data['details'])) {
-                $this->serviceRequestIdempotencyHandler->ensureDeviceIdempotency($data['details'], $serviceRequest->id);
-            }
-
-            $newStatusId = $data['status_id'] ?? $serviceRequest->status_id;
-            $status = $this->getServiceRequestStatusOrFail($newStatusId);
-
-            $this->auditLogService->createAuditLog([
-                'actor_id' => auth()->id() ?? $serviceRequest->user_id,
-                'entity_id' => $serviceRequest->id,
-                'entity_type_id' => 1,
-                'action' => 'UPDATE_STATUS',
-                'notes' => $data['log_notes'] ?? "Status {$serviceRequest->status->name} to {$status->name}",
-                'old_status_id' => $oldStatusId,
-                'new_status_id' => $newStatusId,
-            ]);
-
-            if(auth()->user()->roles->contains('id', Role::OPERATOR)){
-                $serviceRequest->update([
-                    'operator_id' => $data['operator_id'] ?? $serviceRequest->operator_id,
-                ]);
-            }
-
-            $serviceRequest->update(array_filter([
-                'status_id' => $newStatusId
-            ]));
-
-            if (isset($data['details'])) {
-                $this->syncDetails($serviceRequest, $data['details']);
-            }
-
-            $this->statusHandler->handle($serviceRequest,$status,$status->code,$this->notificationService, $this->invoiceService, $this, $data);
-
-            return $this->loadRelations($serviceRequest);
-        });
-    }
-
     public function addSolution(int $id, array $data): ServiceRequest
     {
         $serviceRequest = ServiceRequest::findOrFail($id);
@@ -267,13 +223,13 @@ class ServiceRequestService
     }
 
     //function to load relations 
-    private function loadRelations(ServiceRequest $serviceRequest): ServiceRequest
+    public function loadRelations(ServiceRequest $serviceRequest): ServiceRequest
     {
         return $serviceRequest->load($this->showRelationsHandler->defaultWith());
     }
 
     //function to sync details
-    private function syncDetails(ServiceRequest $serviceRequest, array $details): void
+    public function syncDetails(ServiceRequest $serviceRequest, array $details): void
     {
         foreach ($details as $detail) {
             if (isset($detail['id'])) {

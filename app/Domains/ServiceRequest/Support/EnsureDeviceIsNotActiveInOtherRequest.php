@@ -1,16 +1,14 @@
 <?php
 
-namespace App\Services\ServiceRequest;
+namespace App\Domains\ServiceRequest\Support;
 
-use App\Models\ServiceRequest;
 use App\Models\ServiceRequestDetail;
 use App\Models\Device;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\DB;
 use App\Enums\ServiceRequestStatusCode;
 
-class ServiceRequestIdempotencyHandler{
-    public function ensureDeviceIdempotency(array $details, ?int $excludeServiceRequestId = null): void
+class ensureDeviceIsNotActiveInOtherRequest{
+    public function execute(array $details, ?int $excludeServiceRequestId = null): void
     {
         if (empty($details)) {
             return;

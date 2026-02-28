@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Helpers\ServiceRequest;
+namespace App\Domains\ServiceRequest\Support;
 
 use App\Enums\ServiceRequestStatusCode;
 

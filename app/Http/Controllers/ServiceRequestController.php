@@ -6,14 +6,17 @@ use Illuminate\Http\Request;
 use App\Services\ServiceRequest\ServiceRequestService;
 use App\Helpers\APIResponse;
 use App\Http\Requests\ServiceRequest\StoreServiceRequest;
+use App\Domains\ServiceRequest\Services\UpdateServiceRequestWorkflow;
 use App\Http\Requests\ServiceRequest\UpdateServiceRequest;
 
 class ServiceRequestController extends Controller
 {
     //
     protected $serviceRequestService;
-    public function __construct(ServiceRequestService $serviceRequestService){
+    protected $updateServiceRequestWorkFlow;
+    public function __construct(ServiceRequestService $serviceRequestService, UpdateServiceRequestWorkflow $updateServiceRequestWorkFlow){
         $this->serviceRequestService = $serviceRequestService;
+        $this->updateServiceRequestWorkFlow = $updateServiceRequestWorkFlow;
     }
 
     public function index(Request $request){
@@ -34,7 +37,13 @@ class ServiceRequestController extends Controller
     }
 
     public function update(UpdateServiceRequest $request, $id){
-        $serviceRequests = $this->serviceRequestService->updateServiceRequest($id, $request->validated());
+        $dataDto = new \App\Domains\ServiceRequest\DTOs\UpdateServiceRequestData(
+            $request->input('details', []),
+            $request->input('status_id', null),
+            $request->input('operator_id', null),
+            $request->input('log_notes', null)
+        );
+        $serviceRequests = $this->updateServiceRequestWorkFlow->execute($id, $dataDto);
         return APIResponse::success($serviceRequests);
     }
 
