@@ -2,7 +2,7 @@
 
 namespace App\Services\ServiceRequest;
 
-use App\Enums\ServiceRequestStatusCode;
+use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Models\ServiceCancellation;
 use App\Models\ServiceRequest;
 use App\Models\Status;

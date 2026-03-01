@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Status;
 use App\Models\EntityType;
-use App\Enums\ServiceRequestStatusCode;
+use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Enums\VendorApprovalStatusCode;
 use App\Enums\InvoiceStatusCode;
 use RuntimeException;

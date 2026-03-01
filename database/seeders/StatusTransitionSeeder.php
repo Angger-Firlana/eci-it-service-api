@@ -7,7 +7,7 @@ use App\Models\StatusTransition;
 use App\Models\Status;
 use App\Models\Role;
 use App\Models\EntityType;
-use App\Enums\ServiceRequestStatusCode;
+use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use RuntimeException;
 
 class StatusTransitionSeeder extends Seeder

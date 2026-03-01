@@ -2,7 +2,7 @@
 
 namespace App\Services\Approval;
 
-use App\Enums\ServiceRequestStatusCode;
+use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Enums\VendorApprovalStatusCode;
 use App\Models\Department;
 use App\Models\ServiceCost;
@@ -14,7 +14,6 @@ use App\Models\VendorApproval;
 use App\Services\AuditLog\AuditLogService;
 use App\Services\Invoice\InvoiceService;
 use App\Services\Approval\ApprovalPolicyService;
-use Illuminate\Support\Collection;
 
 class ApprovalService
 {
