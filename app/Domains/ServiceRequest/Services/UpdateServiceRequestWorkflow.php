@@ -5,6 +5,7 @@ use App\Domains\ServiceRequest\Actions\UpdateServiceRequestOperator;
 use App\Domains\ServiceRequest\Actions\UpdateServiceRequestStatus;
 use App\Domains\ServiceRequest\Support\EnsureDeviceIsNotActiveInOtherRequest;
 use App\Domains\ServiceRequest\Support\LoadRelations;
+use App\Domains\ServiceRequest\Actions\WriteAuditLogs;
 use App\Domains\ServiceRequest\DTOs\UpdateServiceRequestData;
 
 use App\Models\Status;
@@ -17,17 +18,20 @@ class UpdateServiceRequestWorkflow
     protected UpdateServiceRequestOperator $updateServiceRequestOperator;
     protected EnsureDeviceIsNotActiveInOtherRequest $ensureDeviceIsNotActiveInOtherRequest;
     protected LoadRelations $loadRelations;
+    protected WriteAuditLogs $writeAuditLogs;
 
     public function __construct(
         UpdateServiceRequestStatus $updateServiceRequestStatus,
         UpdateServiceRequestOperator $updateServiceRequestOperator,
         EnsureDeviceIsNotActiveInOtherRequest $ensureDeviceIsNotActiveInOtherRequest,
-        LoadRelations $loadRelations
+        LoadRelations $loadRelations,
+        WriteAuditLogs $writeAuditLogs
     ) {
         $this->updateServiceRequestStatus = $updateServiceRequestStatus;
         $this->updateServiceRequestOperator = $updateServiceRequestOperator;
         $this->ensureDeviceIsNotActiveInOtherRequest = $ensureDeviceIsNotActiveInOtherRequest;
         $this->loadRelations = $loadRelations;
+        $this->writeAuditLogs = $writeAuditLogs;
     }
 
     public function execute($id, UpdateServiceRequestData $data): ServiceRequest
@@ -37,9 +41,7 @@ class UpdateServiceRequestWorkflow
         $newStatusId = $data->statusId;
         $operatorId = $data->operatorId;
         $logNotes = $data->logNotes;
-
-        $status = Status::findOrFail($newStatusId);
-
+        
         // Ensure device is not active in other request
         if(!empty($details)){
             $this->ensureDeviceIsNotActiveInOtherRequest->execute($details, $serviceRequest->id);
