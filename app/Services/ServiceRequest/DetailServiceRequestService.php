@@ -22,40 +22,7 @@ class DetailServiceRequestService
     public function createDetailServiceRequest(array $data): ServiceRequestDetail
     {
         // Auto-create/resolve device if device info is provided and device_id is not
-        if (!isset($data['device_id']) && isset($data['device_type_id'], $data['brand'], $data['model'], $data['serial_number'])) {
-            $device = $this->deviceResolver->findOrCreateDeviceFromRequest([
-                'device_type_id' => $data['device_type_id'],
-                'brand'          => $data['brand'],
-                'model'          => $data['model'],
-                'serial_number'  => $data['serial_number'],
-            ]);
-            $data['device_id'] = $device->id;
-        }
-
-        $serviceRequestDetail = ServiceRequestDetail::create([
-            'service_request_id' => $data['service_request_id'],
-            'service_type_id' => $data['service_type_id'] ?? null,
-            'device_id' => $data['device_id'] ?? null,
-            'complaint' => $data['complaint'],
-        ]);
-
-        // Handle complaint images if any
-        if (isset($data['complaint_images']) && is_array($data['complaint_images'])) {
-            foreach ($data['complaint_images'] as $image) {
-                if ($image instanceof UploadedFile) {
-
-                    $fileImageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
-                    $imagePath = $image->move(public_path('images/'), $fileImageName);
-                    ComplaintImage::create([
-                        'service_request_detail_id' => $serviceRequestDetail->id,
-                        'image_path' => "images/{$fileImageName}",
-                    ]);
-                }
-            }
-            
-        }
-
-        return $serviceRequestDetail->load('device');
+        
     }
     
     //function to update detail service request

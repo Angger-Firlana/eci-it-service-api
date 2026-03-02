@@ -82,7 +82,7 @@ class ServiceRequestService
 
     public function createServiceRequest(array $data): ServiceRequest
     {
-                $this->ensureDeviceIsNotActiveInOtherRequest->execute($data['details'] ?? []);
+        $this->ensureDeviceIsNotActiveInOtherRequest->execute($data['details'] ?? []);
 
         return DB::transaction(function () use ($data) {
             $serviceRequest = $this->createMainServiceRequest($data);
