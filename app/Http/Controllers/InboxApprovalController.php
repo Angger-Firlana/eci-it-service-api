@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\Inbox\InboxApprovalService;
+use App\Domains\Inbox\Services\InboxApprovalService;
 use App\Helpers\APIResponse;
 
 class InboxApprovalController extends Controller
