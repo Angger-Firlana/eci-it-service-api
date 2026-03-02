@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helpers\APIResponse;
-use App\Services\ServiceRequest\ServiceLocationService;
+use App\Domains\ServiceRequestLocation\Services\ServiceLocationService;
 use App\Models\ServiceRequest;
 use App\Http\Requests\ServiceLocation\UpdateServiceLocationRequest;
 use App\Http\Requests\ServiceLocation\StoreServiceLocationRequest;

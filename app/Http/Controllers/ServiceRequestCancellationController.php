@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helpers\APIResponse;
-use App\Services\ServiceRequest\ServiceRequestCancellationService;
+use App\Domains\ServiceRequestCancellation\Services\ServiceRequestCancellationService;
 use App\Models\ServiceRequest;
 
 class ServiceRequestCancellationController extends Controller

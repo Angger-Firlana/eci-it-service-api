@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\ServiceRequest\ServiceRequestApprovalService;
+use App\Domains\ServiceRequestApproval\Services\ServiceRequestApprovalService;
 use App\Helpers\APIResponse;
 use App\Http\Requests\ServiceApprovals\UpdateApprovalsRequest;
 use App\Http\Requests\ServiceApprovals\StoreApprovalsRequest;

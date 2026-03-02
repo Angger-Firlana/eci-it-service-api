@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helpers\APIResponse;
-use App\Services\Device\DeviceModelService;
+use App\Domains\Device\Services\DeviceModelService;
 use App\Http\Requests\DeviceModel\PostDeviceModelRequest;
 use App\Http\Requests\DeviceModel\PutDeviceModelRequest;
 

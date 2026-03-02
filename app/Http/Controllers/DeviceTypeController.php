@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\Device\DeviceTypeService;
+use App\Domains\Device\Services\DeviceTypeService;
 use App\Http\Requests\DeviceType\PutDeviceTypeRequest;
 use App\Http\Requests\DeviceType\PostDeviceTypeRequest;
 use App\Helpers\APIResponse;

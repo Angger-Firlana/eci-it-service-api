@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\Department\StoreDepartmentRequest;
 use App\Http\Requests\Department\UpdateDepartmentRequest;
 use App\Helpers\APIResponse;
-use App\Services\Department\DepartmentService;
+use App\Domains\Department\Services\DepartmentService;
 
 class DepartmentController extends Controller
 {
@@ -43,8 +43,8 @@ class DepartmentController extends Controller
     }
 
     public function destroy($id){
-        $data = $this->departmentService->deleteDepartment($id);
+        $this->departmentService->deleteDepartment($id);
 
-        return APIResponse::success($data, 200, "");
+        return APIResponse::success(null, 200, "");
     }
 }
