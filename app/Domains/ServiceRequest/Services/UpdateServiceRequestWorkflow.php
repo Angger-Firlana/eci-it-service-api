@@ -49,7 +49,7 @@ class UpdateServiceRequestWorkflow
         }
 
         // Update status
-        $this->updateServiceRequestStatus->execute($serviceRequest, $newStatusId, $logNotes);
+        $this->updateServiceRequestStatus->execute($serviceRequest, $newStatusId,"UPDATE_STATUS", $logNotes);
 
         return $this->ServiceRequestService->loadRelations($serviceRequest);
     }

@@ -80,89 +80,6 @@ class ServiceRequestService
         return $serviceRequest;
     }
 
-    public function createServiceRequest(array $data): ServiceRequest
-    {
-        $this->ensureDeviceIsNotActiveInOtherRequest->execute($data['details'] ?? []);
-
-        return DB::transaction(function () use ($data) {
-            $serviceRequest = $this->createMainServiceRequest($data);
-            $this->createServiceRequestDetails($serviceRequest, $data['details'] ?? []);
-
-            $this->auditLogService->createServiceRequestAuditLog($serviceRequest, 'CREATE_REQUEST', 'Request dibuat');
-
-            $actor = Auth::user();
-
-            $this->contactAdminMailService->sendAdminNotification($serviceRequest->id, $actor->name, $actor->email);
-
-            return $this->loadRelations($serviceRequest);
-        });
-    }
-
-    private function createServiceRequestDetails(ServiceRequest $serviceRequest, array $details): void
-    {
-        foreach ($details as $detail) {
-            $this->detailService->createDetailServiceRequest(array_merge($detail, [
-                'service_request_id' => $serviceRequest->id,
-            ]));
-        }
-    }
-
-    //
-    private function createMainServiceRequest(array $data): ServiceRequest
-    {
-        $operatorId = null;
-        $userId = null;
-        $user = Auth::user();
-
-        $isOperator = $user->roles->contains('id', Role::OPERATOR);
-        $isUser = $user->roles->contains('id', Role::USER);
-
-        if ($isOperator) {
-            // Operators can create on behalf of another user.
-            $operatorId = $user->id;
-            $userId = isset($data['user_id']) ? (int) $data['user_id'] : null;
-        } elseif ($isUser) {
-            // Users can only create requests for themselves.
-            if (isset($data['user_id']) && (int) $data['user_id'] !== (int) $user->id) {
-                throw new \InvalidArgumentException('You can only create a service request for your own account.');
-            }
-
-            $userId = $user->id;
-        } else {
-            throw new \InvalidArgumentException('Your role is not allowed to create service requests.');
-        }
-
-        return ServiceRequest::create([
-            'service_number'   => $this->generateServiceNumber(),
-            'operator_id'         => $operatorId,
-            'user_id'          => $userId,
-            'status_id'        => $this->getServiceRequestStatusId(ServiceRequestStatusCode::REVIEW_IN_WORKSHOP),
-        ]);
-    }
-
-    //function to allowed transitions
-    public function getAllowedTransitions(int $serviceRequestId): Collection
-    {
-        $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
-        $user = Auth::user();
-        
-        // If user is not authenticated, return empty
-        if (!$user) {
-            return collect([]);
-        }
-
-        $userRoles = $user->roles->pluck('id');
-
-        $transitions = StatusTransition::where('from_status_id', $serviceRequest->status_id)
-            ->whereHas('roles', function($q) use ($userRoles) {
-                $q->whereIn('roles.id', $userRoles);
-            })
-            ->with('status')
-            ->get();
-            
-        return $transitions->pluck('status');
-    }
-
     //function to get stats
     public function getStats(): array
     {
@@ -208,25 +125,10 @@ class ServiceRequestService
         return $serviceRequest;
     }
 
-    //function to generate service number
-    private function generateServiceNumber(): string
-    {
-        $prefix = 'SR';
-        $date = now()->format('Ymd');
-        $lastService = ServiceRequest::whereDate('created_at', today())
-            ->orderBy('created_at', 'desc')
-            ->first();
-        
-        $sequence = $lastService ? (int) substr($lastService->service_number, -4) + 1 : 1;
-        
-        return $prefix . $date . str_pad($sequence, 4, '0', STR_PAD_LEFT);
-    }
+    
 
     //function to load relations 
-    public function loadRelations(ServiceRequest $serviceRequest): ServiceRequest
-    {
-        return $serviceRequest->load($this->showRelationsHandler->defaultWith());
-    }
+    
 
     //function to sync details
     public function syncDetails(ServiceRequest $serviceRequest, array $details): void
@@ -242,25 +144,6 @@ class ServiceRequestService
             ]));
         }
     }
-
-    //function to get service request status
-    private function getServiceRequestStatusOrFail(int $statusId): Status
-    {
-        $status = Status::with('entity_type')->findOrFail($statusId);
-
-        if ($status->entity_type?->code !== 'SERVICE_REQUEST') {
-            throw new \Exception('Status tidak valid');
-        }
-
-        return $status;
-    }
-
-    //function to get service request status id
-    private function getServiceRequestStatusId(ServiceRequestStatusCode|string $code): int
-    {
-        return Status::idForEntityCode('SERVICE_REQUEST', $code);
-    }
-
     public function markDevicesAsBadAsset(ServiceRequest $serviceRequest): void
     {
         $deviceIds = $serviceRequest->service_request_details()
