@@ -18,7 +18,7 @@ use App\Domains\ServiceRequest\Support\EnsureDeviceIsNotActiveInOtherRequest;
 use App\Domains\AuditLog\Services\AuditLogService;
 use App\Domains\Invoice\Services\InvoiceService;
 use App\Services\ContactAdmin\ContactAdminMailservice;
-use App\Services\Notification\NotificationService;
+use App\Domains\Notification\Services\NotificationService;
 use App\Services\ServiceRequest\ServiceRequestApprovalService;
 
 use Illuminate\Support\Facades\Auth;

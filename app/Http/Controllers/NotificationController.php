@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\Notification\NotificationService;
+use App\Domains\Notification\Services\NotificationService;
 use App\Helpers\APIResponse;
 
 class NotificationController extends Controller
