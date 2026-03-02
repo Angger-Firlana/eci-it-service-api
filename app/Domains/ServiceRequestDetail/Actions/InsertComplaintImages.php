@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\DetailServiceRequest\Actions;
+namespace App\Domains\ServiceRequestDetail\Actions;
 
 use Illuminate\Http\UploadedFile;
 use App\Models\ComplaintImage;

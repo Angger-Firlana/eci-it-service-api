@@ -5,12 +5,13 @@ namespace App\Domains\ServiceRequest\Actions;
 
 use App\Models\ServiceRequest;
 
-use App\Domains\DetailServiceRequest\Services\CreateDetailServiceRequestWorkflow;
+use App\Domains\ServiceRequestDetail\Services\CreateServiceRequestDetailWorkflow;
 
-class CreateServiceRequestDetails{
-    private CreateDetailServiceRequestWorkflow $detailService;
+class CreateServiceRequestDetails
+{
+    private CreateServiceRequestDetailWorkflow $detailService;
 
-    public function __construct(CreateDetailServiceRequestWorkflow $detailService)
+    public function __construct(CreateServiceRequestDetailWorkflow $detailService)
     {
         $this->detailService = $detailService;
     }

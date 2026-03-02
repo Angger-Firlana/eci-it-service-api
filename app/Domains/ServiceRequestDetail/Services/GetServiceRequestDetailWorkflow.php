@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Domains\DetailServiceRequest\Services;
+namespace App\Domains\ServiceRequestDetail\Services;
 
-use App\Domains\DetailServiceRequest\Actions\GetServiceRequestDetail;
+use App\Domains\ServiceRequestDetail\Actions\GetServiceRequestDetail;
 
-class GetServiceRequestDetailServiceWorkflow{
+class GetServiceRequestDetailWorkflow
+{
     protected GetServiceRequestDetail $getServiceRequestDetail;
 
     public function __construct(GetServiceRequestDetail $getServiceRequestDetail)

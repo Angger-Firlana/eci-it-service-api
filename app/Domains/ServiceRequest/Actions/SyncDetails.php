@@ -3,13 +3,15 @@
 namespace App\Domains\ServiceRequest\Actions;
 
 use App\Models\ServiceRequest;
-use App\Domains\DetailServiceRequest\CreateServiceRequestDetailWorkFlow;
-class SyncDetails{
-    protected CreateServiceRequestDetailWorkFlow $createServiceRequestDetailWorkFlow;
+use App\Domains\ServiceRequestDetail\Services\CreateServiceRequestDetailWorkflow;
 
-    public function __construct(CreateServiceRequestDetailWorkFlow $createServiceRequestDetailWorkFlow)
+class SyncDetails
+{
+    protected CreateServiceRequestDetailWorkflow $createServiceRequestDetailWorkflow;
+
+    public function __construct(CreateServiceRequestDetailWorkflow $createServiceRequestDetailWorkflow)
     {
-        $this->createServiceRequestDetailWorkFlow = $createServiceRequestDetailWorkFlow;
+        $this->createServiceRequestDetailWorkflow = $createServiceRequestDetailWorkflow;
     }
 
     public function execute(ServiceRequest $serviceRequest, array $details): void
@@ -19,7 +21,7 @@ class SyncDetails{
                 continue;
             }
 
-            $this->createServiceRequestDetailWorkFlow->execute(array_merge($detail, [
+            $this->createServiceRequestDetailWorkflow->execute(array_merge($detail, [
                 'service_request_id' => $serviceRequest->id,
             ]));
         }

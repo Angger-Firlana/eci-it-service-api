@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\DetailServiceRequest\Actions;
+namespace App\Domains\ServiceRequestDetail\Actions;
 
 use App\Models\Device;
 use App\Domains\Device\Support\DeviceResolver;

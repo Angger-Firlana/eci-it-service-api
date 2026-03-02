@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Domains\DetailServiceRequest\Services;
+namespace App\Domains\ServiceRequestDetail\Services;
 
-use App\Domains\DetailServiceRequest\Actions\CheckOrCeateDevice;
-use App\Domains\DetailServiceRequest\Actions\InsertComplaintImages;
+use App\Domains\ServiceRequestDetail\Actions\CheckOrCreateDevice;
+use App\Domains\ServiceRequestDetail\Actions\InsertComplaintImages;
 
-use App\Domains\DetailServiceRequest\Actions\UpdateServiceRequestDetail;
+use App\Domains\ServiceRequestDetail\Actions\UpdateServiceRequestDetail;
 
 
-class UpdateServiceRequestDetailWorkflow{
-
-    protected CheckOrCeateDevice $checkOrCreateDevice;
+class UpdateServiceRequestDetailWorkflow
+{
+    protected CheckOrCreateDevice $checkOrCreateDevice;
     protected InsertComplaintImages $insertComplaintImages;
     protected UpdateServiceRequestDetail $updateServiceRequestDetail;
     public function __construct(
-        CheckOrCeateDevice $checkOrCreateDevice,
+        CheckOrCreateDevice $checkOrCreateDevice,
         InsertComplaintImages $insertComplaintImages,
         UpdateServiceRequestDetail $updateServiceRequestDetail
     ) {
@@ -23,7 +23,8 @@ class UpdateServiceRequestDetailWorkflow{
         $this->updateServiceRequestDetail = $updateServiceRequestDetail;
     }
 
-    public function execute(int $id, array $data){
+    public function execute(int $id, array $data)
+    {
         if (!isset($data['device_id']) && isset($data['device_type_id'], $data['brand'], $data['model'], $data['serial_number'])) {
             $device = $this->checkOrCreateDevice->execute($data);
             $data['device_id'] = $device->id;
