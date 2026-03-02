@@ -58,8 +58,8 @@ class ExportInvoiceService
     public function generatePreviewInvoice($serviceRequestId)
     {
         $serviceRequest = ServiceRequest::with([
-            'user',
-            'operator',
+            'user.departments',
+            'operator.departments',
             'status',
             'service_request_details.device.device_model'
         ])->findOrFail($serviceRequestId);

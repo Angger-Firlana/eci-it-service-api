@@ -133,6 +133,10 @@
         </tr>
     </table>
 
+    @php
+        $detail = $serviceRequest->service_request_details->first();
+        $detailDevice = $detail?->device;
+    @endphp
     <table style="border-top: none;">
         <!-- User Section -->
         <tr>
@@ -147,34 +151,27 @@
             <td class="label-col">Department</td>
             <td style="width: 10px; border-right: none;">:</td>
             <td style="border-left: none;">
-                {{ $user->departments->first()->name ?? '-' }}
+                {{ $user?->departments?->first()?->name ?? '-' }}
             </td>
         </tr>
         <tr>
             <td class="label-col" style="vertical-align: top;">Data <br><span style="font-weight: normal; font-size: 9px;">(Device Info)</span></td>
             <td style="width: 10px; border-right: none; vertical-align: top;">:</td>
             <td style="border-left: none; height: 150px; vertical-align: top;">
-                @if(isset($device))
-                    <div><strong>Brand:</strong> {{ $device->device_model->brand ?? '-' }}</div>
-                    <div><strong>Model:</strong> {{ $device->device_model->model ?? '-' }}</div>
-                    <div><strong>Serial Number:</strong> {{ $device->serial_number ?? '-' }}</div>
+                @if(isset($device) || isset($detailDevice))
+                    <div><strong>Brand:</strong> {{ $device?->device_model?->brand ?? $detailDevice?->device_model?->brand ?? '-' }}</div>
+                    <div><strong>Model:</strong> {{ $device?->device_model?->model ?? $detailDevice?->device_model?->model ?? '-' }}</div>
+                    <div><strong>Serial Number:</strong> {{ $device?->serial_number ?? $detailDevice?->serial_number ?? '-' }}</div>
                 @else
                     No Device Associated
                 @endif
             </td>
         </tr>
         <tr>
-            <td class="label-col">Database</td>
-            <td style="width: 10px; border-right: none;">:</td>
-            <td style="border-left: none;">
-                -
-            </td>
-        </tr>
-        <tr>
             <td class="label-col" style="vertical-align: top;">Description of Request</td>
             <td style="width: 10px; border-right: none; vertical-align: top;">:</td>
             <td style="border-left: none; height: 60px; vertical-align: top;">
-                {{ $device->complaint ?? $serviceRequest->service_request_details->first()->complaint ?? '-' }}
+                {{ $detail?->complaint ?? '-' }}
             </td>
         </tr>
     </table>
@@ -200,29 +197,6 @@
                     <li>Check and Verification</li>
                 @endif
                 </ul>
-            </td>
-        </tr>
-        <tr>
-            <td class="label-col">Planning</td>
-            <td style="width: 10px; border-right: none;">:</td>
-            <td colspan="2" style="border-left: none;">
-                <table style="border: none; width: 100%;">
-                    <tr style="border: none;">
-                        <td style="border: none; width: 150px;">
-                            {{ $serviceRequest->created_at->diffInDays($invoice->issue_date) }} day(s)
-                        </td>
-                        <td class="label-col" style="border: none; width: 60px;">Actual</td>
-                        <td style="border: none; width: 10px;">:</td>
-                        <td style="border: none;">
-                             {{ $serviceRequest->created_at->diffInDays($invoice->issue_date) }} day(s)
-                        </td>
-                         <td class="label-col" style="border: none; width: 60px;">Test Doc</td>
-                        <td style="border: none; width: 10px;">:</td>
-                        <td style="border: none;">
-                             <span class="checkbox-rect"></span>
-                        </td>
-                    </tr>
-                </table>
             </td>
         </tr>
         <tr>
@@ -275,9 +249,7 @@
         <tr>
             <th style="width: 16%;">Requester by,<br>User/Supervisor</th>
             <th style="width: 16%;">Review by,<br>IT Manager</th>
-            <th style="width: 16%;">Approved by,<br>Director</th>
-            <th style="width: 16%;">Approved by,<br>Director</th>
-            <th style="width: 16%;">Tested,</th>
+            <th style="width: 16%;">Approved by,<br>Senior IT Manager</th>
             <th style="width: 20%;">Executed by,</th>
         </tr>
         <tr>
@@ -294,18 +266,6 @@
                  <div>Date:</div>
             </td>
              <!-- Approved Director 1 -->
-            <td class="signature-box">
-                 <br><br>
-                 <div style="border-bottom: 1px solid #aaa; width: 80%; margin: 0 auto;"></div>
-                 <div>Date:</div>
-            </td>
-             <!-- Approved Director 2 -->
-            <td class="signature-box">
-                 <br><br>
-                 <div style="border-bottom: 1px solid #aaa; width: 80%; margin: 0 auto;"></div>
-                 <div>Date:</div>
-            </td>
-             <!-- Tested -->
             <td class="signature-box">
                  <br><br>
                  <div style="border-bottom: 1px solid #aaa; width: 80%; margin: 0 auto;"></div>
