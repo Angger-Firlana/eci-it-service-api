@@ -6,7 +6,7 @@ use App\Domains\Approval\Support\ApprovalStatusResolver;
 use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Models\ServiceRequest;
 use App\Domains\AuditLog\Services\AuditLogService;
-use App\Services\Invoice\InvoiceService;
+use App\Domains\Invoice\Services\InvoiceService;
 
 class DeviceNeedRepair
 {

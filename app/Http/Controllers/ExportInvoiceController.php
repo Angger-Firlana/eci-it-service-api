@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\Invoice\ExportInvoiceService;
+use App\Domains\Invoice\Services\ExportInvoiceService;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\APIResponse;
 
