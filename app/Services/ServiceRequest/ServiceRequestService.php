@@ -17,7 +17,7 @@ use App\Services\ServiceRequest\DetailServiceRequestService;
 use App\Domains\ServiceRequest\Support\EnsureDeviceIsNotActiveInOtherRequest;
 use App\Domains\AuditLog\Services\AuditLogService;
 use App\Domains\Invoice\Services\InvoiceService;
-use App\Services\ContactAdmin\ContactAdminMailservice;
+use App\Domains\ContactAdmin\Services\ContactAdminService;
 use App\Domains\Notification\Services\NotificationService;
 use App\Services\ServiceRequest\ServiceRequestApprovalService;
 
@@ -31,7 +31,7 @@ use Throwable;
 class ServiceRequestService
 {
     protected DetailServiceRequestService $detailService;
-    protected ContactAdminMailservice $contactAdminMailService;
+    protected ContactAdminService $contactAdminMailService;
     protected InvoiceService $invoiceService;
     protected AuditLogService $auditLogService;
     protected ServiceRequestApprovalService $serviceRequestApprovalService;
@@ -42,7 +42,7 @@ class ServiceRequestService
 
     public function __construct(
         DetailServiceRequestService $detailService,
-        ContactAdminMailservice $contactAdminMailService,
+        ContactAdminService $contactAdminMailService,
         InvoiceService $invoiceService,
         AuditLogService $auditLogService,
         ServiceRequestApprovalService $serviceRequestApprovalService,

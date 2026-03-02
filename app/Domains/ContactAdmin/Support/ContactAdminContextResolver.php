@@ -1,75 +1,13 @@
 <?php
 
-namespace App\Services\ContactAdmin;
+namespace App\Domains\ContactAdmin\Support;
 
 use App\Models\ServiceRequest;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\UserContactAdmin;
 use RuntimeException;
 
-class ContactAdminMailservice
+class ContactAdminContextResolver
 {
-    public function queue(array $data): void
-    {
-        $adminEmail = $this->adminEmail();
-        $attachmentPath = $this->attachmentPath($data);
-
-        [
-            $device,
-            $deviceModel,
-            $damages,
-            $serviceRequestId,
-            $serviceRequestUrl,
-            $serviceNumber,
-            $serviceRequestItems,
-        ] = $this->serviceRequestContext($data);
-
-        Mail::to($adminEmail)->queue(new UserContactAdmin(
-            name: $data['name'],
-            email: $data['email'],
-            userMessage: $data['message'],
-            attachmentPath: $attachmentPath,
-            device: $device,
-            deviceModel: $deviceModel,
-            damages: $damages,
-            serviceRequestId: $serviceRequestId,
-            serviceRequestUrl: $serviceRequestUrl,
-            serviceNumber: $serviceNumber,
-            serviceRequestItems: $serviceRequestItems,
-        ));
-    }
-
-    public function sendNow(array $data): void
-    {
-        $adminEmail = $this->adminEmail();
-        $attachmentPath = $this->attachmentPath($data);
-
-        [
-            $device,
-            $deviceModel,
-            $damages,
-            $serviceRequestId,
-            $serviceRequestUrl,
-            $serviceNumber,
-            $serviceRequestItems,
-        ] = $this->serviceRequestContext($data);
-
-        Mail::to($adminEmail)->sendNow(new UserContactAdmin(
-            name: $data['name'],
-            email: $data['email'],
-            userMessage: $data['message'],
-            attachmentPath: $attachmentPath,
-            device: $device,
-            deviceModel: $deviceModel,
-            damages: $damages,
-            serviceRequestId: $serviceRequestId,
-            serviceRequestUrl: $serviceRequestUrl,
-            serviceNumber: $serviceNumber,
-            serviceRequestItems: $serviceRequestItems,
-        ));
-    }
-
-    private function adminEmail(): string
+    public function adminEmail(): string
     {
         $adminEmail = config('mail.admin_email');
 
@@ -80,7 +18,7 @@ class ContactAdminMailservice
         return $adminEmail;
     }
 
-    private function attachmentPath(array $data): ?string
+    public function attachmentPath(array $data): ?string
     {
         $attachmentPath = $data['attachmentPath'] ?? null;
 
@@ -94,7 +32,7 @@ class ContactAdminMailservice
     /**
      * @return array{0:?string,1:?string,2:array<int,string>,3:?int,4:?string,5:?string,6:array<int,array<string, mixed>>}
      */
-    private function serviceRequestContext(array $data): array
+    public function serviceRequestContext(array $data): array
     {
         $device = $data['device'] ?? null;
         $device = is_string($device) && trim($device) !== '' ? $device : null;
@@ -140,7 +78,7 @@ class ContactAdminMailservice
 
                     $deviceModelName = null;
                     if (is_string($brand) && trim($brand) !== '' && is_string($model) && trim($model) !== '') {
-                        $deviceModelName = trim($brand).' '.trim($model);
+                        $deviceModelName = trim($brand) . ' ' . trim($model);
                     } elseif (is_string($model) && trim($model) !== '') {
                         $deviceModelName = trim($model);
                     }
@@ -175,23 +113,5 @@ class ContactAdminMailservice
         }
 
         return [$device, $deviceModel, $damages, $serviceRequestId, $serviceRequestUrl, $serviceNumber, $serviceRequestItems];
-    }
-
-
-    public function sendAdminNotification($serviceRequestId, $actorName, $actorEmail):void
-    {
-        try {
-            $this->queue([
-                'name' => $actorName,
-                'email' => $actorEmail,
-                'message' => 'A new service request has been created and requires review.',
-                'service_request_id' => $serviceRequestId,
-            ]);
-        } catch (Throwable $e) {
-            logger()->error('Failed to queue admin notification email for service request.', [
-                'service_request_id' => $serviceRequestId,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 }

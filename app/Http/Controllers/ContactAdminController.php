@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ContactAdmin\ContactAdminMailservice;
+use App\Domains\ContactAdmin\Services\ContactAdminService;
 use App\Http\Requests\ContactAdminMail\ContactAdminRequest;
 use Throwable;
 
 class ContactAdminController extends Controller
 {
-    protected ContactAdminMailservice $mailService;
+    protected ContactAdminService $mailService;
 
-    public function __construct(ContactAdminMailservice $mailService)
+    public function __construct(ContactAdminService $mailService)
     {
         $this->mailService = $mailService;
     }
