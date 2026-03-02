@@ -13,28 +13,36 @@ use App\Domains\ServiceRequest\Actions\CreateMainServiceRequest;
 use App\Domains\ServiceRequest\Actions\CreateServiceRequestDetails;
 
 use App\Domains\ServiceRequest\Support\EnsureDeviceIsNotActiveInOtherRequest;
+use App\Domains\ServiceRequest\Support\LoadRelations;
+
 use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 
 class CreateServiceRequestWorkflow{
     protected EnsureDeviceIsNotActiveInOtherRequest $ensureDeviceIsNotActiveInOtherRequest;
     protected WriteAuditLogs $writeAuditLogs;
     protected CreateServiceRequestDetails $createServiceRequestDetails;
+    protected CreateMainServiceRequest $createMainServiceRequest;
+    protected LoadRelations $loadRelations;
 
     public function __construct(
         EnsureDeviceIsNotActiveInOtherRequest $ensureDeviceIsNotActiveInOtherRequest,
         WriteAuditLogs $writeAuditLogs,
         CreateServiceRequestDetails $createServiceRequestDetails,
+        CreateMainServiceRequest $createMainServiceRequest,
+        LoadRelations $loadRelations
     ) {
         $this->ensureDeviceIsNotActiveInOtherRequest = $ensureDeviceIsNotActiveInOtherRequest;
         $this->writeAuditLogs = $writeAuditLogs;
         $this->createServiceRequestDetails = $createServiceRequestDetails;
+        $this->createMainServiceRequest = $createMainServiceRequest;
+        $this->loadRelations = $loadRelations;
     }
 
     public function execute($data){
         $this->ensureDeviceIsNotActiveInOtherRequest->execute($data['details'] ?? []);
 
         return DB::transaction(function () use ($data) {
-            $serviceRequest = CreateMainServiceRequest::execute($data);
+            $serviceRequest = $this->createMainServiceRequest->execute($data);
             $this->createServiceRequestDetails->execute($serviceRequest, $data['details'] ?? []);
             
             $status = Status::where('code', ServiceRequestStatusCode::REVIEW_IN_WORKSHOP)->first();
@@ -44,7 +52,7 @@ class CreateServiceRequestWorkflow{
 
             // $this->contactAdminMailService->sendAdminNotification($serviceRequest->id, $actor->name, $actor->email);
 
-            return $this->loadRelations($serviceRequest);
+            return $this->loadRelations->execute($serviceRequest);
         });
     }
 }

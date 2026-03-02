@@ -7,10 +7,18 @@ use App\Domains\ServiceRequest\Actions\WriteAuditLogs;
 
 class UpdateServiceRequestStatus
 {
+    protected WriteAuditLogs $writeAuditLogs;
+
+    public function __construct(
+        WriteAuditLogs $writeAuditLogs
+    ){
+        $this->writeAuditLogs = $writeAuditLogs;
+    }
+
     public function execute(ServiceRequest $serviceRequest, int $newStatusId, ?string $Lognotes = null): void
     {
         $newStatus = Status::find($newStatusId);
         $serviceRequest->update(['status_id' => $newStatusId]);
-        WriteAuditLogs::execute($serviceRequest, $newStatus, $Lognotes);
+        $this->writeAuditLogs->execute($serviceRequest, $newStatus,"UPDATE_STATUS", $Lognotes);
     }
 }

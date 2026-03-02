@@ -3,36 +3,42 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\ServiceRequest\ServiceRequestService;
 use App\Helpers\APIResponse;
 use App\Http\Requests\ServiceRequest\StoreServiceRequest;
 use App\Domains\ServiceRequest\Services\UpdateServiceRequestWorkflow;
+use App\Domains\ServiceRequest\Services\CreateServiceRequestWorkflow;
+use App\Domains\ServiceRequest\Services\GetServiceRequestWorkflow;
+use App\Domains\ServiceRequest\Services\DeleteServiceRequestWorkflow;
 use App\Http\Requests\ServiceRequest\UpdateServiceRequest;
 
 class ServiceRequestController extends Controller
 {
     //
-    protected $serviceRequestService;
+    protected $deleteServiceRequestWorkflow;
     protected $updateServiceRequestWorkFlow;
-    public function __construct(ServiceRequestService $serviceRequestService, UpdateServiceRequestWorkflow $updateServiceRequestWorkFlow){
-        $this->serviceRequestService = $serviceRequestService;
+    protected $createServiceRequestWorkflow;
+    protected $getServiceRequestWorkflow;
+    public function __construct(CreateServiceRequestWorkflow $createServiceRequestWorkflow, UpdateServiceRequestWorkflow $updateServiceRequestWorkFlow, GetServiceRequestWorkflow $getServiceRequestWorkflow, DeleteServiceRequestWorkflow $deleteServiceRequestWorkflow){
+        $this->getServiceRequestWorkflow = $getServiceRequestWorkflow;
         $this->updateServiceRequestWorkFlow = $updateServiceRequestWorkFlow;
+        $this->createServiceRequestWorkflow = $createServiceRequestWorkflow;
+        $this->deleteServiceReqeustWorkflow = $deleteServiceRequestWorkflow;
     }
 
     public function index(Request $request){
-        $paginator = $this->serviceRequestService->getAllServiceRequest($request);
+        $paginator = $this->getServiceRequestWorkflow->getAllServiceRequest($request);
         $data = $paginator->items();
         $meta = APIResponse::formatPagination($paginator);
         return APIResponse::success($data, 200, "Success", $meta);
     }
 
     public function show($id){
-        $serviceRequests = $this->serviceRequestService->getServiceRequestById($id);
+        $serviceRequests = $this->getServiceRequestWorkflow->getServiceRequestById($id);
         return APIResponse::success($serviceRequests);
     }
 
     public function store(StoreServiceRequest $request){
-        $serviceRequests = $this->serviceRequestService->createServiceRequest($request->validated());
+        $serviceRequests = $this->createServiceRequestWorkflow->execute($request->validated());
         return APIResponse::success($serviceRequests);
     }
 
@@ -48,17 +54,16 @@ class ServiceRequestController extends Controller
     }
 
     public function destroy($id){
-        $serviceRequests = $this->serviceRequestService->deleteServiceRequest($id);
+        $serviceRequests = $this->deleteServiceRequestWorkflow->execute($id);
         return APIResponse::success($serviceRequests);
     }
 
     public function allowedTransitions($id) {
-        $transitions = $this->serviceRequestService->getAllowedTransitions($id);
-        return APIResponse::success($transitions);
+
     }
 
     public function stats() {
-        $stats = $this->serviceRequestService->getStats();
+        $stats = $this->getServiceRequestWorkflow->getStats();
         return APIResponse::success($stats);
     }
 }

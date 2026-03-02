@@ -3,7 +3,7 @@
 namespace App\Domains\ServiceRequest\Services;
 
 use App\Domains\ServiceRequest\Actions\GetServiceRequest;
-use App\Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use App\Models\ServiceRequest;
     
 class GetServiceRequestWorkflow{
@@ -18,7 +18,7 @@ class GetServiceRequestWorkflow{
         return $this->getServiceRequest->getServiceRequestById($id);
     }
 
-    public function getAllServiceRequests($request):LengthAwarePaginator
+    public function getAllServiceRequest($request):LengthAwarePaginator
     {
         return $this->getServiceRequest->getAllServiceRequest($request);
     }

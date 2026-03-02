@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Domains\ServiceRequest\GenerateServiceNumber;
+namespace App\Domains\ServiceRequest\Support;
 
 use App\Models\ServiceRequest;
 
 class GenerateServiceNumber{
     //function to generate service number
-    private static function execute(): string
+    public static function execute(): string
     {
         $prefix = 'SR';
         $date = now()->format('Ymd');

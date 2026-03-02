@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\ServiceRequest\GetStatsServiceRequest;
+namespace App\Domains\ServiceRequest\Actions;
 
 use App\Models\ServiceRequest;
 use Illuminate\Http\Request;
