@@ -5,9 +5,10 @@ namespace App\Domains\ServiceRequest\Support;
 use App\Models\ServiceRequestDetail;
 use App\Models\Device;
 use Illuminate\Validation\ValidationException;
-use App\Enums\ServiceRequestStatusCode;
+use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 
-class ensureDeviceIsNotActiveInOtherRequest{
+class EnsureDeviceIsNotActiveInOtherRequest
+{
     public function execute(array $details, ?int $excludeServiceRequestId = null): void
     {
         if (empty($details)) {

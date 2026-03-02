@@ -4,9 +4,9 @@ namespace App\Domains\ServiceRequest\Support;
 
 use App\Models\Status;
 
-class GetStatusById
+class GetServiceRequestStatusById
 {
-    private function execute(int $statusId): Status
+    public function execute(int $statusId): Status
     {
         $status = Status::with('entity_type')->findOrFail($statusId);
 

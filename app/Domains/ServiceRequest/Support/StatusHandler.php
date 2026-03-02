@@ -2,7 +2,7 @@
 
 namespace App\Domains\ServiceRequest\Support;
 
-use App\Enums\ServiceRequestStatusCode;
+use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 
 class StatusHandler
 {

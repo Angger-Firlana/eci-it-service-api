@@ -4,14 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helpers\APIResponse;
-use App\Services\Device\DeviceService;
+use App\Domains\Device\Services\DeviceService;
 use App\Models\Device;
 use App\Http\Requests\Device\StoreDeviceRequest;
 use App\Http\Requests\Device\UpdateDeviceRequest;
 
 class DeviceController extends Controller
 {
-    protected $deviceService;
+    protected DeviceService $deviceService;
     //
     public function __construct(DeviceService $deviceService)
     {
@@ -30,7 +30,7 @@ class DeviceController extends Controller
     
     public function show($id)
     {
-        $data = $this->deviceService->getDeviceById($id);
+        $data = $this->deviceService->getDeviceById((int) $id);
 
         return APIResponse::success($data, 200, "");
     }
@@ -46,7 +46,7 @@ class DeviceController extends Controller
     public function update($id, UpdateDeviceRequest $request)
     {
         //
-        $data = $this->deviceService->updateDevice($id, $request->validated());
+        $data = $this->deviceService->updateDevice((int) $id, $request->validated());
 
         return APIResponse::success($data, 200, "");
     }
@@ -54,7 +54,7 @@ class DeviceController extends Controller
     public function patch($id, UpdateDeviceRequest $request)
     {
         //
-        $data = $this->deviceService->patchDevice($id, $request->validated());
+        $data = $this->deviceService->patchDevice((int) $id, $request->validated());
 
         return APIResponse::success($data, 200, "");
     }
@@ -62,7 +62,7 @@ class DeviceController extends Controller
     public function destroy($id)
     {
         //
-        $data = $this->deviceService->deleteDevice($id);
+        $data = $this->deviceService->deleteDevice((int) $id);
 
         return APIResponse::success($data, 200, "");
     }

@@ -6,16 +6,16 @@ use App\Models\ServiceRequestDetail;
 use Illuminate\Http\UploadedFile;
 use App\Models\ComplaintImage;
 use Illuminate\Support\Facades\Storage;
-use App\Services\Device\DeviceService;
+use App\Domains\Device\Support\DeviceResolver;
 use Illuminate\Support\Str;
 
 class DetailServiceRequestService
 {
-    protected DeviceService $deviceService;
+    protected DeviceResolver $deviceResolver;
 
-    public function __construct(DeviceService $deviceService)
+    public function __construct(DeviceResolver $deviceResolver)
     {
-        $this->deviceService = $deviceService;
+        $this->deviceResolver = $deviceResolver;
     }
 
     //function to create detail all service request
@@ -23,7 +23,7 @@ class DetailServiceRequestService
     {
         // Auto-create/resolve device if device info is provided and device_id is not
         if (!isset($data['device_id']) && isset($data['device_type_id'], $data['brand'], $data['model'], $data['serial_number'])) {
-            $device = $this->deviceService->findOrCreateDeviceFromRequest([
+            $device = $this->deviceResolver->findOrCreateDeviceFromRequest([
                 'device_type_id' => $data['device_type_id'],
                 'brand'          => $data['brand'],
                 'model'          => $data['model'],
@@ -65,7 +65,7 @@ class DetailServiceRequestService
         
         // Auto-create/resolve device if device info is provided and device_id is not
         if (!isset($data['device_id']) && isset($data['device_type_id'], $data['brand'], $data['model'], $data['serial_number'])) {
-            $device = $this->deviceService->findOrCreateDeviceFromRequest([
+            $device = $this->deviceResolver->findOrCreateDeviceFromRequest([
                 'device_type_id' => $data['device_type_id'],
                 'brand'          => $data['brand'],
                 'model'          => $data['model'],
