@@ -5,7 +5,7 @@ namespace App\Domains\Approval\Actions;
 use App\Domains\Approval\Support\ApprovalStatusResolver;
 use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Models\ServiceRequest;
-use App\Services\AuditLog\AuditLogService;
+use App\Domains\AuditLog\Services\AuditLogService;
 
 class DeviceNoNeedRepair
 {

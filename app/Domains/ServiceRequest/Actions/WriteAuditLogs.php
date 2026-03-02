@@ -3,7 +3,7 @@
 namespace App\Domains\ServiceRequest\Actions;
 use App\Models\ServiceRequest;
 use App\Models\Status;
-use App\Services\AuditLog\AuditLogService;
+use App\Domains\AuditLog\Services\AuditLogService;
 
 class WriteAuditLogs
 {

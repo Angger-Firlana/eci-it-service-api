@@ -12,7 +12,7 @@ use App\Models\ServiceRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
 use App\Domains\Approval\Services\ApprovalPolicyService;
-use App\Services\AuditLog\AuditLogService;
+use App\Domains\AuditLog\Services\AuditLogService;
 
 class ServiceRequestApprovalService
 {

@@ -7,7 +7,7 @@ use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Enums\VendorApprovalStatusCode;
 use App\Models\ServiceRequest;
 use App\Models\VendorApproval;
-use App\Services\AuditLog\AuditLogService;
+use App\Domains\AuditLog\Services\AuditLogService;
 
 class RejectVendorRequest
 {

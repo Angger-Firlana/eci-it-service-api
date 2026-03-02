@@ -15,7 +15,7 @@ use App\Models\Device;
 
 use App\Services\ServiceRequest\DetailServiceRequestService;
 use App\Domains\ServiceRequest\Support\EnsureDeviceIsNotActiveInOtherRequest;
-use App\Services\AuditLog\AuditLogService;
+use App\Domains\AuditLog\Services\AuditLogService;
 use App\Services\Invoice\InvoiceService;
 use App\Services\ContactAdmin\ContactAdminMailservice;
 use App\Services\Notification\NotificationService;
