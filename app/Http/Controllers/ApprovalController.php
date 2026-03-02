@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helpers\APIResponse;
-use App\Services\Approval\ApprovalService;
+use App\Domains\Approval\Services\ApprovalWorkflowService;
 
 class ApprovalController extends Controller
 {
-    protected $approvalService;
+    protected ApprovalWorkflowService $approvalService;
 
-    public function __construct(ApprovalService $approvalService)
+    public function __construct(ApprovalWorkflowService $approvalService)
     {
         $this->approvalService = $approvalService;
     }

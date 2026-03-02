@@ -11,7 +11,7 @@ use App\Models\VendorApproval;
 use App\Models\ServiceRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
-use App\Services\Approval\ApprovalPolicyService;
+use App\Domains\Approval\Services\ApprovalPolicyService;
 use App\Services\AuditLog\AuditLogService;
 
 class ServiceRequestApprovalService

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Approval;
+namespace App\Domains\Approval\Services;
 
 use App\Models\ApprovalPolicy;
 use App\Models\ApprovalPolicyStep;
