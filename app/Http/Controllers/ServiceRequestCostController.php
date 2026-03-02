@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helpers\APIResponse;
-use App\Services\ServiceRequest\ServiceRequestCostService;
+use App\Domains\ServiceRequestCost\Services\ServiceRequestCostService;
 use App\Http\Requests\ServiceCost\StoreServiceCostRequest;
 use App\Http\Requests\ServiceCost\UpdateServiceCostRequest;
 
