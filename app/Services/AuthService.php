@@ -16,6 +16,10 @@ class AuthService
      * @return array An associative array containing 'success', 'message', 'data' (user and token), and 'code'.
      */
     public function login(array $credentials): array{
+        if(auth()->check()){
+            $this->logout();
+        }
+        
         $user = User::where('email', $credentials['email'])
             ->with(['roles:id,name', 'departments:id,name,code'])
             ->first();
@@ -36,44 +40,6 @@ class AuthService
             'updated_at' => $user->updated_at
         ], 'token' => $token], 'code' => 200];
     }
-
-    /**
-     * Register a new user.
-     *
-     * @param array $data The user registration data, including 'name', 'email', 'password', and optional 'pin' and 'role_id'.
-     * @return array An associative array containing 'success', 'message', 'data' (newly created user and token), and 'code'.
-     */
-    public function register(array $data): array{
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'pin' => isset($data['pin']) ? Hash::make($data['pin']) : null,
-        ]);
-
-        if (isset($data['role_id'])) {
-            $user->roles()->syncWithoutDetaching([$data['role_id']]);
-        }
-
-        if (isset($data['department_id'])) {
-            $user->departments()->syncWithoutDetaching([$data['department_id']]);
-        }
-
-        $user->load(['roles:id,name', 'departments:id,name,code']);
-
-        $token = $user->createToken('token_eci_service' . now()->timestamp)->plainTextToken;
-
-        return ['success' => true, 'message' => 'Registration successful', 'data' => ['user' => [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'role' => $user->roles->first(),
-            'department' => $user->departments->first(),
-            'created_at' => $user->created_at,
-            'updated_at' => $user->updated_at
-        ], 'token' => $token], 'code' => 201];
-    }
-
     /**
      * Retrieve data for the currently authenticated user based on their token.
      *

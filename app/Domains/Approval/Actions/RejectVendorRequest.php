@@ -21,7 +21,6 @@ class RejectVendorRequest
     {
         $approval = VendorApproval::findOrFail($approvalId);
 
-        $oldStatusId = (int) $approval->status_id;
         $newStatusId = $this->statusResolver->getVendorApprovalStatusId(VendorApprovalStatusCode::REJECTED);
 
         $approval->update([
@@ -30,15 +29,7 @@ class RejectVendorRequest
             'notes' => $data['notes'] ?? $approval->notes,
         ]);
 
-        $this->auditLogService->createAuditLog([
-            'actor_id' => auth()->id(),
-            'entity_id' => $approval->id,
-            'entity_type_id' => 2,
-            'old_status_id' => $oldStatusId,
-            'new_status_id' => $newStatusId,
-            'action' => 'REJECT_VENDOR',
-            'notes' => $data['notes'] ?? 'Vendor approval rejected',
-        ]);
+        $this->auditLogService->writeAuditLogsApproval($approval, $newStatusId, "REJECTED", $data['notes'] ?? $approval->notes);
 
         $this->updateServiceRequestOnRejection($approval->service_request, $data['notes'] ?? null);
 
@@ -51,14 +42,6 @@ class RejectVendorRequest
         $cancelledStatusId = $this->statusResolver->getServiceRequestStatusId(ServiceRequestStatusCode::CANCELLED);
         $serviceRequest->update(['status_id' => $cancelledStatusId]);
 
-        $this->auditLogService->createAuditLog([
-            'actor_id' => auth()->id(),
-            'entity_id' => $serviceRequest->id,
-            'entity_type_id' => 1,
-            'old_status_id' => $oldStatusId,
-            'new_status_id' => $cancelledStatusId,
-            'action' => 'ABOVES_REJECTED',
-            'notes' => $notes ?? 'Salah satu atasan menolak permintaan, status request dibatalkan',
-        ]);
+        $this->auditLogService->writeAuditLogsServiceRequest($serviceRequest, $cancelledStatusId, "REJECTED", $notes ?? 'Salah satu atasan menolak permintaan, status request dibatalkan');
     }
 }

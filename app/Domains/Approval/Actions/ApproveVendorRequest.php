@@ -30,15 +30,7 @@ class ApproveVendorRequest
             'notes' => $data['notes'] ?? $approval->notes,
         ]);
 
-        $this->auditLogService->createAuditLog([
-            'actor_id' => auth()->id(),
-            'entity_id' => $approval->service_request_id,
-            'entity_type_id' => 2,
-            'old_status_id' => $oldStatusId,
-            'new_status_id' => $newStatusId,
-            'action' => 'APPROVE_VENDOR',
-            'notes' => $data['notes'] ?? 'Vendor approval completed',
-        ]);
+        $this->auditLogService->writeAuditLogsApproval($approval, $newStatusId, "APPROVED", $data['notes'] ?? $approval->notes);
 
         $this->checkAndUpdateServiceRequestStatus($approval->service_request);
 
@@ -66,15 +58,7 @@ class ApproveVendorRequest
             $oldStatusId = (int) $serviceRequest->status_id;
             $serviceRequest->update(['status_id' => $repairInVendorStatusId]);
 
-            $this->auditLogService->createAuditLog([
-                'actor_id' => auth()->id(),
-                'entity_id' => $serviceRequest->id,
-                'entity_type_id' => 1,
-                'old_status_id' => $oldStatusId,
-                'new_status_id' => $repairInVendorStatusId,
-                'action' => 'ABOVES_APPROVED',
-                'notes' => 'Semua atasan sudah menyetujui',
-            ]);
+            $this->auditLogService->writeAuditLogsServiceRequest($serviceRequest, $repairInVendorStatusId, "APPROVED", "Semua atasan sudah menyetujui");
         }
     }
 }
