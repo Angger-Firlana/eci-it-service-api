@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property Device $device
  * @property ServiceRequest $service_request
  * @property ServiceType|null $service_type
+ * @property DeviceType $device_type
  *
  * @package App\Models
  */
@@ -33,12 +34,14 @@ class ServiceRequestDetail extends Model
 	protected $casts = [
 		'service_request_id' => 'int',
 		'device_id' => 'int',
+		'device_type_id' => 'int',
 		'solution' => 'string'
 	];
 
 	protected $fillable = [
 		'service_request_id',
 		'device_id',
+		'device_type_id',
 		'complaint',
 		'solution'
 	];
@@ -51,6 +54,11 @@ class ServiceRequestDetail extends Model
 	public function service_request()
 	{
 		return $this->belongsTo(ServiceRequest::class);
+	}
+
+	public function device_type()
+	{
+		return $this->belongsTo(DeviceType::class);
 	}
 
 	public function complaint_images()

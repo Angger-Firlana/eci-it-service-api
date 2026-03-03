@@ -10,6 +10,7 @@ class CreateServiceRequestDetail{
             'service_request_id' => $data['service_request_id'],
             'service_type_id' => $data['service_type_id'] ?? null,
             'device_id' => $data['device_id'] ?? null,
+            'device_type_id' => $data['device_type_id'] ?? null,
             'complaint' => $data['complaint'],
         ]);
         

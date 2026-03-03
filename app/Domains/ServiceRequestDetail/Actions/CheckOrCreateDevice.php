@@ -15,7 +15,7 @@ class CheckOrCreateDevice{
 
     public function execute(array $deviceData):Device{
         $device = $this->deviceResolver->findOrCreateDeviceFromRequest([
-                'device_type_id' => $deviceData['device_type_id'],
+                'device_type_id' => $deviceData['device_type_id'] ,
                 'brand'          => $deviceData['brand'],
                 'model'          => $deviceData['model'],
                 'serial_number'  => $deviceData['serial_number'],

@@ -47,9 +47,9 @@ class StoreServiceRequest extends FormRequest
             'details' => 'required|array',
             'details.*.device_id' => 'sometimes|exists:devices,id',
             'details.*.device_type_id' =>  'required_without:details.*.device_id|exists:device_types,id',
-            'details.*.brand' => 'required_without:details.*.device_id|string',
-            'details.*.model' => 'required_without:details.*.device_id|string',
-            'details.*.serial_number' => 'required_without:details.*.device_id|string',
+            'details.*.brand' => 'sometimes|string',
+            'details.*.model' => 'sometimes|string',
+            'details.*.serial_number' => 'sometimes|string',
             'details.*.complaint' => 'required|string',
             'details.*.complaint_images' => 'sometimes|array',
             'details.*.complaint_images.*' => 'sometimes|file|mimes:jpeg,png,jpg,gif,svg|max:2048'

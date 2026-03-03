@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('service_request_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('service_request_id')->constrained('service_requests');
-            $table->foreignId('device_id')->constrained('devices');
+            $table->foreignId('device_id')->nullable()->constrained('devices');
             $table->text('complaint');
+            $table->foreignId('device_type_id')->constrained('device_types');
             $table->timestamps();
         });
     }
