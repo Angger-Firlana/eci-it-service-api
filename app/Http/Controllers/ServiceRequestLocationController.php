@@ -4,17 +4,35 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helpers\APIResponse;
-use App\Domains\ServiceRequestLocation\Services\ServiceLocationService;
+use App\Domains\ServiceRequestLocation\Actions\CreateServiceLocation;
+use App\Domains\ServiceRequestLocation\Actions\DeleteServiceLocation;
+use App\Domains\ServiceRequestLocation\Actions\GetServiceLocationById;
+use App\Domains\ServiceRequestLocation\Actions\ListServiceLocationsByServiceRequestId;
+use App\Domains\ServiceRequestLocation\Actions\UpdateServiceLocation;
 use App\Models\ServiceRequest;
 use App\Http\Requests\ServiceLocation\UpdateServiceLocationRequest;
 use App\Http\Requests\ServiceLocation\StoreServiceLocationRequest;
 class ServiceRequestLocationController extends Controller
 {
-    protected $locationService;
+    protected CreateServiceLocation $createServiceLocation;
+    protected UpdateServiceLocation $updateServiceLocation;
+    protected DeleteServiceLocation $deleteServiceLocation;
+    protected ListServiceLocationsByServiceRequestId $listServiceLocationsByServiceRequestId;
+    protected GetServiceLocationById $getServiceLocationById;
 
-    public function __construct(ServiceLocationService $locationService)
+    public function __construct(
+        CreateServiceLocation $createServiceLocation,
+        UpdateServiceLocation $updateServiceLocation,
+        DeleteServiceLocation $deleteServiceLocation,
+        ListServiceLocationsByServiceRequestId $listServiceLocationsByServiceRequestId,
+        GetServiceLocationById $getServiceLocationById
+    )
     {
-        $this->locationService = $locationService;
+        $this->createServiceLocation = $createServiceLocation;
+        $this->updateServiceLocation = $updateServiceLocation;
+        $this->deleteServiceLocation = $deleteServiceLocation;
+        $this->listServiceLocationsByServiceRequestId = $listServiceLocationsByServiceRequestId;
+        $this->getServiceLocationById = $getServiceLocationById;
     }
 
     public function store(StoreServiceLocationRequest $request, $serviceRequestId)
@@ -24,40 +42,40 @@ class ServiceRequestLocationController extends Controller
         $location = $serviceRequest->service_locations()->where('is_active', true)->first();
 
         if ($location) {
-             $updatedLocation = $this->locationService->updateServiceLocation($serviceRequestId, $location->id, $request->validated());
+             $updatedLocation = $this->updateServiceLocation->execute((int) $serviceRequestId, (int) $location->id, $request->validated());
              return APIResponse::success($updatedLocation, 200, 'Service location updated successfully');
         } else {
-             $newLocation = $this->locationService->createServiceLocation($serviceRequestId, $request->validated());
+             $newLocation = $this->createServiceLocation->execute((int) $serviceRequestId, $request->validated());
              return APIResponse::success($newLocation, 201, 'Service location set successfully');
         }
     }
 
     public function index($serviceRequestId)
     {
-        $locations = $this->locationService->getLocationsByServiceRequestId($serviceRequestId);
+        $locations = $this->listServiceLocationsByServiceRequestId->execute((int) $serviceRequestId);
         return APIResponse::success($locations, 200, 'Service locations retrieved successfully');
     }
 
     public function show($serviceRequestId, $locationId){
-        $location = $this->locationService->getLocationById($locationId);
+        $location = $this->getServiceLocationById->execute((int) $locationId);
         return APIResponse::success($location, 200, 'Service location retrieved successfully');
     }
 
     public function update(UpdateServiceLocationRequest $request, $serviceRequestId, $locationId)
     {
-        $location = $this->locationService->getLocationById($locationId);
+        $location = $this->getServiceLocationById->execute((int) $locationId);
         
         if($location->service_request_id != $serviceRequestId){
             return APIResponse::error('Location does not belong to this service request', 400);
         }
 
-        $updatedLocation = $this->locationService->updateServiceLocation($serviceRequestId, $location->id, $request->validated());
+        $updatedLocation = $this->updateServiceLocation->execute((int) $serviceRequestId, (int) $location->id, $request->validated());
         return APIResponse::success($updatedLocation, 200, 'Service location updated successfully');
     }
     
     public function destroy($serviceRequestId, $locationId)
     {
-        $this->locationService->deleteServiceLocation($locationId);
+        $this->deleteServiceLocation->execute((int) $locationId);
         return APIResponse::success(null, 200, 'Service location deleted successfully');
     }
 }
