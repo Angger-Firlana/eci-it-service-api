@@ -1,21 +1,22 @@
 # ECI IT Service API
 
-Laravel-based API for IT service request management (devices, approvals, costs, invoices, notifications).
+Backend API untuk manajemen IT service request (device, approval, service cost, invoice, notification) berbasis Laravel 12.
 
-## Main Documentation
+## Documentation Index
 
-Read the complete implementation documentation in:
+- `documentation.md`: katalog endpoint, request/response, relasi data, dan alur bisnis.
+- `reports.md`: changelog sesi implementasi per tanggal.
+- `changes.md`: catatan perubahan tambahan/fix tertentu.
 
-- `documentation.md`
+## Architecture Snapshot
 
-That file contains:
+Struktur saat ini menggunakan pendekatan domain modular:
 
-- full endpoint catalog
-- request/response contracts
-- database schema
-- all seeders and seeded data
-- workflow details
-- known implementation gaps
+- `app/Domains/*`: action/workflow/service per domain bisnis.
+- `app/Http/Controllers`: endpoint layer (delegasi ke domain service/workflow).
+- `app/Http/Requests`: validation layer per endpoint.
+- `app/Models`: Eloquent model + relasi data.
+- `routes/api.php`: registrasi route API.
 
 ## Quick Start
 
@@ -28,8 +29,20 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-For queued email mode:
+Untuk job queue (email/notifikasi async):
 
 ```bash
 php artisan queue:work
 ```
+
+## Development Commands
+
+```bash
+composer dev
+php artisan test
+```
+
+## Notes
+
+- Pastikan konfigurasi `.env` sudah sesuai (database, mail, queue, `FRONTEND_URL`, `ADMIN_MAIL`).
+- Folder `public/images` dipakai untuk penyimpanan attachment/upload file.

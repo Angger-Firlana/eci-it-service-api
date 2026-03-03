@@ -458,3 +458,74 @@ Make vendor approval notes optional at database level so approval records are no
 
 ### Files Modified
 - `database/migrations/2026_01_19_081515_create_vendor_approvals_table.php`
+
+## Session: 2026-03-02 - Service Request Domain Refactor Merge
+
+### Goal
+Finalize refactor branch for service request module so business logic is split into domain actions/workflows and remove dependence on legacy service structure.
+
+### Changes
+1. Merged `refactor/service-request` into `main` and moved service request logic into `app/Domains/*` modular structure.
+2. Added/updated workflow orchestration for create/get/update/delete service requests after refactor merge.
+3. Moved related modules into domain packages:
+   - `ServiceRequestApproval`
+   - `ServiceRequestCancellation`
+   - `ServiceRequestCost`
+   - `ServiceRequestDetail`
+   - `ServiceRequestLocation`
+4. Updated controller-service wiring so HTTP layer calls domain workflows/actions.
+5. Applied post-merge bug fixes for service request retrieval, status resolution, and service number/status helper usage.
+
+### Files Modified
+- `app/Domains/ServiceRequest/*`
+- `app/Domains/ServiceRequestApproval/*`
+- `app/Domains/ServiceRequestCancellation/*`
+- `app/Domains/ServiceRequestCost/*`
+- `app/Domains/ServiceRequestDetail/*`
+- `app/Domains/ServiceRequestLocation/*`
+- `app/Http/Controllers/ServiceRequestController.php`
+- `app/Http/Controllers/ServiceRequestApprovalController.php`
+- `app/Http/Controllers/ServiceRequestCancellationController.php`
+- `app/Http/Controllers/ServiceRequestCostController.php`
+
+## Session: 2026-03-02 - Audit Log Ordering Fix (Service Request Status Update)
+
+### Goal
+Fix incorrect audit-log capture during service request status update flow after domain refactor.
+
+### Changes
+1. Changed status update action to write audit log before persisting `status_id` so transition logs keep the expected old/new status context.
+2. Injected `WriteAuditLogs` into update workflow and removed unused status lookup in workflow layer.
+
+### Files Modified
+- `app/Domains/ServiceRequest/Actions/UpdateServiceRequestStatus.php`
+- `app/Domains/ServiceRequest/Services/UpdateServiceRequestWorkflow.php`
+
+## Session: 2026-03-03 - Operator Flow: Create Device After Service Request Creation
+
+### Goal
+Allow operator flow to create/link device after service request is created (during detail update), instead of forcing device creation at initial detail creation.
+
+### Changes
+1. Added `UpdateServiceRequestDetails` action and integrated it into `UpdateServiceRequestWorkflow` when `details` payload is provided.
+2. Updated detail update workflow:
+   - Finds current detail first.
+   - Creates/fetches device when `brand`, `model`, and `serial_number` are provided.
+   - Uses existing `device_type_id` from current detail for device resolver.
+3. Removed auto device creation from detail create workflow so initial detail creation no longer forces full device identity payload.
+4. Updated store validation to make `details.*.brand`, `details.*.model`, and `details.*.serial_number` optional.
+5. Updated `service_request_details` schema/model contract:
+   - `device_id` nullable.
+   - Added `device_type_id` column and relation/fillable/cast support.
+
+### Files Modified
+- `app/Domains/ServiceRequest/Actions/UpdateServiceRequestDetails.php`
+- `app/Domains/ServiceRequest/Services/UpdateServiceRequestWorkflow.php`
+- `app/Domains/ServiceRequestDetail/Actions/CheckOrCreateDevice.php`
+- `app/Domains/ServiceRequestDetail/Actions/CreateServiceRequestDetail.php`
+- `app/Domains/ServiceRequestDetail/Actions/UpdateServiceRequestDetail.php`
+- `app/Domains/ServiceRequestDetail/Services/CreateServiceRequestDetailWorkflow.php`
+- `app/Domains/ServiceRequestDetail/Services/UpdateServiceRequestDetailWorkflow.php`
+- `app/Http/Requests/ServiceRequest/StoreServiceRequest.php`
+- `app/Models/ServiceRequestDetail.php`
+- `database/migrations/2026_01_19_081325_create_service_request_details_table.php`
