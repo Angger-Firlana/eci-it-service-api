@@ -31,7 +31,7 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::prefix('device-type')->middleware('auth:sanctum')->group(function () {
-    Route::get('/', [DeviceTypeController::class, 'index'])->middleware('role:admin,operator');
+    Route::get('/', [DeviceTypeController::class, 'index'])->middleware('role:user,admin,operator');
     Route::get('/{id}', [DeviceTypeController::class, 'show'])->middleware('role:admin,operator');
     Route::post('/', [DeviceTypeController::class, 'store'])->middleware('role:admin');
     Route::put('/{id}', [DeviceTypeController::class, 'update'])->middleware('role:admin');
