@@ -15,11 +15,13 @@ class UserMiddleware
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if(!auth()->check()){
+        $guard = auth('sanctum');
+
+        if(!$guard->check()){
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $user = auth()->user();
+        $user = $guard->user();
         
         foreach($roles as $role){
             if($user->roles->contains('name', $role)){

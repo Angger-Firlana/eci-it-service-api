@@ -556,3 +556,23 @@ Menambahkan dukungan query `include` yang bisa memakai argumen (contoh `location
 - `app/Http/Controllers/InboxApprovalController.php`
 - `routes/api.php`
 - `documentation.md`
+
+## Session: 2026-03-05 - CORS + API Auth + ServiceRequest Include Fix
+
+### Goal
+Menghilangkan error CORS pada request API dari frontend dan memastikan response API tetap JSON (401) tanpa redirect. Sekaligus memperbaiki fatal error di `ServiceRequest` terkait include yang memakai closure.
+
+### Changes
+1. Menjadikan `HandleCors` global middleware (prepend) agar header CORS selalu terpasang, termasuk saat request gagal di awal pipeline.
+2. Menambahkan guard `sanctum` di `config/auth.php` dan memaksa `UserMiddleware` menggunakan `auth('sanctum')`.
+3. Menambahkan middleware `Authenticate` kustom untuk API agar tidak redirect ke route `login` (return `null`).
+4. Menambahkan handler `AuthenticationException` agar API selalu respon 401 JSON (`Unauthenticated`).
+5. Mengganti `AVAILABLE_INCLUDES` (const berisi closure) menjadi method `availableIncludes()` dan menyesuaikan `ShowRelationsHandler`.
+
+### Files Modified
+- `bootstrap/app.php`
+- `config/auth.php`
+- `app/Http/Middleware/UserMiddleware.php`
+- `app/Http/Middleware/Authenticate.php`
+- `app/Models/ServiceRequest.php`
+- `app/Domains/ServiceRequest/Support/ShowRelationsHandler.php`

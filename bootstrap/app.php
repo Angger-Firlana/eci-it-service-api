@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Validation\ValidationException;
 use App\Helpers\APIResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Auth\AuthenticationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
@@ -23,10 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->api(prepend: [
-            \Illuminate\Http\Middleware\HandleCors::class,
-        ]);
+        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
         $middleware->alias([
+            'auth' => \App\Http\Middleware\Authenticate::class,
             'role' => \App\Http\Middleware\UserMiddleware::class,
         ]);
     })
@@ -47,6 +47,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // 401
         $exceptions->render(function (UnauthorizedHttpException $e) {
             return APIResponse::error(null, 401, 'Unauthorized');
+        });
+
+        // 401 - auth middleware
+        $exceptions->render(function (AuthenticationException $e) {
+            return APIResponse::error(null, 401, 'Unauthenticated');
         });
 
         // 403

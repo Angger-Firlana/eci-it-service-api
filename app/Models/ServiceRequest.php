@@ -38,43 +38,46 @@ class ServiceRequest extends Model
 {
 	protected $table = 'service_requests';
 
-	public const AVAILABLE_INCLUDES = [
-		'user' => [
-			'user:id,name,email',
-		],
-		'operator' => [
-			'operator:id,name,email',
-		],
-		'status' => [
-			'status:id,name,code',
-		],
-		'locations' => [
-			'service_locations:id,service_request_id,vendor_id,location_type,address,phone_number,is_active',
-		],
-		'details.device.deviceModel' => [
-			'service_request_details.device.device_model:id,device_type_id,brand,model',
-		],
-		'details.device.deviceModel.deviceType' => [
-			'service_request_details:id,service_request_id,device_id,device_type_id,complaint,solution',
-			'service_request_details.device:id,device_model_id,serial_number,bad_asset',
-			'service_request_details.device.device_model:id,device_type_id,brand,model',
-			'service_request_details.device.device_model.device_type:id,name',
-		],
-		'locations(active)' => [
-			'service_locations' => function ($query) {
-				$query->where('is_active', true)
-					->select([
-						'id',
-						'service_request_id',
-						'vendor_id',
-						'location_type',
-						'address',
-						'phone_number',
-						'is_active'
-					]);
-			},
-		],
-	];
+	public static function availableIncludes(): array
+	{
+		return [
+			'user' => [
+				'user:id,name,email',
+			],
+			'operator' => [
+				'operator:id,name,email',
+			],
+			'status' => [
+				'status:id,name,code',
+			],
+			'locations' => [
+				'service_locations:id,service_request_id,vendor_id,location_type,address,phone_number,is_active',
+			],
+			'details.device.deviceModel' => [
+				'service_request_details.device.device_model:id,device_type_id,brand,model',
+			],
+			'details.device.deviceModel.deviceType' => [
+				'service_request_details:id,service_request_id,device_id,device_type_id,complaint,solution',
+				'service_request_details.device:id,device_model_id,serial_number,bad_asset',
+				'service_request_details.device.device_model:id,device_type_id,brand,model',
+				'service_request_details.device.device_model.device_type:id,name',
+			],
+			'locations(active)' => [
+				'service_locations' => function ($query) {
+					$query->where('is_active', true)
+						->select([
+							'id',
+							'service_request_id',
+							'vendor_id',
+							'location_type',
+							'address',
+							'phone_number',
+							'is_active'
+						]);
+				},
+			],
+		];
+	}
 
 	protected $casts = [
 		'user_id' => 'int',

@@ -81,7 +81,7 @@ class ShowRelationsHandler{
     public function indexWithFromIncludeString(string $includeParam): array
     {
         $relations = [];
-        $availableIncludes = ServiceRequest::AVAILABLE_INCLUDES;
+        $availableIncludes = ServiceRequest::availableIncludes();
         $tokens = $this->parseIncludeTokens($includeParam);
 
         foreach ($tokens as $token) {
