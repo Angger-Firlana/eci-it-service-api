@@ -6,18 +6,112 @@ use Illuminate\Http\Request;
 use App\Models\ServiceRequest;
 
 class ShowRelationsHandler{
+    private function splitIncludes(string $includeParam): array
+    {
+        $includes = [];
+        $current = '';
+        $depth = 0;
+        $length = strlen($includeParam);
+
+        for ($i = 0; $i < $length; $i++) {
+            $char = $includeParam[$i];
+
+            if ($char === '(') {
+                $depth++;
+                $current .= $char;
+                continue;
+            }
+
+            if ($char === ')') {
+                $depth = max(0, $depth - 1);
+                $current .= $char;
+                continue;
+            }
+
+            if ($char === ',' && $depth === 0) {
+                $trimmed = trim($current);
+                if ($trimmed !== '') {
+                    $includes[] = $trimmed;
+                }
+                $current = '';
+                continue;
+            }
+
+            $current .= $char;
+        }
+
+        $trimmed = trim($current);
+        if ($trimmed !== '') {
+            $includes[] = $trimmed;
+        }
+
+        return $includes;
+    }
+
+    public function parseIncludeTokens(string $includeParam): array
+    {
+        $tokens = [];
+        $rawIncludes = $this->splitIncludes($includeParam);
+
+        foreach ($rawIncludes as $raw) {
+            $raw = trim($raw);
+            if ($raw === '') {
+                continue;
+            }
+
+            $name = $raw;
+            $args = [];
+
+            $openPos = strpos($raw, '(');
+            if ($openPos !== false && str_ends_with($raw, ')')) {
+                $name = trim(substr($raw, 0, $openPos));
+                $argsString = substr($raw, $openPos + 1, -1);
+                $args = array_map('trim', $this->splitIncludes($argsString));
+            }
+
+            $tokens[] = [
+                'name' => $name,
+                'args' => $args
+            ];
+        }
+
+        return $tokens;
+    }
+
+    public function indexWithFromIncludeString(string $includeParam): array
+    {
+        $relations = [];
+        $availableIncludes = ServiceRequest::AVAILABLE_INCLUDES;
+        $tokens = $this->parseIncludeTokens($includeParam);
+
+        foreach ($tokens as $token) {
+            $includeName = $token['name'];
+            $args = $token['args'];
+
+            if ($includeName === '') {
+                continue;
+            }
+
+            $lookupKey = $includeName;
+            if (!empty($args)) {
+                $keyWithArgs = $includeName . '(' . implode(',', $args) . ')';
+                if (isset($availableIncludes[$keyWithArgs])) {
+                    $lookupKey = $keyWithArgs;
+                }
+            }
+
+            if (isset($availableIncludes[$lookupKey])) {
+                $relations = array_merge($relations, $availableIncludes[$lookupKey]);
+            }
+        }
+
+        return $relations;
+    }
+
      //function to get relations for index
     public function indexWith(Request $request): array
     {
-        $relations = [];
-        $includes = explode(',', $request->get('include', ''));
-        $availableIncludes = ServiceRequest::AVAILABLE_INCLUDES;
-        foreach ($includes as $include) {
-            if(isset($availableIncludes[$include])){
-                $relations = array_merge($relations, $availableIncludes[$include]);
-            }
-        }
-        return $relations;
+        return $this->indexWithFromIncludeString($request->get('include', ''));
     }
 
     //function to get relations for show
@@ -49,6 +143,15 @@ class ShowRelationsHandler{
             'user:id,name,email',
             'status:id,name,code',
             'service_request_details.device:id,device_model_id,serial_number,bad_asset'
+        ];
+    }
+
+    public function summaryWith(): array
+    {
+        return [
+            'user:id,name',
+            'operator:id,name',
+            'status:id,name,code',
         ];
     }
 }

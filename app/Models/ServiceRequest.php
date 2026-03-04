@@ -49,11 +49,30 @@ class ServiceRequest extends Model
 			'status:id,name,code',
 		],
 		'locations' => [
-			'service_locations:id,service_request_id,location_id,phone_number',
-			'service_locations.location:id,name',
+			'service_locations:id,service_request_id,vendor_id,location_type,address,phone_number,is_active',
 		],
 		'details.device.deviceModel' => [
 			'service_request_details.device.device_model:id,device_type_id,brand,model',
+		],
+		'details.device.deviceModel.deviceType' => [
+			'service_request_details:id,service_request_id,device_id,device_type_id,complaint,solution',
+			'service_request_details.device:id,device_model_id,serial_number,bad_asset',
+			'service_request_details.device.device_model:id,device_type_id,brand,model',
+			'service_request_details.device.device_model.device_type:id,name',
+		],
+		'locations(active)' => [
+			'service_locations' => function ($query) {
+				$query->where('is_active', true)
+					->select([
+						'id',
+						'service_request_id',
+						'vendor_id',
+						'location_type',
+						'address',
+						'phone_number',
+						'is_active'
+					]);
+			},
 		],
 	];
 
@@ -131,7 +150,15 @@ class ServiceRequest extends Model
 				$request->filled('request_date'),
 				fn ($q) => $q->whereDate('service_requests.created_at', $request->request_date)
 			)
-			->select(['service_requests.id', 'service_requests.user_id', 'service_requests.operator_id', 'service_requests.status_id', 'service_requests.created_at']);
+			->select([
+				'service_requests.id',
+				'service_requests.user_id',
+				'service_requests.operator_id',
+				'service_requests.status_id',
+				'service_requests.service_number',
+				'service_requests.estimated_date',
+				'service_requests.created_at'
+			]);
 
 		if ($request->filled('search')) {
 			$keyword = addcslashes($request->search, '%_');

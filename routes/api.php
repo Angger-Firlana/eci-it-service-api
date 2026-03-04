@@ -59,6 +59,9 @@ Route::prefix('devices')->middleware('auth:sanctum')->group(function(){
 
 Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [ServiceRequestController::class, 'index'])->middleware('role:user,admin,operator,manager');
+    Route::get('/summary', [ServiceRequestController::class, 'summary'])
+        ->middleware('role:user,admin,operator,manager')
+        ->middleware('throttle:60,1');
     Route::get('/stats', [ServiceRequestController::class, 'stats'])->middleware('role:admin,operator,manager');
     Route::get('/{id}', [ServiceRequestController::class, 'show'])->middleware('role:user,admin,operator,manager');
     Route::post('/', [ServiceRequestController::class, 'store'])->middleware('role:user');
@@ -157,5 +160,8 @@ Route::prefix('notifications')->middleware('auth:sanctum')->group(function(){
 
 Route::prefix('inbox-approvals')->middleware('auth:sanctum')->group(function(){
     Route::get('/{statusId}', [InboxApprovalController::class, 'index'])->middleware('role:admin,operator,manager');
+    Route::get('/{statusId}/summary', [InboxApprovalController::class, 'summary'])
+        ->middleware('role:admin,operator,manager')
+        ->middleware('throttle:60,1');
     Route::put('/{id}/read', [InboxApprovalController::class, 'readInbox'])->middleware('role:admin,operator,manager');
 });

@@ -37,6 +37,13 @@ class ServiceRequestController extends Controller
         return APIResponse::success($data, 200, "Success", $meta);
     }
 
+    public function summary(Request $request){
+        $paginator = $this->getServiceRequest->getAllServiceRequestSummary($request);
+        $data = $paginator->items();
+        $meta = APIResponse::formatPagination($paginator);
+        return APIResponse::success($data, 200, "Success", $meta);
+    }
+
     public function show($id){
         $serviceRequests = $this->getServiceRequest->getServiceRequestById((int) $id);
         return APIResponse::success($serviceRequests);
