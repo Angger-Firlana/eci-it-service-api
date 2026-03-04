@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Services\AuthService;
 use App\Helpers\APIResponse;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Requests\Auth\RegisterRequest;
 
 /**
  * Handles authentication-related API requests such as login, registration, and logout.
@@ -39,21 +38,6 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request){
         $result = $this->authService->login($request->validated());
-        if(!$result['code'] >= 200 && $result['code'] < 300){
-            return $this->apiResponse->error($result['errors'] ?? null, $result['code'], $result['message']);
-        }
-
-        return $this->apiResponse->success($result['data'] ?? null, $result['code'], $result['message']);
-    }
-
-    /**
-     * Handle a user registration request.
-     *
-     * @param RegisterRequest $request The registration request containing user data.
-     * @return \Illuminate\Http\JsonResponse The JSON response with the newly registered user or error.
-     */
-    public function register(RegisterRequest $request){
-        $result = $this->authService->register($request->validated());
         if(!$result['code'] >= 200 && $result['code'] < 300){
             return $this->apiResponse->error($result['errors'] ?? null, $result['code'], $result['message']);
         }

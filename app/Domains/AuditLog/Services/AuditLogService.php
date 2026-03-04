@@ -10,6 +10,7 @@ use App\Domains\AuditLog\Actions\GetTimelineForServiceRequest;
 use App\Models\AuditLog;
 use App\Models\ServiceRequest;
 use App\Models\Status;
+use App\Models\VendorApproval;
 use Illuminate\Database\Eloquent\Collection;
 
 class AuditLogService
@@ -38,9 +39,30 @@ class AuditLogService
         $this->createStatusAuditLog->execute($serviceRequest, $status, $oldStatusId, $newStatusId, $data);
     }
 
-    public function createServiceRequestAuditLog(ServiceRequest $serviceRequest, string $action, string $notes): void
+    public function writeAuditLogsApproval(VendorApproval $vendorApproval,$newStatusId, string $action, ?string $Lognotes = null): void
     {
-        $this->createServiceRequestAuditLog->execute($serviceRequest, $action, $notes);
+        $this->createAuditLog([
+            'actor_id' => auth()->id(),
+            'entity_id' => $vendorApproval->id,
+            'entity_type_id' => 2,
+            'action' => $action,
+            'notes' => $Lognotes ?? 'Vendor approval ' . $action,
+            'old_status_id' => $vendorApproval->status_id,
+            'new_status_id' => $newStatusId,
+        ]);
+    }
+
+    public function writeAuditLogsServiceRequest(ServiceRequest $serviceRequest, Status $newStatus,string $action, ?string $Lognotes = null): void
+    {
+        $this->createAuditLog([
+            'actor_id' => auth()->id() ?? $serviceRequest->user_id,
+            'entity_id' => $serviceRequest->id,
+            'entity_type_id' => 1,
+            'action' => $action,
+            'notes' => $Lognotes ?? "Status {$serviceRequest->status->name} to {$newStatus->name}",
+            'old_status_id' => $serviceRequest->status_id,
+            'new_status_id' => $newStatus->id,
+        ]);
     }
 
     public function getAuditLogsForServiceRequest(ServiceRequest $serviceRequest): Collection

@@ -4,23 +4,43 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helpers\APIResponse;
-use App\Domains\Device\Services\DeviceModelService;
+use App\Domains\Device\Actions\ListDeviceModels;
+use App\Domains\Device\Actions\GetDeviceModelById;
+use App\Domains\Device\Actions\CreateDeviceModel;
+use App\Domains\Device\Actions\UpdateDeviceModel;
+use App\Domains\Device\Actions\PatchDeviceModel;
+use App\Domains\Device\Actions\DeleteDeviceModel;
 use App\Http\Requests\DeviceModel\PostDeviceModelRequest;
 use App\Http\Requests\DeviceModel\PutDeviceModelRequest;
 
 class DeviceModelController extends Controller
 {
-    protected $deviceModelService;
+    protected ListDeviceModels $listDeviceModels;
+    protected GetDeviceModelById $getDeviceModelById;
+    protected CreateDeviceModel $createDeviceModel;
+    protected UpdateDeviceModel $updateDeviceModel;
+    protected PatchDeviceModel $patchDeviceModel;
+    protected DeleteDeviceModel $deleteDeviceModel;
 
     
     public function __construct(
-        DeviceModelService $deviceModelService
+        ListDeviceModels $listDeviceModels,
+        GetDeviceModelById $getDeviceModelById,
+        CreateDeviceModel $createDeviceModel,
+        UpdateDeviceModel $updateDeviceModel,
+        PatchDeviceModel $patchDeviceModel,
+        DeleteDeviceModel $deleteDeviceModel
     ){
-        $this->deviceModelService = $deviceModelService;
+        $this->listDeviceModels = $listDeviceModels;
+        $this->getDeviceModelById = $getDeviceModelById;
+        $this->createDeviceModel = $createDeviceModel;
+        $this->updateDeviceModel = $updateDeviceModel;
+        $this->patchDeviceModel = $patchDeviceModel;
+        $this->deleteDeviceModel = $deleteDeviceModel;
     }
 
     public function index(Request $request){
-        $paginator = $this->deviceModelService->getAllDeviceModel($request->keyword);
+        $paginator = $this->listDeviceModels->execute($request->keyword);
         $data = $paginator->items();
         $meta = APIResponse::formatPagination($paginator);
         
@@ -28,27 +48,27 @@ class DeviceModelController extends Controller
     }
 
     public function show(int $id){
-        $data = $this->deviceModelService->getDeviceModelById($id);
+        $data = $this->getDeviceModelById->execute($id);
         return APIResponse::success($data, 200, "Device Model Found");
     }
 
     public function store(PostDeviceModelRequest $request){
-        $data = $this->deviceModelService->createDeviceModel($request->validated());
+        $data = $this->createDeviceModel->execute($request->validated());
         return APIResponse::success($data, 201, "Device Model Create Successfully");
     }
 
     public function update($id, PutDeviceModelRequest $request){
-        $data = $this->deviceModelService->updateDeviceModel($id, $request->validated());
+        $data = $this->updateDeviceModel->execute((int) $id, $request->validated());
         return APIResponse::success($data, 200, "Device Model Update Successfully");
     }
 
     public function patch($id, PutDeviceModelRequest $request){
-        $data = $this->deviceModelService->patchDeviceModel($id, $request->validated());
+        $data = $this->patchDeviceModel->execute((int) $id, $request->validated());
         return APIResponse::success($data, 200, "Device Model Patch Successfully");
     }
 
     public function destroy($id){
-        $this->deviceModelService->deleteDeviceModel($id);
+        $this->deleteDeviceModel->execute((int) $id);
         return APIResponse::success(null, 200, "Device Model Delete Successfully");
     }
 }

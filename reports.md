@@ -529,3 +529,30 @@ Allow operator flow to create/link device after service request is created (duri
 - `app/Http/Requests/ServiceRequest/StoreServiceRequest.php`
 - `app/Models/ServiceRequestDetail.php`
 - `database/migrations/2026_01_19_081325_create_service_request_details_table.php`
+
+## Session: 2026-03-04 - Include Parsing + Summary Endpoints + Throttle
+
+### Goal
+Menambahkan dukungan query `include` yang bisa memakai argumen (contoh `locations(active)` dan `approvals(status,approver)`), memastikan eager loading aman untuk list utama, serta menyediakan endpoint list ringan untuk UI dengan batas pagination dan throttle.
+
+### Changes
+1. Menambahkan parser `include` yang memahami tanda kurung dan argumen nested.
+2. Menambahkan include `details.device.deviceModel.deviceType` serta `locations(active)` untuk filter lokasi aktif.
+3. Menambahkan endpoint ringan:
+   - `GET /api/service-requests/summary`
+   - `GET /api/inbox-approvals/{statusId}/summary`
+4. Membatasi `per_page` maksimal 100 untuk list utama dan summary.
+5. Menambahkan throttle `60/min` pada endpoint summary.
+6. Menambahkan eager loading untuk inbox approvals berdasarkan `include=serviceRequest(...)`.
+7. Menambahkan relasi summary default untuk service request list ringan.
+
+### Files Modified
+- `app/Domains/ServiceRequest/Support/ShowRelationsHandler.php`
+- `app/Models/ServiceRequest.php`
+- `app/Domains/ServiceRequest/Actions/GetServiceRequest.php`
+- `app/Domains/Inbox/Actions/ListInboxApprovals.php`
+- `app/Domains/Inbox/Actions/ListInboxApprovalsSummary.php`
+- `app/Http/Controllers/ServiceRequestController.php`
+- `app/Http/Controllers/InboxApprovalController.php`
+- `routes/api.php`
+- `documentation.md`

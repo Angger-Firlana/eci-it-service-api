@@ -1,7 +1,7 @@
 # ECI IT Service API - Complete Implementation Documentation
 
 Version: code-accurate snapshot (generated from current source)
-Date: 2026-02-23
+Date: 2026-03-04
 Framework: Laravel 12 + Sanctum
 
 This document is intentionally written as a full implementation reference so frontend/backend integrators can work without opening the codebase.
@@ -172,6 +172,10 @@ For endpoints using `APIResponse::formatPagination`:
 }
 ```
 
+Notes:
+
+- `per_page` is capped at `100` for service request list/summary and inbox approvals summary endpoints.
+
 ### 3.6 Timezone
 
 - Application timezone: `UTC` (`config/app.php`).
@@ -223,6 +227,7 @@ Devices:
 Service requests core:
 
 - `GET /api/service-requests`
+- `GET /api/service-requests/summary`
 - `GET /api/service-requests/stats`
 - `GET /api/service-requests/{id}`
 - `POST /api/service-requests`
@@ -300,6 +305,7 @@ Notifications:
 Inbox approvals:
 
 - `GET /api/inbox-approvals/{statusId}`
+- `GET /api/inbox-approvals/{statusId}/summary`
 - `PUT /api/inbox-approvals/{id}/read`
 
 Misc:
@@ -1030,9 +1036,34 @@ Known behavior:
   - `request_date` (applied against `created_at` date)
   - `search` (keyword against user name, service number, device model, serial number, vendor name, location phone)
   - `per_page`
-- Returns paginated with relations:
-  - user/admin/status
-  - detail + device + device model
+- Optional query:
+  - `include` (comma-separated includes, supports nested args with parentheses)
+- Include options:
+  - `user`
+  - `operator`
+  - `status`
+  - `details.device.deviceModel`
+  - `details.device.deviceModel.deviceType`
+  - `locations`
+  - `locations(active)`
+  - `approvals` or `approvals(status,approver)`
+- Returns paginated list. Relations are only eager loaded when requested via `include`.
+
+Examples:
+
+- `GET /api/service-requests?per_page=20&include=user,operator,status,details.device.deviceModel.deviceType,locations(active),approvals(status,approver)`
+
+### `GET /api/service-requests/summary`
+
+- Auth: yes
+- Purpose: lightweight list for UI (minimal fields + minimal relations).
+- Query filters: same as `/api/service-requests`
+- `per_page` max: `100`
+- Throttled: `60` requests per minute.
+- Relations included by default:
+  - `user` (id, name)
+  - `operator` (id, name)
+  - `status` (id, name, code)
 
 ### `GET /api/service-requests/stats`
 
@@ -1463,6 +1494,21 @@ Behavior:
 
 - Auth: yes
 - Returns `vendor_approvals` for current approver filtered by `status_id`.
+- Optional query:
+  - `include=serviceRequest(...)` to eager load service request relations.
+- Example:
+  - `GET /api/inbox-approvals/{statusId}?include=serviceRequest(user,status,details.device.deviceModel.deviceType,locations(active),approvals(status,approver))`
+
+### `GET /api/inbox-approvals/{statusId}/summary`
+
+- Auth: yes
+- Purpose: lightweight list for UI (minimal approval + service request fields).
+- `per_page` max: `100`
+- Relations included by default on `service_request`:
+  - `user` (id, name)
+  - `operator` (id, name)
+  - `status` (id, name, code)
+- Throttled: `60` requests per minute.
 
 ### `PUT /api/inbox-approvals/{id}/read`
 

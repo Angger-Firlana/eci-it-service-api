@@ -24,80 +24,78 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ContactAdminController;
 use App\Http\Controllers\InboxApprovalController;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/me', [AuthController::class, 'getDataMe'])->middleware('auth:sanctum');
 });
 
 Route::prefix('device-type')->middleware('auth:sanctum')->group(function () {
-    Route::get('/', [DeviceTypeController::class, 'index']);
-    Route::get('/{id}', [DeviceTypeController::class, 'show']);
-    Route::post('/', [DeviceTypeController::class, 'store']);
-    Route::put('/{id}', [DeviceTypeController::class, 'update']);
-    Route::delete('/{id}', [DeviceTypeController::class, 'destroy']);
+    Route::get('/', [DeviceTypeController::class, 'index'])->middleware('role:user,admin,operator');
+    Route::get('/{id}', [DeviceTypeController::class, 'show'])->middleware('role:admin,operator');
+    Route::post('/', [DeviceTypeController::class, 'store'])->middleware('role:admin');
+    Route::put('/{id}', [DeviceTypeController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [DeviceTypeController::class, 'destroy'])->middleware('role:admin');
 });
 
 Route::prefix('device-model')->middleware('auth:sanctum')->group(function(){
-    Route::get('/', [DeviceModelController::class, 'index']);
-    Route::get('/{id}', [DeviceModelController::class, 'show']);
-    Route::post('/', [DeviceModelController::class, 'store']);
-    Route::put('/{id}', [DeviceModelController::class, 'update']);
-    Route::patch('/{id}', [DeviceModelController::class, 'patch']);
-    Route::delete('/{id}', [DeviceModelController::class, 'destroy']);
+    Route::get('/', [DeviceModelController::class, 'index'])->middleware('role:user,admin,operator');
+    Route::get('/{id}', [DeviceModelController::class, 'show'])->middleware('role:user,admin,operator');
+    Route::post('/', [DeviceModelController::class, 'store'])->middleware('role:admin');
+    Route::put('/{id}', [DeviceModelController::class, 'update'])->middleware('role:admin');
+    Route::patch('/{id}', [DeviceModelController::class, 'patch'])->middleware('role:admin');
+    Route::delete('/{id}', [DeviceModelController::class, 'destroy'])->middleware('role:admin');
 });
 
 Route::prefix('devices')->middleware('auth:sanctum')->group(function(){
-    Route::get('/', [DeviceController::class, 'index']);
-    Route::get('/{id}', [DeviceController::class, 'show']);
-    Route::post('/', [DeviceController::class, 'store']);
-    Route::put('/{id}', [DeviceController::class, 'update']);
-    Route::patch('/{id}', [DeviceController::class, 'patch']);
-    Route::delete('/{id}', [DeviceController::class, 'destroy']);
+    Route::get('/', [DeviceController::class, 'index'])->middleware('role:user,admin,operator,manager');
+    Route::get('/{id}', [DeviceController::class, 'show'])->middleware('role:user,admin,operator,manager');
+    Route::post('/', [DeviceController::class, 'store'])->middleware('role:admin');
+    Route::put('/{id}', [DeviceController::class, 'update'])->middleware('role:admin');
+    Route::patch('/{id}', [DeviceController::class, 'patch'])->middleware('role:admin');
+    Route::delete('/{id}', [DeviceController::class, 'destroy'])->middleware('role:admin');
 
 });
 
 Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
-    Route::get('/', [ServiceRequestController::class, 'index']);
-    Route::get('/stats', [ServiceRequestController::class, 'stats']);
-    Route::get('/{id}', [ServiceRequestController::class, 'show']);
-    Route::post('/', [ServiceRequestController::class, 'store']);
-    Route::put('/{id}', [ServiceRequestController::class, 'update']);
-    Route::delete('/{id}', [ServiceRequestController::class, 'destroy']);
+    Route::get('/', [ServiceRequestController::class, 'index'])->middleware('role:user,admin,operator,manager');
+    Route::get('/summary', [ServiceRequestController::class, 'summary'])
+        ->middleware('role:user,admin,operator,manager')
+        ->middleware('throttle:60,1');
+    Route::get('/stats', [ServiceRequestController::class, 'stats'])->middleware('role:admin,operator,manager');
+    Route::get('/{id}', [ServiceRequestController::class, 'show'])->middleware('role:user,admin,operator,manager');
+    Route::post('/', [ServiceRequestController::class, 'store'])->middleware('role:user');
+    Route::put('/{id}', [ServiceRequestController::class, 'update'])->middleware('role:operator');
+    Route::delete('/{id}', [ServiceRequestController::class, 'destroy'])->middleware('role:admin');
     Route::get('/{id}/allowed-transitions', [ServiceRequestController::class, 'allowedTransitions']);
-    Route::get('/{id}/download-invoice', [ExportInvoiceController::class, 'download']);
-    Route::get('/{id}/preview-invoice', [ExportInvoiceController::class, 'downloadPreview']);
-    Route::get('/{id}/can-print-invoice', [ExportInvoiceController::class, 'canPrint']);
+    Route::get('/{id}/download-invoice', [ExportInvoiceController::class, 'download'])->middleware('role:user,admin,operator,manager');
+    Route::get('/{id}/preview-invoice', [ExportInvoiceController::class, 'downloadPreview'])->middleware('role:user,admin,operator,manager');
+    Route::get('/{id}/can-print-invoice', [ExportInvoiceController::class, 'canPrint'])->middleware('role:user,admin,operator,manager');
     
     //costs
-    Route::get('/{serviceRequestId}/costs', [ServiceRequestCostController::class, 'index']);
-    Route::post('/{serviceRequestId}/costs', [ServiceRequestCostController::class, 'store']);
-    Route::put('/{serviceRequestId}/costs/{costId}', [ServiceRequestCostController::class, 'update']);
-    Route::get('/{serviceRequestId}/costs/{costId}/attachment', [ServiceRequestCostController::class, 'attachment']);
-    Route::delete('/{serviceRequestId}/costs/{costId}', [ServiceRequestCostController::class, 'destroy']);
+    Route::get('/{serviceRequestId}/costs', [ServiceRequestCostController::class, 'index'])->middleware('role:admin,operator,manager');
+    Route::post('/{serviceRequestId}/costs', [ServiceRequestCostController::class, 'store'])->middleware('role:admin,operator,manager');
+    Route::put('/{serviceRequestId}/costs/{costId}', [ServiceRequestCostController::class, 'update'])->middleware('role:admin,operator,manager');
+    Route::get('/{serviceRequestId}/costs/{costId}/attachment', [ServiceRequestCostController::class, 'attachment'])->middleware('role:user,admin,operator,manager');
+    Route::delete('/{serviceRequestId}/costs/{costId}', [ServiceRequestCostController::class, 'destroy'])->middleware('role:admin,operator,manager');
 
     //Locations
-    Route::post('/{serviceRequestId}/locations', [ServiceRequestLocationController::class, 'store']);
-    Route::get('/{serviceRequestId}/locations', [ServiceRequestLocationController::class, 'index']);
-    Route::get('/{serviceRequestId}/locations/{locationId}', [ServiceRequestLocationController::class, 'show']);
-    Route::put('/{serviceRequestId}/locations/{locationId}', [ServiceRequestLocationController::class, 'update']);
-    Route::delete('/{serviceRequestId}/locations/{locationId}', [ServiceRequestLocationController::class, 'destroy']);
+    Route::post('/{serviceRequestId}/locations', [ServiceRequestLocationController::class, 'store'])->middleware('role:admin,operator,manager');
+    Route::get('/{serviceRequestId}/locations', [ServiceRequestLocationController::class, 'index'])->middleware('role:user,admin,operator,manager');
+    Route::get('/{serviceRequestId}/locations/{locationId}', [ServiceRequestLocationController::class, 'show'])->middleware('role:user,admin,operator,manager');
+    Route::put('/{serviceRequestId}/locations/{locationId}', [ServiceRequestLocationController::class, 'update'])->middleware('role:admin,operator,manager');
+    Route::delete('/{serviceRequestId}/locations/{locationId}', [ServiceRequestLocationController::class, 'destroy'])->middleware('role:admin,operator,manager');
 
     // Approval (Keep existing or aliased if needed)
-    Route::get('/{serviceRequestId}/approvers', [ApprovalController::class, 'getApproversByServiceRequestId']);
-    Route::post('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'store']);
-    Route::get('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'index']);
-    Route::put('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'update']);
-    Route::delete('/{serviceRequestId}/approvals/{approvalId}', [ServiceRequestApprovalController::class, 'destroy']);
-    Route::post('/approved/{approvalId}', [ApprovalController::class, 'approveVendorRequest']);
-    Route::post('/need-repair/{serviceRequestId}', [ApprovalController::class, 'deviceNeedRepair']);
-    Route::post('/no-need-repair/{serviceRequestId}', [ApprovalController::class, 'deviceNoNeedRepair']);
-    Route::post('/rejected/{approvalId}', [ApprovalController::class, 'rejectVendorRequest']);
+    Route::get('/{serviceRequestId}/approvers', [ApprovalController::class, 'getApproversByServiceRequestId'])->middleware('role:admin,operator,manager');
+    Route::post('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'store'])->middleware('role:admin,operator,manager');
+    Route::get('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'index'])->middleware('role:admin,operator,manager');
+    Route::put('/{serviceRequestId}/approvals', [ServiceRequestApprovalController::class, 'update'])->middleware('role:admin,operator,manager');
+    Route::delete('/{serviceRequestId}/approvals/{approvalId}', [ServiceRequestApprovalController::class, 'destroy'])->middleware('role:admin,operator,manager');
+    Route::post('/approved/{approvalId}', [ApprovalController::class, 'approveVendorRequest'])->middleware('role:admin,operator,manager');
+    Route::post('/need-repair/{serviceRequestId}', [ApprovalController::class, 'deviceNeedRepair'])->middleware('role:admin,operator,manager');
+    Route::post('/no-need-repair/{serviceRequestId}', [ApprovalController::class, 'deviceNoNeedRepair'])->middleware('role:admin,operator,manager');
+    Route::post('/rejected/{approvalId}', [ApprovalController::class, 'rejectVendorRequest'])->middleware('role:admin,operator,manager');
 
     //Cancellation
     Route::get('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'index']);
@@ -119,17 +117,17 @@ Route::prefix('references')->middleware('auth:sanctum')->group(function() {
 Route::prefix('departments')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [DepartmentController::class, 'index']);
     Route::get('/{id}', [DepartmentController::class, 'show']);
-    Route::post('/', [DepartmentController::class, 'store']);
-    Route::put('/{id}', [DepartmentController::class, 'update']);
-    Route::delete('/{id}', [DepartmentController::class, 'destroy']);
+    Route::post('/', [DepartmentController::class, 'store'])->middleware('role:admin');
+    Route::put('/{id}', [DepartmentController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [DepartmentController::class, 'destroy'])->middleware('role:admin');
 });
 
 Route::prefix('users')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [UserController::class, 'index']);
     Route::get('/{id}', [UserController::class, 'show']);
-    Route::post('/', [UserController::class, 'store']);
-    Route::put('/{id}', [UserController::class, 'update']);
-    Route::delete('/{id}', [UserController::class, 'destroy']);
+    Route::post('/', [UserController::class, 'store'])->middleware('role:admin');
+    Route::put('/{id}', [UserController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [UserController::class, 'destroy'])->middleware('role:admin');
 });
 
 Route::prefix('invoices')->middleware('auth:sanctum')->group(function(){
@@ -142,17 +140,17 @@ Route::prefix('invoices')->middleware('auth:sanctum')->group(function(){
 Route::prefix('vendors')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [VendorController::class, 'index']);
     Route::get('/{id}', [VendorController::class, 'show']);
-    Route::post('/', [VendorController::class, 'store']);
-    Route::put('/{id}', [VendorController::class, 'update']);
-    Route::delete('/{id}', [VendorController::class, 'destroy']);
+    Route::post('/', [VendorController::class, 'store'])->middleware('role:admin');
+    Route::put('/{id}', [VendorController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [VendorController::class, 'destroy'])->middleware('role:admin');
 });
 
 Route::prefix('cost-types')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [CostTypeController::class, 'index']);
     Route::get('/{id}', [CostTypeController::class, 'show']);
-    Route::post('/', [CostTypeController::class, 'store']);
-    Route::put('/{id}', [CostTypeController::class, 'update']);
-    Route::delete('/{id}', [CostTypeController::class, 'destroy']);
+    Route::post('/', [CostTypeController::class, 'store'])->middleware('role:admin');
+    Route::put('/{id}', [CostTypeController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [CostTypeController::class, 'destroy'])->middleware('role:admin');
 });
 
 Route::prefix('notifications')->middleware('auth:sanctum')->group(function(){
@@ -161,11 +159,9 @@ Route::prefix('notifications')->middleware('auth:sanctum')->group(function(){
 });
 
 Route::prefix('inbox-approvals')->middleware('auth:sanctum')->group(function(){
-    Route::get('/{statusId}', [InboxApprovalController::class, 'index']);
-    Route::put('/{id}/read', [InboxApprovalController::class, 'readInbox']);
+    Route::get('/{statusId}', [InboxApprovalController::class, 'index'])->middleware('role:admin,operator,manager');
+    Route::get('/{statusId}/summary', [InboxApprovalController::class, 'summary'])
+        ->middleware('role:admin,operator,manager')
+        ->middleware('throttle:60,1');
+    Route::put('/{id}/read', [InboxApprovalController::class, 'readInbox'])->middleware('role:admin,operator,manager');
 });
-
-Route::get('/export-invoice/{id}', [ExportInvoiceController::class, 'download']);
-
-Route::post('/contact-admin', [ContactAdminController::class, 'send']);
-

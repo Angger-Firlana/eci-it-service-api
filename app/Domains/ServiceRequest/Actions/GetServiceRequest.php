@@ -32,10 +32,32 @@ class GetServiceRequest{
 
     public function getAllServiceRequest(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        return ServiceRequest::with($this->showRelationsHandler->indexWith())
+        $perPage = $this->resolvePerPage($request);
+
+        return ServiceRequest::with($this->showRelationsHandler->indexWith($request))
             ->filter($request)
             ->orderBy('created_at', 'desc')
-            ->paginate($request->get('per_page', 15));
+            ->paginate($perPage);
+    }
+
+    public function getAllServiceRequestSummary(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $perPage = $this->resolvePerPage($request);
+
+        return ServiceRequest::query()
+            ->select([
+                'service_requests.id',
+                'service_requests.user_id',
+                'service_requests.operator_id',
+                'service_requests.status_id',
+                'service_requests.service_number',
+                'service_requests.estimated_date',
+                'service_requests.created_at',
+            ])
+            ->with($this->showRelationsHandler->summaryWith())
+            ->filter($request)
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
     }
 
     public function getStats():array{
@@ -54,5 +76,15 @@ class GetServiceRequest{
                 }),
             'recent' => ServiceRequest::orderBy('created_at', 'desc')->take(5)->get()
         ];
+    }
+
+    private function resolvePerPage(Request $request): int
+    {
+        $perPage = (int) $request->get('per_page', 15);
+        if ($perPage <= 0) {
+            $perPage = 15;
+        }
+
+        return min($perPage, 100);
     }
 }
