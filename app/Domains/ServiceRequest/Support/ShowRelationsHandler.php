@@ -2,19 +2,22 @@
 
 namespace App\Domains\ServiceRequest\Support;
 
+use Illuminate\Http\Request;
+use App\Models\ServiceRequest;
+
 class ShowRelationsHandler{
      //function to get relations for index
-    public function indexWith(): array
+    public function indexWith(Request $request): array
     {
-        return [
-            'user:id,name,email',
-            'operator:id,name,email',
-            'status:id,name,code',
-            'service_request_details:id,service_request_id,device_id,device_type_id,complaint',
-            'service_request_details.device:id,device_model_id,serial_number',
-            'service_request_details.device.device_model:id,device_type_id,brand,model',
-            'service_request_details.device_type:id,name'
-        ];
+        $relations = [];
+        $includes = explode(',', $request->get('include', ''));
+        $availableIncludes = ServiceRequest::AVAILABLE_INCLUDES;
+        foreach ($includes as $include) {
+            if(isset($availableIncludes[$include])){
+                $relations = array_merge($relations, $availableIncludes[$include]);
+            }
+        }
+        return $relations;
     }
 
     //function to get relations for show

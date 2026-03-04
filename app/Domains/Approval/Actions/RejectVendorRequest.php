@@ -39,9 +39,9 @@ class RejectVendorRequest
     private function updateServiceRequestOnRejection(ServiceRequest $serviceRequest, ?string $notes = null): void
     {
         $oldStatusId = (int) $serviceRequest->status_id;
-        $cancelledStatusId = $this->statusResolver->getServiceRequestStatusId(ServiceRequestStatusCode::CANCELLED);
-        $serviceRequest->update(['status_id' => $cancelledStatusId]);
+        $rejectedByAboveId = $this->statusResolver->getServiceRequestStatusId(ServiceRequestStatusCode::REJECTED_BY_ABOVE);
+        $serviceRequest->update(['status_id' => $rejectedByAboveId]);
 
-        $this->auditLogService->writeAuditLogsServiceRequest($serviceRequest, $cancelledStatusId, "REJECTED", $notes ?? 'Salah satu atasan menolak permintaan, status request dibatalkan');
+        $this->auditLogService->writeAuditLogsServiceRequest($serviceRequest, $rejectedByAboveId, "REJECTED", $notes ?? 'Salah satu atasan menolak permintaan, status request ditolak');
     }
 }

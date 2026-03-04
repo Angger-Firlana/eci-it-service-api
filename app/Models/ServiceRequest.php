@@ -38,6 +38,25 @@ class ServiceRequest extends Model
 {
 	protected $table = 'service_requests';
 
+	public const AVAILABLE_INCLUDES = [
+		'user' => [
+			'user:id,name,email',
+		],
+		'operator' => [
+			'operator:id,name,email',
+		],
+		'status' => [
+			'status:id,name,code',
+		],
+		'locations' => [
+			'service_locations:id,service_request_id,location_id,phone_number',
+			'service_locations.location:id,name',
+		],
+		'details.device.deviceModel' => [
+			'service_request_details.device.device_model:id,device_type_id,brand,model',
+		],
+	];
+
 	protected $casts = [
 		'user_id' => 'int',
 		'operator_id' => 'int',
@@ -112,7 +131,7 @@ class ServiceRequest extends Model
 				$request->filled('request_date'),
 				fn ($q) => $q->whereDate('service_requests.created_at', $request->request_date)
 			)
-			->select(['id', 'user_id', 'operator_id', 'status_id', 'created_at']);
+			->select(['service_requests.id', 'service_requests.user_id', 'service_requests.operator_id', 'service_requests.status_id', 'service_requests.created_at']);
 
 		if ($request->filled('search')) {
 			$keyword = addcslashes($request->search, '%_');

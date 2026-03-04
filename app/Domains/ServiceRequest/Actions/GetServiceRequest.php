@@ -32,7 +32,7 @@ class GetServiceRequest{
 
     public function getAllServiceRequest(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        return ServiceRequest::with($this->showRelationsHandler->indexWith())
+        return ServiceRequest::with($this->showRelationsHandler->indexWith($request))
             ->filter($request)
             ->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 15));
