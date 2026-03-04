@@ -9,7 +9,6 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 
 /**
  * Class ServiceRequest
@@ -18,7 +17,6 @@ use Illuminate\Http\Request;
  * @property int $user_id
  * @property int|null $operator_id
  * @property string $service_number
- * @property Carbon|null $estimated_date
  * @property int $status_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -159,7 +157,6 @@ class ServiceRequest extends Model
 				'service_requests.operator_id',
 				'service_requests.status_id',
 				'service_requests.service_number',
-				'service_requests.estimated_date',
 				'service_requests.created_at'
 			]);
 
