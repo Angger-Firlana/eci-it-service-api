@@ -12,6 +12,7 @@ class ContactAdminTest extends TestCase
     {
         Mail::fake();
         config()->set('mail.admin_email', 'admin@example.com');
+        config()->set('mail.manager_email', 'manager@example.com');
 
         $response = $this->postJson('/api/contact-admin', [
             'name' => 'Test User',
@@ -25,13 +26,16 @@ class ContactAdminTest extends TestCase
             'mode' => 'queue',
         ]);
 
-        Mail::assertQueued(UserContactAdmin::class);
+        Mail::assertQueued(UserContactAdmin::class, 2);
+        Mail::assertQueued(UserContactAdmin::class, fn (UserContactAdmin $mail) => $mail->hasTo('admin@example.com'));
+        Mail::assertQueued(UserContactAdmin::class, fn (UserContactAdmin $mail) => $mail->hasTo('manager@example.com'));
     }
 
     public function test_contact_admin_sync_mode_returns_200_and_sends_mail(): void
     {
         Mail::fake();
         config()->set('mail.admin_email', 'admin@example.com');
+        config()->set('mail.manager_email', 'manager@example.com');
 
         $response = $this->postJson('/api/contact-admin', [
             'name' => 'Test User',
@@ -49,7 +53,9 @@ class ContactAdminTest extends TestCase
             'mode' => 'sync',
         ]);
 
-        Mail::assertSent(UserContactAdmin::class);
+        Mail::assertSent(UserContactAdmin::class, 2);
+        Mail::assertSent(UserContactAdmin::class, fn (UserContactAdmin $mail) => $mail->hasTo('admin@example.com'));
+        Mail::assertSent(UserContactAdmin::class, fn (UserContactAdmin $mail) => $mail->hasTo('manager@example.com'));
     }
 
     public function test_contact_admin_mailable_renders_with_context_fields(): void

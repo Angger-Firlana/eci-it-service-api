@@ -18,6 +18,17 @@ class ContactAdminContextResolver
         return $adminEmail;
     }
 
+    public function managerEmail(): string
+    {
+        $managerEmail = config('mail.manager_email');
+
+        if (!is_string($managerEmail) || trim($managerEmail) === '') {
+            throw new RuntimeException('MANAGER_MAIL is not configured.');
+        }
+
+        return $managerEmail;
+    }
+
     public function attachmentPath(array $data): ?string
     {
         $attachmentPath = $data['attachmentPath'] ?? null;

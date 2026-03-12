@@ -17,25 +17,30 @@ use App\Domains\ServiceRequest\Support\LoadRelations;
 
 use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 
+use App\Domains\ContactAdmin\Services\ContactAdminService;
+
 class CreateServiceRequestWorkflow{
     protected EnsureDeviceIsNotActiveInOtherRequest $ensureDeviceIsNotActiveInOtherRequest;
     protected WriteAuditLogs $writeAuditLogs;
     protected CreateServiceRequestDetails $createServiceRequestDetails;
     protected CreateMainServiceRequest $createMainServiceRequest;
     protected LoadRelations $loadRelations;
+    protected ContactAdminService $contactAdminService;
 
     public function __construct(
         EnsureDeviceIsNotActiveInOtherRequest $ensureDeviceIsNotActiveInOtherRequest,
         WriteAuditLogs $writeAuditLogs,
         CreateServiceRequestDetails $createServiceRequestDetails,
         CreateMainServiceRequest $createMainServiceRequest,
-        LoadRelations $loadRelations
+        LoadRelations $loadRelations,
+        ContactAdminService $contactAdminService
     ) {
         $this->ensureDeviceIsNotActiveInOtherRequest = $ensureDeviceIsNotActiveInOtherRequest;
         $this->writeAuditLogs = $writeAuditLogs;
         $this->createServiceRequestDetails = $createServiceRequestDetails;
         $this->createMainServiceRequest = $createMainServiceRequest;
         $this->loadRelations = $loadRelations;
+        $this->contactAdminService = $contactAdminService;
     }
 
     public function execute($data){
@@ -50,7 +55,7 @@ class CreateServiceRequestWorkflow{
 
             $actor = Auth::user();
 
-            // $this->contactAdminMailService->sendAdminNotification($serviceRequest->id, $actor->name, $actor->email);
+            $this->contactAdminService->sendAdminNotification($serviceRequest->id, $actor->name, $actor->email);
 
             return $this->loadRelations->execute($serviceRequest);
         });

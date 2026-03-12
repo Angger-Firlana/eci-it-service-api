@@ -30,6 +30,8 @@ Route::prefix('auth')->group(function () {
     Route::get('/me', [AuthController::class, 'getDataMe'])->middleware('auth:sanctum');
 });
 
+Route::post('/contact-admin', [ContactAdminController::class, 'send']);
+
 Route::prefix('device-type')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [DeviceTypeController::class, 'index'])->middleware('role:user,admin,operator');
     Route::get('/{id}', [DeviceTypeController::class, 'show'])->middleware('role:admin,operator');

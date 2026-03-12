@@ -15,6 +15,7 @@ use Symfony\Component\HttpKernel\Exception\ForbiddenException;
 use Symfony\Component\HttpKernel\Exception\ForbiddenHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -70,12 +71,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 500 - DB
         $exceptions->render(function (QueryException $e) {
-            return APIResponse::error(null, 500, 'Database Error : ' . $e->getMessage());
+            Log::error('Database Error', ['exception' => $e]);
+            return APIResponse::error(null, 500, 'Database Error');
         });
 
         // 500 - fallback (WAJIB PALING BAWAH)
         $exceptions->render(function (Throwable $e) {
-            return APIResponse::error(null, 500, 'Internal Server Error : ' . $e->getMessage());
+            Log::error('Internal Server Error', ['exception' => $e]);
+            return APIResponse::error(null, 500, 'Internal Server Error');
         });
 
     })->create();

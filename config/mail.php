@@ -16,6 +16,7 @@ return [
 
     'default' => env('MAIL_MAILER', 'log'),
     'admin_email' => env('ADMIN_MAIL', env('MAIL_FROM_ADDRESS')),
+    'manager_email' => env('MANAGER_MAIL', env('MAIL_FROM_ADDRESS')),
 
     /*
     |--------------------------------------------------------------------------
