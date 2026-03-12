@@ -16,10 +16,14 @@
         }
 
         $resolvedDeviceModel = $deviceModel ?? null;
-        $resolvedDevice = $device ?? null;
         $resolvedDamages = is_array($damages ?? null) ? $damages : [];
         $resolvedItems = is_array($serviceRequestItems ?? null) ? $serviceRequestItems : [];
         $resolvedMessage = $userMessage ?? ($message ?? '');
+
+        $resolvedDeviceType = $device ?? null;
+        if (empty($resolvedDeviceType) && count($resolvedItems) > 0) {
+            $resolvedDeviceType = $resolvedItems[0]['device_type'] ?? null;
+        }
     @endphp
 
     <h2 style="margin: 0 0 12px;">Permintaan Servis Baru</h2>
@@ -47,10 +51,10 @@
             <td style="padding: 6px 0;"><strong>Email</strong></td>
             <td style="padding: 6px 0;">{{ $email }}</td>
         </tr>
-        @if (!empty($resolvedDevice))
+        @if (!empty($resolvedDeviceType))
         <tr>
-            <td style="padding: 6px 0;"><strong>Device</strong></td>
-            <td style="padding: 6px 0;">{{ $resolvedDevice }}</td>
+            <td style="padding: 6px 0;"><strong>Device Type</strong></td>
+            <td style="padding: 6px 0;">{{ $resolvedDeviceType }}</td>
         </tr>
         @endif
         @if (!empty($resolvedDeviceModel))
@@ -66,7 +70,7 @@
         <table cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 640px; border: 1px solid #e5e7eb;">
             <thead>
                 <tr>
-                    <th align="left" style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Device</th>
+                    <th align="left" style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Device Type</th>
                     <th align="left" style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Model</th>
                     <th align="left" style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Serial</th>
                     <th align="left" style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Keluhan</th>
