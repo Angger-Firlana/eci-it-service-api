@@ -45,24 +45,6 @@ class ContactAdminContextResolver
      */
     public function serviceRequestContext(array $data): array
     {
-        $device = $data['device'] ?? null;
-        $device = is_string($device) && trim($device) !== '' ? $device : null;
-
-        $deviceModel = $data['device_model'] ?? ($data['deviceModel'] ?? null);
-        $deviceModel = is_string($deviceModel) && trim($deviceModel) !== '' ? $deviceModel : null;
-
-        $damages = $data['damages'] ?? [];
-        if (!is_array($damages)) {
-            $damages = [];
-        }
-        $damages = array_values(array_filter(array_map(static function ($value) {
-            if (!is_string($value)) {
-                return null;
-            }
-            $value = trim($value);
-            return $value === '' ? null : $value;
-        }, $damages)));
-
         $serviceRequestId = $data['service_request_id'] ?? ($data['serviceRequestId'] ?? null);
         $serviceRequestId = is_int($serviceRequestId) ? $serviceRequestId : (is_numeric($serviceRequestId) ? (int) $serviceRequestId : null);
 
@@ -70,10 +52,13 @@ class ContactAdminContextResolver
         $serviceRequestUrl = is_string($serviceRequestUrl) && trim($serviceRequestUrl) !== '' ? $serviceRequestUrl : null;
 
         $serviceNumber = null;
+        $device = null;
+        $deviceModel = null;
+        $damages = [];
         $serviceRequestItems = [];
 
-        // Only hit the DB when we need to enrich missing info.
-        if ($serviceRequestId !== null && ($device === null || $deviceModel === null || count($damages) === 0)) {
+        // Primary source: service_request_details[0] (single item for now).
+        if ($serviceRequestId !== null) {
             $serviceRequest = ServiceRequest::query()
                 ->with(['service_request_details.device.device_model.device_type'])
                 ->find($serviceRequestId);
@@ -81,45 +66,43 @@ class ContactAdminContextResolver
             if ($serviceRequest) {
                 $serviceNumber = is_string($serviceRequest->service_number) ? $serviceRequest->service_number : null;
 
-                foreach ($serviceRequest->service_request_details as $detail) {
-                    $deviceTypeName = $detail->device?->device_model?->device_type?->name;
-                    $brand = $detail->device?->device_model?->brand;
-                    $model = $detail->device?->device_model?->model;
-                    $serialNumber = $detail->device?->serial_number;
+                $detail = $serviceRequest->service_request_details->first();
 
-                    $deviceModelName = null;
-                    if (is_string($brand) && trim($brand) !== '' && is_string($model) && trim($model) !== '') {
-                        $deviceModelName = trim($brand) . ' ' . trim($model);
-                    } elseif (is_string($model) && trim($model) !== '') {
-                        $deviceModelName = trim($model);
+                if ($detail) {
+                    $deviceTypeName = $detail->device?->device_model?->device_type?->name;
+                    $serialNumber = $detail->device?->serial_number;
+                    $complaint = $detail->complaint;
+
+                    $device = is_string($deviceTypeName) && trim($deviceTypeName) !== '' ? trim($deviceTypeName) : null;
+
+                    $resolvedComplaint = is_string($complaint) && trim($complaint) !== '' ? trim($complaint) : null;
+                    if ($resolvedComplaint !== null) {
+                        $damages = [$resolvedComplaint];
                     }
 
-                    $serviceRequestItems[] = [
-                        'device_type' => is_string($deviceTypeName) && trim($deviceTypeName) !== '' ? $deviceTypeName : null,
-                        'device_model' => $deviceModelName,
-                        'serial_number' => is_string($serialNumber) && trim($serialNumber) !== '' ? $serialNumber : null,
-                        'complaint' => is_string($detail->complaint) && trim($detail->complaint) !== '' ? $detail->complaint : null,
-                    ];
+                    $serviceRequestItems = [[
+                        'device_type' => $device,
+                        'serial_number' => is_string($serialNumber) && trim($serialNumber) !== '' ? trim($serialNumber) : null,
+                        'complaint' => $resolvedComplaint,
+                    ]];
                 }
+            }
+        }
 
-                if ($device === null && isset($serviceRequestItems[0]['device_type'])) {
-                    $device = $serviceRequestItems[0]['device_type'];
-                }
+        // Fallback for manual contact-admin payloads (or when SR lookup fails).
+        if ($device === null && count($damages) === 0 && count($serviceRequestItems) === 0) {
+            $fallbackDevice = $data['device'] ?? null;
+            $device = is_string($fallbackDevice) && trim($fallbackDevice) !== '' ? trim($fallbackDevice) : null;
 
-                if ($deviceModel === null && isset($serviceRequestItems[0]['device_model'])) {
-                    $deviceModel = $serviceRequestItems[0]['device_model'];
-                }
-
-                if (count($damages) === 0) {
-                    $damages = array_values(array_filter(array_map(static function ($item) {
-                        $complaint = $item['complaint'] ?? null;
-                        if (!is_string($complaint)) {
-                            return null;
-                        }
-                        $complaint = trim($complaint);
-                        return $complaint === '' ? null : $complaint;
-                    }, $serviceRequestItems)));
-                }
+            $fallbackDamages = $data['damages'] ?? [];
+            if (is_array($fallbackDamages)) {
+                $damages = array_values(array_filter(array_map(static function ($value) {
+                    if (!is_string($value)) {
+                        return null;
+                    }
+                    $value = trim($value);
+                    return $value === '' ? null : $value;
+                }, $fallbackDamages)));
             }
         }
 

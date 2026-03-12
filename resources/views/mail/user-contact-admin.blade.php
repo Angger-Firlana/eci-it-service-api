@@ -15,7 +15,6 @@
             $resolvedServiceRequestUrl = $frontendUrl !== '' ? $frontendUrl.'/service-requests/'.$serviceRequestId : null;
         }
 
-        $resolvedDeviceModel = $deviceModel ?? null;
         $resolvedDamages = is_array($damages ?? null) ? $damages : [];
         $resolvedItems = is_array($serviceRequestItems ?? null) ? $serviceRequestItems : [];
         $resolvedMessage = $userMessage ?? ($message ?? '');
@@ -24,6 +23,21 @@
         if (empty($resolvedDeviceType) && count($resolvedItems) > 0) {
             $resolvedDeviceType = $resolvedItems[0]['device_type'] ?? null;
         }
+
+        $resolvedComplaint = null;
+        if (count($resolvedItems) > 0) {
+            $resolvedComplaint = $resolvedItems[0]['complaint'] ?? null;
+        }
+        if ((!is_string($resolvedComplaint) || trim($resolvedComplaint) === '') && count($resolvedDamages) > 0) {
+            $resolvedComplaint = implode(', ', $resolvedDamages);
+        }
+        $resolvedComplaint = is_string($resolvedComplaint) && trim($resolvedComplaint) !== '' ? trim($resolvedComplaint) : null;
+
+        $deviceHeadlineParts = array_values(array_filter([
+            is_string($resolvedDeviceType) && trim($resolvedDeviceType) !== '' ? trim($resolvedDeviceType) : null,
+            $resolvedComplaint,
+        ]));
+        $deviceHeadline = count($deviceHeadlineParts) > 0 ? implode(', ', $deviceHeadlineParts) : null;
     @endphp
 
     <h2 style="margin: 0 0 12px;">Permintaan Servis Baru</h2>
@@ -51,52 +65,26 @@
             <td style="padding: 6px 0;"><strong>Email</strong></td>
             <td style="padding: 6px 0;">{{ $email }}</td>
         </tr>
-        @if (!empty($resolvedDeviceType))
-        <tr>
-            <td style="padding: 6px 0;"><strong>Device Type</strong></td>
-            <td style="padding: 6px 0;">{{ $resolvedDeviceType }}</td>
-        </tr>
-        @endif
-        @if (!empty($resolvedDeviceModel))
-        <tr>
-            <td style="padding: 6px 0;"><strong>Device Model</strong></td>
-            <td style="padding: 6px 0;">{{ $resolvedDeviceModel }}</td>
-        </tr>
-        @endif
     </table>
 
-    @if (count($resolvedItems) > 0)
-        <h3 style="margin: 18px 0 8px;">Detail Perangkat</h3>
-        <table cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 640px; border: 1px solid #e5e7eb;">
-            <thead>
+    <div style="margin: 18px 0 8px;">
+        <h3 style="margin: 0 0 8px;">Perangkat</h3>
+        <div style="border: 1px solid #e5e7eb; background: #f9fafb; padding: 14px; border-radius: 12px; max-width: 640px;">
+            <div style="font-size: 16px; font-weight: 700; margin: 0 0 8px;">
+                {{ $deviceHeadline ?? '-' }}
+            </div>
+            <table cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%;">
                 <tr>
-                    <th align="left" style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Device Type</th>
-                    <th align="left" style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Model</th>
-                    <th align="left" style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Serial</th>
-                    <th align="left" style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Keluhan</th>
+                    <td style="padding: 4px 0; width: 120px; color: #6b7280;"><strong>Type</strong></td>
+                    <td style="padding: 4px 0;">{{ $resolvedDeviceType ?? '-' }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                @foreach ($resolvedItems as $item)
-                    <tr>
-                        <td style="padding: 10px; border-bottom: 1px solid #f3f4f6;">{{ $item['device_type'] ?? '-' }}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #f3f4f6;">{{ $item['device_model'] ?? '-' }}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #f3f4f6;">{{ $item['serial_number'] ?? '-' }}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #f3f4f6;">{{ $item['complaint'] ?? '-' }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endif
-
-    @if (count($resolvedDamages) > 0)
-        <h3 style="margin: 18px 0 8px;">Kerusakan</h3>
-        <ul style="margin: 0 0 14px; padding-left: 18px;">
-            @foreach ($resolvedDamages as $item)
-                <li>{{ $item }}</li>
-            @endforeach
-        </ul>
-    @endif
+                <tr>
+                    <td style="padding: 4px 0; color: #6b7280;"><strong>Keluhan</strong></td>
+                    <td style="padding: 4px 0;">{{ $resolvedComplaint ?? '-' }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
 
     <h3 style="margin: 18px 0 8px;">Pesan</h3>
     <div style="white-space: pre-wrap; border: 1px solid #e5e7eb; padding: 12px; border-radius: 8px;">

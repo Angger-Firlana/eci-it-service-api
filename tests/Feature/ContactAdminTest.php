@@ -45,7 +45,6 @@ class ContactAdminTest extends TestCase
             'device' => 'Laptop',
             'device_model' => 'Dell XPS 13',
             'damages' => ['No power', 'Fan noise'],
-            'service_request_id' => 123,
         ]);
 
         $response->assertStatus(200);
@@ -76,7 +75,9 @@ class ContactAdminTest extends TestCase
         $html = $mailable->render();
 
         $this->assertStringContainsString('Permintaan Servis Baru', $html);
-        $this->assertStringContainsString('Dell XPS 13', $html);
+        $this->assertStringContainsString('Laptop', $html);
+        $this->assertStringContainsString('No power', $html);
+        $this->assertStringContainsString('Fan noise', $html);
         $this->assertStringContainsString('service-requests/123', $html);
         $this->assertStringContainsString('app.example.com/login', $html);
     }
