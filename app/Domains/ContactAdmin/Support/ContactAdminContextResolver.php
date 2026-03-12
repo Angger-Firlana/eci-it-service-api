@@ -69,7 +69,7 @@ class ContactAdminContextResolver
                 $detail = $serviceRequest->service_request_details->first();
 
                 if ($detail) {
-                    $deviceTypeName = $detail->device?->device_model?->device_type?->name;
+                    $deviceTypeName = $detail->device_type?->name;
                     $serialNumber = $detail->device?->serial_number;
                     $complaint = $detail->complaint;
 
@@ -87,10 +87,8 @@ class ContactAdminContextResolver
                     ]];
                 }
             }
-        }
-
-        // Fallback for manual contact-admin payloads (or when SR lookup fails).
-        if ($device === null && count($damages) === 0 && count($serviceRequestItems) === 0) {
+        } else {
+            // Fallback for manual contact-admin payloads without service_request_id.
             $fallbackDevice = $data['device'] ?? null;
             $device = is_string($fallbackDevice) && trim($fallbackDevice) !== '' ? trim($fallbackDevice) : null;
 
