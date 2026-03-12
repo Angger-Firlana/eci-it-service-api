@@ -27,14 +27,14 @@ class ContactAdminService
     public function sendAdminNotification(int $serviceRequestId, string $actorName, string $actorEmail): void
     {
         try {
-            $this->queue([
+            $this->sendNow([
                 'name' => $actorName,
                 'email' => $actorEmail,
                 'message' => 'A new service request has been created and requires review.',
                 'service_request_id' => $serviceRequestId,
             ]);
         } catch (Throwable $e) {
-            logger()->error('Failed to queue admin notification email for service request.', [
+            logger()->error('Failed to send admin notification email for service request.', [
                 'service_request_id' => $serviceRequestId,
                 'error' => $e->getMessage(),
             ]);
