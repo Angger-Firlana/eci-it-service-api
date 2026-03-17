@@ -28,12 +28,8 @@ class ExportInvoiceController extends Controller
      */
     public function downloadPreview($serviceRequestId)
     {
-        try {
-            $pdf = $this->exportInvoiceService->generatePreviewInvoice($serviceRequestId);
-            return $pdf->download('invoice-preview-' . $serviceRequestId . '.pdf');
-        } catch (\Exception $e) {
-            return APIResponse::error($e->getMessage(), 400);
-        }
+        $pdf = $this->exportInvoiceService->generatePreviewInvoice($serviceRequestId);
+        return $pdf->download('invoice-preview-' . $serviceRequestId . '.pdf');
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Domains\ServiceRequest\Support;
 
+use App\Exceptions\ApiException;
 use App\Models\Status;
 
 class GetServiceRequestStatusById
@@ -11,7 +12,7 @@ class GetServiceRequestStatusById
         $status = Status::with('entity_type')->findOrFail($statusId);
 
         if ($status->entity_type?->code !== 'SERVICE_REQUEST') {
-            throw new \Exception('Status tidak valid');
+            throw ApiException::badRequest('Status tidak valid');
         }
 
         return $status;

@@ -3,6 +3,7 @@ namespace App\Domains\ServiceRequest\Actions;
 
 use App\Models\ServiceRequest;
 use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
+use App\Exceptions\ApiException;
 
 class DeleteServiceRequest{
     public function execute(int $id): ServiceRequest
@@ -11,7 +12,7 @@ class DeleteServiceRequest{
 
         $serviceRequest->loadMissing('status');
         if ($serviceRequest->status?->code === ServiceRequestStatusCode::COMPLETED->value) {
-            throw new \Exception('Cannot delete completed service request');
+            throw ApiException::conflict('Cannot delete completed service request');
         }
 
         $serviceRequest->delete();

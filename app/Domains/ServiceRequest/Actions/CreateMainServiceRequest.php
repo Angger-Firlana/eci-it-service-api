@@ -6,6 +6,7 @@ use App\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use App\Models\ServiceRequest;
 use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
+use App\Exceptions\ApiException;
 
 use App\Domains\ServiceRequest\Support\GenerateServiceNumber;
 use App\Domains\ServiceRequest\Support\GetServiceRequestStatusIdByCode;
@@ -27,12 +28,12 @@ class CreateMainServiceRequest{
         } elseif ($isUser) {
             // Users can only create requests for themselves.
             if (isset($data['user_id']) && (int) $data['user_id'] !== (int) $user->id) {
-                throw new \InvalidArgumentException('You can only create a service request for your own account.');
+                throw ApiException::forbidden('You can only create a service request for your own account.');
             }
 
             $userId = $user->id;
         } else {
-            throw new \InvalidArgumentException('Your role is not allowed to create service requests.');
+            throw ApiException::forbidden('Your role is not allowed to create service requests.');
         }
 
         return ServiceRequest::create([

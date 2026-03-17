@@ -2,7 +2,6 @@
 
 namespace App\Helpers;
 
-use Illuminate\Support\Facades\Response;
 use Illuminate\Http\JsonResponse;
 
 class APIResponse
@@ -13,9 +12,10 @@ class APIResponse
         int $code = 200,
         string $message = 'Success',
         ?array $meta = null
-    ):JSONResponse{
+    ): JsonResponse {
         $response = [
             'success' => true,
+            'code' => $code,
             'data' => $data,
             'message' => $message,
         ];
@@ -32,14 +32,30 @@ class APIResponse
         mixed $errors = null,
         int $code = 500,
         string $message = 'Error',
-    ){
+        ?string $errorCode = null,
+        ?array $meta = null
+    ): JsonResponse {
+        if (is_string($errors) && ($message === 'Error' || trim($message) === '')) {
+            $message = $errors;
+            $errors = null;
+        }
+
         $response = [
             'success' => false,
+            'code' => $code,
             'message' => $message
         ];
 
+        if ($errorCode !== null) {
+            $response['error_code'] = $errorCode;
+        }
+
         if($errors !== null){
             $response['errors'] = $errors;
+        }
+
+        if ($meta !== null) {
+            $response['meta'] = $meta;
         }
 
         return response()->json($response, $code);

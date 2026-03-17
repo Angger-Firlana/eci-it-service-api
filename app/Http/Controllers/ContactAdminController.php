@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Domains\ContactAdmin\Services\ContactAdminService;
+use App\Helpers\APIResponse;
 use App\Http\Requests\ContactAdminMail\ContactAdminRequest;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class ContactAdminController extends Controller
@@ -37,13 +39,20 @@ class ContactAdminController extends Controller
                 'message' => 'Message queued successfully',
                 'mode' => 'queue',
             ], 202);
-        } catch (Throwable $e) {
-            return response()->json([
-                'message' => 'Failed to send message',
+         } catch (Throwable $e) {
+            Log::error('Failed to send contact-admin message', [
+                'exception' => $e,
                 'mode' => $mode,
-                'error' => config('app.debug') ? $e->getMessage() : null,
-            ], 500);
-        }
-    }
+            ]);
+
+            return APIResponse::error(
+                [
+                    'mode' => $mode,
+                ],
+                500,
+                'Failed to send message'
+            );
+         }
+     }
 
 }

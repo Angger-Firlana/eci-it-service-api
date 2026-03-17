@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Helpers\APIResponse;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,7 +19,7 @@ class UserMiddleware
         $guard = auth('sanctum');
 
         if(!$guard->check()){
-            return response()->json(['message' => 'Unauthorized'], 401);
+            return APIResponse::error(null, 401, 'Unauthorized');
         }
 
         $user = $guard->user();
@@ -29,6 +30,6 @@ class UserMiddleware
             }
         }
         
-        return response()->json(['message' => 'User is not authorized'], 403);
+        return APIResponse::error(null, 403, 'User is not authorized');
     }
 }

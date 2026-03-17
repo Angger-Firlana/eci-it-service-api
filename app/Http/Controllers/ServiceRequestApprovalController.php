@@ -10,6 +10,7 @@ use App\Domains\ServiceRequestApproval\Actions\GetVendorApprovalById;
 use App\Domains\ServiceRequestApproval\Actions\ListVendorApprovalsByServiceRequestId;
 use App\Domains\ServiceRequestApproval\Actions\UpdateVendorApprovals;
 use App\Helpers\APIResponse;
+use App\Exceptions\ApiException;
 use App\Http\Requests\ServiceApprovals\UpdateApprovalsRequest;
 use App\Http\Requests\ServiceApprovals\StoreApprovalsRequest;
 
@@ -73,7 +74,7 @@ class ServiceRequestApprovalController extends Controller
         $approval = $this->getVendorApprovalById->execute((int) $approvalId);
 
         if ((int) $approval->service_request_id !== (int) $serviceRequestId) {
-            throw new \Exception('Approval does not belong to this service request');
+            throw ApiException::badRequest('Approval does not belong to this service request');
         }
 
         $this->deleteVendorApproval->execute((int) $approvalId);

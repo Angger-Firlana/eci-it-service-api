@@ -2,6 +2,7 @@
 
 namespace App\Domains\ServiceRequestCost\Actions;
 
+use App\Exceptions\ApiException;
 use App\Models\ServiceCost;
 
 class RemoveCost
@@ -10,10 +11,9 @@ class RemoveCost
     {
         $cost = ServiceCost::findOrFail($costId);
         if ($serviceRequestId !== $cost->service_request_id) {
-            throw new \Exception('Service request id not match');
+            throw ApiException::badRequest('Service request id not match');
         }
 
         $cost->delete();
     }
 }
-

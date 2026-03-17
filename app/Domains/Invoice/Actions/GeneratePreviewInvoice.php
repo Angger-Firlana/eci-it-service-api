@@ -4,6 +4,7 @@ namespace App\Domains\Invoice\Actions;
 
 use App\Domains\Invoice\Support\CompletedAtResolver;
 use App\Domains\Invoice\Support\InvoicePrintRules;
+use App\Exceptions\ApiException;
 use App\Models\ServiceCost;
 use App\Models\ServiceRequest;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -26,7 +27,7 @@ class GeneratePreviewInvoice
 
         $statusCode = $serviceRequest->status?->code;
         if (InvoicePrintRules::isBlocked($statusCode)) {
-            throw new \Exception('Invoice tidak dapat dicetak. Status request belum disetujui operator.');
+            throw ApiException::badRequest('Invoice tidak dapat dicetak. Status request belum disetujui operator.');
         }
 
         $user = $serviceRequest->user;

@@ -38,7 +38,7 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request){
         $result = $this->authService->login($request->validated());
-        if(!$result['code'] >= 200 && $result['code'] < 300){
+        if (!($result['code'] >= 200 && $result['code'] < 300)) {
             return $this->apiResponse->error($result['errors'] ?? null, $result['code'], $result['message']);
         }
 
@@ -52,7 +52,7 @@ class AuthController extends Controller
      */
     public function logout(){
         $result = $this->authService->logout();
-        if(!$result['code'] >= 200 && $result['code'] < 300){
+        if (!($result['code'] >= 200 && $result['code'] < 300)) {
             return $this->apiResponse->error($result['errors'] ?? null, $result['code'], $result['message']);
         }
 
@@ -66,7 +66,7 @@ class AuthController extends Controller
      */
     public function getDataMe(){
         $result = $this->authService->getDataUserByToken();
-        if(!$result['code'] >= 200 && $result['code'] < 300){
+        if (!($result['code'] >= 200 && $result['code'] < 300)) {
             return $this->apiResponse->error($result['errors'] ?? null, $result['code'], $result['message']);
         }
 

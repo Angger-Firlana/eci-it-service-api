@@ -5,6 +5,7 @@ namespace App\Domains\ServiceRequestApproval\Actions;
 use App\Domains\Approval\Services\ApprovalPolicyService;
 use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Enums\VendorApprovalStatusCode;
+use App\Exceptions\ApiException;
 use App\Models\ServiceCost;
 use App\Models\ServiceRequest;
 use App\Models\Status;
@@ -34,7 +35,7 @@ class UpdateVendorApprovals
 
         if (!$approvalPolicy) {
             DB::rollBack();
-            throw new \Exception('No approval policy found for the given service request cost.');
+            throw ApiException::unprocessable('No approval policy found for the given service request cost.');
         }
 
         $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
@@ -48,7 +49,7 @@ class UpdateVendorApprovals
 
             if (!$approvalPolicyStep) {
                 DB::rollBack();
-                throw new \Exception('No approval policy step found for approver role.');
+                throw ApiException::unprocessable('No approval policy step found for approver role.');
             }
 
             VendorApproval::create([
@@ -82,4 +83,3 @@ class UpdateVendorApprovals
         return Status::idForEntityCode('VENDOR_APPROVAL', $code);
     }
 }
-

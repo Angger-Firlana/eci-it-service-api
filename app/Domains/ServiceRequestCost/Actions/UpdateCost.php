@@ -3,6 +3,7 @@
 namespace App\Domains\ServiceRequestCost\Actions;
 
 use App\Domains\ServiceRequestCost\Support\CostAttachmentStorage;
+use App\Exceptions\ApiException;
 use App\Models\ServiceCost;
 
 class UpdateCost
@@ -16,7 +17,7 @@ class UpdateCost
     {
         $cost = ServiceCost::findOrFail($costId);
         if ($serviceRequestId != $cost->service_request_id) {
-            throw new \Exception('Service request id not match');
+            throw ApiException::badRequest('Service request id not match');
         }
 
         if (isset($data['image'])) {
@@ -33,4 +34,3 @@ class UpdateCost
         return $cost->load('cost_type');
     }
 }
-

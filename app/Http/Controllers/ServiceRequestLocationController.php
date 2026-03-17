@@ -66,7 +66,7 @@ class ServiceRequestLocationController extends Controller
         $location = $this->getServiceLocationById->execute((int) $locationId);
         
         if($location->service_request_id != $serviceRequestId){
-            return APIResponse::error('Location does not belong to this service request', 400);
+            return APIResponse::error(null, 400, 'Location does not belong to this service request');
         }
 
         $updatedLocation = $this->updateServiceLocation->execute((int) $serviceRequestId, (int) $location->id, $request->validated());
