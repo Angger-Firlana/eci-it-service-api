@@ -142,9 +142,9 @@ Route::prefix('invoices')->middleware('auth:sanctum')->group(function(){
 Route::prefix('vendors')->middleware('auth:sanctum')->group(function(){
     Route::get('/', [VendorController::class, 'index']);
     Route::get('/{id}', [VendorController::class, 'show']);
-    Route::post('/', [VendorController::class, 'store'])->middleware('role:admin');
-    Route::put('/{id}', [VendorController::class, 'update'])->middleware('role:admin');
-    Route::delete('/{id}', [VendorController::class, 'destroy'])->middleware('role:admin');
+    Route::post('/', [VendorController::class, 'store'])->middleware('role:admin,operator');
+    Route::put('/{id}', [VendorController::class, 'update'])->middleware('role:admin,operator');
+    Route::delete('/{id}', [VendorController::class, 'destroy'])->middleware('role:admin,operator');
 });
 
 Route::prefix('cost-types')->middleware('auth:sanctum')->group(function(){
