@@ -2,7 +2,7 @@
 
 namespace App\Domains\Notification\Actions;
 
-use App\Enums\ServiceRequestStatusCode;
+use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Models\ServiceRequest;
 use App\Models\Status;
 

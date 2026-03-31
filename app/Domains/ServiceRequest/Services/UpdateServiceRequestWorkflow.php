@@ -1,17 +1,21 @@
 <?php
 
 namespace App\Domains\ServiceRequest\Services;
+
 use App\Domains\ServiceRequest\Actions\UpdateServiceRequestOperator;
 use App\Domains\ServiceRequest\Actions\UpdateServiceRequestStatus;
+use App\Domains\ServiceRequest\Actions\MarkDeviceAsBadAsset;
+use App\Domains\Notification\Actions\CreateNotificationForServiceRequest;
 use App\Domains\ServiceRequest\Support\EnsureDeviceIsNotActiveInOtherRequest;
 use App\Domains\ServiceRequest\Support\LoadRelations;
 use App\Domains\ServiceRequest\Actions\WriteAuditLogs;
 use App\Domains\ServiceRequest\DTOs\UpdateServiceRequestData;
 use App\Domains\ServiceRequest\Actions\UpdateServiceRequestDetails;
-
+use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Models\Status;
 use App\Models\Role;
 use App\Models\ServiceRequest;
+use Illuminate\Support\Facades\DB;
 
 class UpdateServiceRequestWorkflow
 {
@@ -21,6 +25,8 @@ class UpdateServiceRequestWorkflow
     protected LoadRelations $loadRelations;
     protected WriteAuditLogs $writeAuditLogs;
     protected UpdateServiceRequestDetails $updateServiceRequestDetails;
+    protected MarkDeviceAsBadAsset $markDeviceAsBadAsset;
+    protected CreateNotificationForServiceRequest $createNotificationForServiceRequest;
 
     public function __construct(
         UpdateServiceRequestStatus $updateServiceRequestStatus,
@@ -28,7 +34,9 @@ class UpdateServiceRequestWorkflow
         EnsureDeviceIsNotActiveInOtherRequest $ensureDeviceIsNotActiveInOtherRequest,
         LoadRelations $loadRelations,
         WriteAuditLogs $writeAuditLogs,
-        UpdateServiceRequestDetails $updateServiceRequestDetails
+        UpdateServiceRequestDetails $updateServiceRequestDetails,
+        MarkDeviceAsBadAsset $markDeviceAsBadAsset,
+        CreateNotificationForServiceRequest $createNotificationForServiceRequest
     ) {
         $this->updateServiceRequestStatus = $updateServiceRequestStatus;
         $this->updateServiceRequestOperator = $updateServiceRequestOperator;
@@ -36,30 +44,45 @@ class UpdateServiceRequestWorkflow
         $this->loadRelations = $loadRelations;
         $this->writeAuditLogs = $writeAuditLogs;
         $this->updateServiceRequestDetails = $updateServiceRequestDetails;
+        $this->markDeviceAsBadAsset = $markDeviceAsBadAsset;
+        $this->createNotificationForServiceRequest = $createNotificationForServiceRequest;
     }
 
     public function execute($id, UpdateServiceRequestData $data): ServiceRequest
     {
-        $serviceRequest = ServiceRequest::findOrFail($id);
-        $details = $data->details ?? [];
-        $newStatusId = $data->statusId ?? $serviceRequest->status_id;
-        $operatorId = $data->operatorId;
-        $logNotes = $data->logNotes;
-        
-        // Ensure device is not active in other request
-        if(!empty($details)){
-            $this->ensureDeviceIsNotActiveInOtherRequest->execute($details, $serviceRequest->id);
-            $this->updateServiceRequestDetails->execute($serviceRequest, $details);
-        }
+        return DB::transaction(function () use ($id, $data) {
+            $serviceRequest = ServiceRequest::findOrFail($id);
+            $details = $data->details ?? [];
+            $newStatusId = $data->statusId ?? $serviceRequest->status_id;
+            $operatorId = $data->operatorId;
+            $logNotes = $data->logNotes;
 
-        // Update operator if provided
-        if (auth()->user()->roles->contains('id', Role::OPERATOR)) {
-            $this->updateServiceRequestOperator->execute($serviceRequest, auth()->user()->id);
-        }
+            if (!empty($details)) {
+                $this->ensureDeviceIsNotActiveInOtherRequest->execute($details, $serviceRequest->id);
+                $this->updateServiceRequestDetails->execute($serviceRequest, $details);
+            }
 
-        // Update status
-        $this->updateServiceRequestStatus->execute($serviceRequest, $newStatusId, $logNotes);
+            if (auth()->user()->roles->contains('id', Role::OPERATOR)) {
+                $resolvedOperatorId = $operatorId ?? auth()->user()->id;
+                $this->updateServiceRequestOperator->execute($serviceRequest, $resolvedOperatorId);
+            }
 
-        return $this->loadRelations->execute($serviceRequest);
+            $this->updateServiceRequestStatus->execute($serviceRequest, $newStatusId, $logNotes);
+            $newStatus = Status::findOrFail($newStatusId);
+
+            if ($newStatus->code === ServiceRequestStatusCode::BAD_ASSET->value) {
+                $this->markDeviceAsBadAsset->execute($serviceRequest);
+            }
+
+            if (in_array($newStatus->code, [
+                ServiceRequestStatusCode::COMPLETED->value,
+                ServiceRequestStatusCode::BAD_ASSET->value,
+                ServiceRequestStatusCode::CANCELLED->value,
+            ], true)) {
+                $this->createNotificationForServiceRequest->execute($serviceRequest, $newStatus);
+            }
+
+            return $this->loadRelations->execute($serviceRequest);
+        });
     }
 }

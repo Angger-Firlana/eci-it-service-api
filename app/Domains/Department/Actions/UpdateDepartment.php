@@ -11,8 +11,8 @@ class UpdateDepartment
         $department = Department::findOrFail($id);
 
         $department->update([
-            'name' => $data['name'],
-            'code' => $data['code'],
+            'name' => $data['name'] ?? $department->name,
+            'code' => $data['code'] ?? $department->code,
         ]);
 
         return $department->load('users');

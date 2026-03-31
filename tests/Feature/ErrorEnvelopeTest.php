@@ -2,11 +2,12 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ErrorEnvelopeTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_returns_consistent_json_for_404(): void
     {
         $response = $this->getJson('/api/this-route-does-not-exist');
@@ -18,7 +19,7 @@ class ErrorEnvelopeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_consistent_json_for_validation_errors(): void
     {
         $response = $this->postJson('/api/auth/login', []);
@@ -35,7 +36,7 @@ class ErrorEnvelopeTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_consistent_json_for_unauthenticated_requests(): void
     {
         $response = $this->getJson('/api/device-type');
@@ -47,4 +48,3 @@ class ErrorEnvelopeTest extends TestCase
         ]);
     }
 }
-

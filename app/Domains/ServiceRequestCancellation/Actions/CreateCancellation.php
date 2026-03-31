@@ -14,8 +14,7 @@ class CreateCancellation
         $cancellation = ServiceCancellation::create([
             'service_request_id' => $serviceRequest->id,
             'reason' => $data['reason'],
-            'canceled_by' => $data['canceled_by'] ?? auth()->id(),
-            'cancellation_date' => now(),
+            'cancelled_by' => $data['cancelled_by'] ?? auth()->id(),
         ]);
 
         $serviceRequest->update([
@@ -30,4 +29,3 @@ class CreateCancellation
         return Status::idForEntityCode('SERVICE_REQUEST', $code);
     }
 }
-

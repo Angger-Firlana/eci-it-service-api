@@ -21,6 +21,7 @@ class UpdateCost
         }
 
         if (isset($data['image'])) {
+            $this->attachmentStorage->delete($cost->image_path);
             $data['image_path'] = $this->attachmentStorage->store($serviceRequestId, $data['image']);
         }
 

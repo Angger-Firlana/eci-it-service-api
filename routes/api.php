@@ -69,7 +69,7 @@ Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
     Route::post('/', [ServiceRequestController::class, 'store'])->middleware('role:user');
     Route::put('/{id}', [ServiceRequestController::class, 'update'])->middleware('role:operator');
     Route::delete('/{id}', [ServiceRequestController::class, 'destroy'])->middleware('role:admin');
-    Route::get('/{id}/allowed-transitions', [ServiceRequestController::class, 'allowedTransitions']);
+    Route::get('/{id}/allowed-transitions', [ServiceRequestController::class, 'allowedTransitions'])->middleware('role:user,admin,operator,manager');
     Route::get('/{id}/download-invoice', [ExportInvoiceController::class, 'download'])->middleware('role:user,admin,operator,manager');
     Route::get('/{id}/preview-invoice', [ExportInvoiceController::class, 'downloadPreview'])->middleware('role:user,admin,operator,manager');
     Route::get('/{id}/can-print-invoice', [ExportInvoiceController::class, 'canPrint'])->middleware('role:user,admin,operator,manager');
@@ -100,10 +100,10 @@ Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
     Route::post('/rejected/{approvalId}', [ApprovalController::class, 'rejectVendorRequest'])->middleware('role:admin,operator,manager');
 
     //Cancellation
-    Route::get('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'index']);
-    Route::post('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'store']);
-    Route::put('/{serviceRequestId}/cancellation/{cancellationId}', [ServiceRequestCancellationController::class, 'update']);
-    Route::delete('/{serviceRequestId}/cancellation/{cancellationId}', [ServiceRequestCancellationController::class, 'destroy']);
+    Route::get('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'index'])->middleware('role:user,admin,operator,manager');
+    Route::post('/{serviceRequestId}/cancellation', [ServiceRequestCancellationController::class, 'store'])->middleware('role:user,admin,operator,manager');
+    Route::put('/{serviceRequestId}/cancellation/{cancellationId}', [ServiceRequestCancellationController::class, 'update'])->middleware('role:user,admin,operator,manager');
+    Route::delete('/{serviceRequestId}/cancellation/{cancellationId}', [ServiceRequestCancellationController::class, 'destroy'])->middleware('role:user,admin,operator,manager');
 });
 
 Route::prefix('references')->middleware('auth:sanctum')->group(function() {

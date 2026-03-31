@@ -11,9 +11,9 @@ class UpdateDeviceModel
         $deviceModel = DeviceModel::findOrFail($id);
 
         $deviceModel->update([
-            'device_type_id' => $data['device_type_id'],
-            'brand' => $data['brand'],
-            'model' => $data['model'],
+            'device_type_id' => $data['device_type_id'] ?? $deviceModel->device_type_id,
+            'brand' => $data['brand'] ?? $deviceModel->brand,
+            'model' => $data['model'] ?? $deviceModel->model,
         ]);
 
         return $deviceModel;

@@ -11,8 +11,8 @@ class UpdateDevice
         $device = Device::findOrFail($id);
 
         $device->update([
-            'device_model_id' => $data['device_model_id'],
-            'serial_number' => $data['serial_number'],
+            'device_model_id' => $data['device_model_id'] ?? $device->device_model_id,
+            'serial_number' => $data['serial_number'] ?? $device->serial_number,
             'bad_asset' => $data['bad_asset'] ?? $device->bad_asset,
         ]);
 

@@ -44,8 +44,18 @@ class ServiceCancellation extends Model
 		return $this->belongsTo(User::class, 'cancelled_by');
 	}
 
+	public function cancelledBy()
+	{
+		return $this->belongsTo(User::class, 'cancelled_by');
+	}
+
 	public function service_request()
 	{
 		return $this->belongsTo(ServiceRequest::class);
+	}
+
+	public function serviceRequest()
+	{
+		return $this->belongsTo(ServiceRequest::class, 'service_request_id');
 	}
 }

@@ -14,7 +14,7 @@ class DeleteCancellation
 
         $serviceRequest = $cancellation->serviceRequest;
         $serviceRequest->update([
-            'status_id' => $this->getServiceRequestStatusId(ServiceRequestStatusCode::PENDING),
+            'status_id' => $this->getServiceRequestStatusId(ServiceRequestStatusCode::REVIEW_IN_WORKSHOP),
         ]);
 
         $cancellation->delete();
@@ -25,4 +25,3 @@ class DeleteCancellation
         return Status::idForEntityCode('SERVICE_REQUEST', $code);
     }
 }
-

@@ -35,7 +35,11 @@ class ApprovalController extends Controller
 
     public function approveVendorRequest(Request $request, $id)
     {
-        $serviceRequest = $this->approveVendorRequest->execute((int) $id, $request->all());
+        $validated = $request->validate([
+            'notes' => 'nullable|string',
+        ]);
+
+        $serviceRequest = $this->approveVendorRequest->execute((int) $id, $validated);
         return APIResponse::success($serviceRequest, 200, 'Vendor request approved successfully');
     }
     
@@ -47,19 +51,31 @@ class ApprovalController extends Controller
 
     public function rejectVendorRequest(Request $request, $id)
     {
-        $serviceRequest = $this->rejectVendorRequest->execute((int) $id, $request->all());
+        $validated = $request->validate([
+            'notes' => 'nullable|string',
+        ]);
+
+        $serviceRequest = $this->rejectVendorRequest->execute((int) $id, $validated);
         return APIResponse::success($serviceRequest, 200, 'Vendor request rejected successfully');
     }
 
     public function deviceNeedRepair(Request $request, $id)
     {
-        $serviceRequest = $this->deviceNeedRepair->execute((int) $id, $request->all());
+        $validated = $request->validate([
+            'notes' => 'nullable|string',
+        ]);
+
+        $serviceRequest = $this->deviceNeedRepair->execute((int) $id, $validated);
         return APIResponse::success($serviceRequest, 200, 'Request approved successfully');
     }
 
     public function deviceNoNeedRepair(Request $request, $id)
     {
-        $serviceRequest = $this->deviceNoNeedRepair->execute((int) $id, $request->all());
+        $validated = $request->validate([
+            'notes' => 'nullable|string',
+        ]);
+
+        $serviceRequest = $this->deviceNoNeedRepair->execute((int) $id, $validated);
         return APIResponse::success($serviceRequest, 200, 'Request rejected successfully');
     }
 }

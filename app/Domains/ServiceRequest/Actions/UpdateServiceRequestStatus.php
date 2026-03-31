@@ -17,7 +17,7 @@ class UpdateServiceRequestStatus
 
     public function execute(ServiceRequest $serviceRequest, int $newStatusId, ?string $Lognotes = null): void
     {
-        $newStatus = Status::find($newStatusId);
+        $newStatus = Status::findOrFail($newStatusId);
 
         $this->writeAuditLogs->execute($serviceRequest, $newStatus, "UPDATE_STATUS", $Lognotes);
 

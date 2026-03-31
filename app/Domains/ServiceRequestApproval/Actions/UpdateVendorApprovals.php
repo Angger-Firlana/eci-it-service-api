@@ -2,6 +2,7 @@
 
 namespace App\Domains\ServiceRequestApproval\Actions;
 
+use App\Domains\AuditLog\Services\AuditLogService;
 use App\Domains\Approval\Services\ApprovalPolicyService;
 use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Enums\VendorApprovalStatusCode;
@@ -17,60 +18,66 @@ use Illuminate\Support\Facades\DB;
 class UpdateVendorApprovals
 {
     public function __construct(
-        protected ApprovalPolicyService $approvalPolicyService
+        protected ApprovalPolicyService $approvalPolicyService,
+        protected AuditLogService $auditLogService
     ) {
     }
 
     public function execute(int $serviceRequestId, array $approvalsData): Collection
     {
-        DB::beginTransaction();
+        return DB::transaction(function () use ($serviceRequestId, $approvalsData) {
+            VendorApproval::where('service_request_id', $serviceRequestId)->delete();
 
-        VendorApproval::where('service_request_id', $serviceRequestId)->delete();
+            $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
+            $serviceCost = ServiceCost::where([
+                'service_request_id' => $serviceRequestId,
+            ])->sum('amount');
+            $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
 
-        $serviceRequest = ServiceRequest::findOrFail($serviceRequestId);
-        $serviceCost = ServiceCost::where([
-            'service_request_id' => $serviceRequestId,
-        ])->sum('amount');
-        $approvalPolicy = $this->approvalPolicyService->getApprovalPolicyByServiceRequestCost($serviceCost);
-
-        if (!$approvalPolicy) {
-            DB::rollBack();
-            throw ApiException::unprocessable('No approval policy found for the given service request cost.');
-        }
-
-        $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
-        $waitingApprovalAboveStatusId = $this->getServiceRequestStatusId(ServiceRequestStatusCode::WAITING_APPROVAL_ABOVE);
-
-        foreach ($approvalsData['approvers'] as $approverId) {
-            $approver = User::findOrFail($approverId);
-            $approvalPolicyStep = $approvalPolicy->approval_policy_steps
-                ->where('role_id', $approver->roles->first()->id)
-                ->first();
-
-            if (!$approvalPolicyStep) {
-                DB::rollBack();
-                throw ApiException::unprocessable('No approval policy step found for approver role.');
+            if (!$approvalPolicy) {
+                throw ApiException::unprocessable('No approval policy found for the given service request cost.');
             }
 
-            VendorApproval::create([
-                'service_request_id' => $serviceRequestId,
-                'approver_id' => $approverId,
-                'assigned_by' => auth()->id(),
-                'assigned_at' => now(),
-                'status_id' => $vendorPendingStatusId,
-                'approval_policy_id' => $approvalPolicy->id,
-                'approval_policy_step_id' => $approvalPolicyStep->id,
-            ]);
-        }
+            $vendorPendingStatusId = $this->getVendorApprovalStatusId(VendorApprovalStatusCode::PENDING);
+            $waitingApprovalAboveStatus = Status::forEntityCode('SERVICE_REQUEST', ServiceRequestStatusCode::WAITING_APPROVAL_ABOVE);
+            $oldStatusId = (int) $serviceRequest->status_id;
 
-        $oldStatusId = $serviceRequest->status_id;
-        $newStatusId = $waitingApprovalAboveStatusId;
+            foreach ($approvalsData['approvers'] as $approverId) {
+                $approver = User::findOrFail($approverId);
+                $approvalPolicyStep = $approvalPolicy->approval_policy_steps
+                    ->where('role_id', optional($approver->roles->first())->id)
+                    ->first();
 
-        DB::commit();
+                if (!$approvalPolicyStep) {
+                    throw ApiException::unprocessable('No approval policy step found for approver role.');
+                }
 
-        return VendorApproval::where('service_request_id', $serviceRequestId)
-            ->with(['approver', 'assigned_by'])
-            ->get();
+                VendorApproval::create([
+                    'service_request_id' => $serviceRequestId,
+                    'approver_id' => $approverId,
+                    'assigned_by' => auth()->id(),
+                    'assigned_at' => now(),
+                    'status_id' => $vendorPendingStatusId,
+                    'approval_policy_id' => $approvalPolicy->id,
+                    'approval_policy_step_id' => $approvalPolicyStep->id,
+                ]);
+            }
+
+            if ($serviceRequest->status_id !== $waitingApprovalAboveStatus->id) {
+                $serviceRequest->update(['status_id' => $waitingApprovalAboveStatus->id]);
+                $this->auditLogService->writeAuditLogsServiceRequest(
+                    $serviceRequest,
+                    $waitingApprovalAboveStatus,
+                    'UPDATE_VENDOR_APPROVAL',
+                    'Vendor approval updated',
+                    $oldStatusId
+                );
+            }
+
+            return VendorApproval::where('service_request_id', $serviceRequestId)
+                ->with(['approver', 'assigned_by'])
+                ->get();
+        });
     }
 
     private function getServiceRequestStatusId(ServiceRequestStatusCode|string $code): int

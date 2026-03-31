@@ -16,10 +16,20 @@ class GetAttachment
         }
 
         $path = $cost->image_path;
-        if (!$path || !Storage::disk('public')->exists($path)) {
+        if (!$path) {
             throw ApiException::notFound('Attachment not found');
         }
 
-        return response()->file(public_path('images/' . $path));
+        $publicDisk = Storage::disk('public');
+        if ($publicDisk->exists($path)) {
+            return response()->file($publicDisk->path($path));
+        }
+
+        $legacyPath = public_path('images/' . basename($path));
+        if (is_file($legacyPath)) {
+            return response()->file($legacyPath);
+        }
+
+        throw ApiException::notFound('Attachment not found');
     }
 }

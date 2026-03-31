@@ -12,7 +12,7 @@ class UpdateCancellation
 
         $updateData = [
             'reason' => $data['reason'] ?? $cancellation->reason,
-            'canceled_by' => $data['canceled_by'] ?? $cancellation->canceled_by,
+            'cancelled_by' => $data['cancelled_by'] ?? $cancellation->cancelled_by,
         ];
 
         $cancellation->update(array_filter($updateData));
@@ -20,4 +20,3 @@ class UpdateCancellation
         return $cancellation->load('cancelledBy');
     }
 }
-

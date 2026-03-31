@@ -12,8 +12,8 @@ class UpdateUser
         $user = User::findOrFail($id);
 
         $updateData = [
-            'name' => $data['name'],
-            'email' => $data['email'],
+            'name' => $data['name'] ?? $user->name,
+            'email' => $data['email'] ?? $user->email,
         ];
 
         if (isset($data['password'])) {

@@ -1,6 +1,6 @@
 <?php
 
-namespace AppHttpRequestsDevice;
+namespace App\Http\Requests\Device;
 
 use Illuminate\Foundation\Http\FormRequest;
 

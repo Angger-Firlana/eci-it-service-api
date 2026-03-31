@@ -3,16 +3,21 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Invoice;
 use App\Helpers\APIResponse;
 use App\Domains\Invoice\Services\InvoiceService;
+use App\Domains\Invoice\Services\ExportInvoiceService;
 
 class InvoiceController extends Controller
 {
-    protected $invoiceService;
+    protected InvoiceService $invoiceService;
+    protected ExportInvoiceService $exportInvoiceService;
 
-    public function __construct(InvoiceService $invoiceService){
+    public function __construct(
+        InvoiceService $invoiceService,
+        ExportInvoiceService $exportInvoiceService
+    ){
         $this->invoiceService = $invoiceService;
+        $this->exportInvoiceService = $exportInvoiceService;
     }
 
     public function index(Request $request){
@@ -30,5 +35,13 @@ class InvoiceController extends Controller
     public function print($id){
         $data = $this->invoiceService->getInvoicePrintData($id);
         return APIResponse::success($data);
+    }
+
+    public function download($id)
+    {
+        $invoice = $this->invoiceService->getInvoiceById((int) $id);
+        $pdf = $this->exportInvoiceService->generateInvoice((int) $invoice->service_request_id);
+
+        return $pdf->download('invoice-' . $invoice->id . '.pdf');
     }
 }

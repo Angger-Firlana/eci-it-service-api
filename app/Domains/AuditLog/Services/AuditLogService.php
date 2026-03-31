@@ -39,7 +39,13 @@ class AuditLogService
         $this->createStatusAuditLog->execute($serviceRequest, $status, $oldStatusId, $newStatusId, $data);
     }
 
-    public function writeAuditLogsApproval(VendorApproval $vendorApproval,$newStatusId, string $action, ?string $Lognotes = null): void
+    public function writeAuditLogsApproval(
+        VendorApproval $vendorApproval,
+        int $newStatusId,
+        string $action,
+        ?string $Lognotes = null,
+        ?int $oldStatusId = null
+    ): void
     {
         $this->createAuditLog([
             'actor_id' => auth()->id(),
@@ -47,12 +53,18 @@ class AuditLogService
             'entity_type_id' => 2,
             'action' => $action,
             'notes' => $Lognotes ?? 'Vendor approval ' . $action,
-            'old_status_id' => $vendorApproval->status_id,
+            'old_status_id' => $oldStatusId ?? $vendorApproval->status_id,
             'new_status_id' => $newStatusId,
         ]);
     }
 
-    public function writeAuditLogsServiceRequest(ServiceRequest $serviceRequest, Status $newStatus,string $action, ?string $Lognotes = null): void
+    public function writeAuditLogsServiceRequest(
+        ServiceRequest $serviceRequest,
+        Status $newStatus,
+        string $action,
+        ?string $Lognotes = null,
+        ?int $oldStatusId = null
+    ): void
     {
         $this->createAuditLog([
             'actor_id' => auth()->id() ?? $serviceRequest->user_id,
@@ -60,7 +72,7 @@ class AuditLogService
             'entity_type_id' => 1,
             'action' => $action,
             'notes' => $Lognotes ?? "Status {$serviceRequest->status->name} to {$newStatus->name}",
-            'old_status_id' => $serviceRequest->status_id,
+            'old_status_id' => $oldStatusId ?? $serviceRequest->status_id,
             'new_status_id' => $newStatus->id,
         ]);
     }

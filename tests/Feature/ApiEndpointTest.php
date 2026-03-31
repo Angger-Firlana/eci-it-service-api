@@ -2,60 +2,66 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Role;
+use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Models\Department;
-use App\Models\DeviceType;
-use App\Models\DeviceModel;
 use App\Models\Device;
-use App\Models\ServiceType;
-use App\Enums\ServiceRequestStatusCode;
+use App\Models\DeviceModel;
+use App\Models\DeviceType;
+use App\Models\Role;
+use App\Models\ServiceCancellation;
+use App\Models\ServiceRequest;
+use App\Models\Status;
+use App\Models\User;
+use Database\Seeders\CostTypeSeeder;
+use Database\Seeders\DepartmentSeeder;
+use Database\Seeders\EntityTypeSeeder;
+use Database\Seeders\RoleSeeder;
+use Database\Seeders\ServiceTypeSeeder;
+use Database\Seeders\StatusSeeder;
+use Database\Seeders\StatusTransitionSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class ApiEndpointTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected $adminUser;
-    protected $token;
+    protected User $adminUser;
+    protected User $operatorUser;
+    protected User $requesterUser;
+    protected string $adminToken;
+    protected string $operatorToken;
+    protected string $requesterToken;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Seed basic data
-        $this->seed(\Database\Seeders\RoleSeeder::class);
-        $this->seed(\Database\Seeders\DepartmentSeeder::class);
-        $this->seed(\Database\Seeders\StatusSeeder::class);
-        $this->seed(\Database\Seeders\ServiceTypeSeeder::class);
-        $this->seed(\Database\Seeders\CostTypeSeeder::class);
+        config()->set('mail.admin_email', 'admin@example.com');
+        config()->set('mail.manager_email', 'manager@example.com');
 
-        $adminRole = Role::where('name', 'admin')->first();
-        $itDept = Department::where('code', 'IT')->first();
+        $this->seed(EntityTypeSeeder::class);
+        $this->seed(RoleSeeder::class);
+        $this->seed(DepartmentSeeder::class);
+        $this->seed(StatusSeeder::class);
+        $this->seed(StatusTransitionSeeder::class);
+        $this->seed(ServiceTypeSeeder::class);
+        $this->seed(CostTypeSeeder::class);
 
-        $this->adminUser = User::create([
-            'name' => 'Admin Test',
-            'email' => 'admin@test.com',
-            'password' => Hash::make('password'),
-            'pin' => '123456'
-        ]);
+        $this->adminUser = $this->createUserWithRole('Admin Test', 'admin@test.com', 'admin');
+        $this->operatorUser = $this->createUserWithRole('Operator Test', 'operator@test.com', 'operator');
+        $this->requesterUser = $this->createUserWithRole('Requester Test', 'requester@test.com', 'user');
 
-        $this->adminUser->roles()->attach($adminRole->id);
-        $this->adminUser->departments()->attach($itDept->id);
-
-        $response = $this->postJson('/api/auth/login', [
-            'email' => 'admin@test.com',
-            'password' => 'password',
-        ]);
-
-        $this->token = $response->json('data.token');
+        $this->adminToken = $this->loginAndGetToken('admin@test.com');
+        $this->operatorToken = $this->loginAndGetToken('operator@test.com');
+        $this->requesterToken = $this->loginAndGetToken('requester@test.com');
     }
 
-    /** @test */
-    public function it_can_login()
+    #[Test]
+    public function it_can_login(): void
     {
         $response = $this->postJson('/api/auth/login', [
             'email' => 'admin@test.com',
@@ -63,200 +69,231 @@ class ApiEndpointTest extends TestCase
         ]);
 
         $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'code' => 200,
+                'message' => 'Login successful',
+            ])
             ->assertJsonStructure([
-                'status',
-                'code',
-                'message',
-                'data' => ['token']
+                'data' => [
+                    'token',
+                    'user' => ['id', 'email'],
+                ],
             ]);
     }
 
-    /** @test */
-    public function it_can_register()
+    #[Test]
+    public function it_can_get_me(): void
     {
-        $userRole = Role::where('name', 'user')->first();
-        
-        $response = $this->postJson('/api/auth/register', [
-            'name' => 'New User',
-            'email' => 'newuser@test.com',
-            'password' => 'password123',
-            'role_id' => $userRole->id
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJsonStructure([
-                'status', 'code', 'message', 'data' => ['id', 'name', 'email']
-            ]);
-    }
-
-    /** @test */
-    public function it_can_get_me()
-    {
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withToken($this->adminToken)
             ->getJson('/api/auth/me');
 
         $response->assertStatus(200)
             ->assertJson([
-                'status' => 'success',
+                'success' => true,
                 'data' => [
-                    'email' => 'admin@test.com'
-                ]
+                    'email' => 'admin@test.com',
+                ],
             ]);
     }
 
-    /** @test */
-    public function it_can_manage_device_types()
+    #[Test]
+    public function it_can_manage_device_types(): void
     {
-        // Index
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/device-type');
-        $response->assertStatus(200);
+        $response = $this->withToken($this->adminToken)->getJson('/api/device-type');
+        $response->assertStatus(200)->assertJson(['success' => true]);
 
-        // Store
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withToken($this->adminToken)
             ->postJson('/api/device-type', ['name' => 'Tablet']);
         $response->assertStatus(201);
         $typeId = $response->json('data.id');
 
-        // Show
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson("/api/device-type/{$typeId}");
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->getJson("/api/device-type/{$typeId}")
+            ->assertStatus(200);
 
-        // Update
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->putJson("/api/device-type/{$typeId}", ['name' => 'Modern Tablet']);
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->putJson("/api/device-type/{$typeId}", ['name' => 'Modern Tablet'])
+            ->assertStatus(200);
 
-        // Delete
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->deleteJson("/api/device-type/{$typeId}");
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->deleteJson("/api/device-type/{$typeId}")
+            ->assertStatus(200);
     }
 
-    /** @test */
-    public function it_can_manage_device_models()
+    #[Test]
+    public function it_can_manage_device_models(): void
     {
         $type = DeviceType::create(['name' => 'Smartphone']);
 
-        // Index
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/device-model');
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->getJson('/api/device-model')
+            ->assertStatus(200);
 
-        // Store
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withToken($this->adminToken)
             ->postJson('/api/device-model', [
                 'device_type_id' => $type->id,
                 'brand' => 'Samsung',
-                'model' => 'Galaxy S21'
+                'model' => 'Galaxy S21',
             ]);
         $response->assertStatus(201);
         $modelId = $response->json('data.id');
 
-        // Show
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson("/api/device-model/{$modelId}");
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->getJson("/api/device-model/{$modelId}")
+            ->assertStatus(200);
 
-        // Update
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $this->withToken($this->adminToken)
             ->putJson("/api/device-model/{$modelId}", [
-                'brand' => 'Samsung',
-                'model' => 'Galaxy S22'
-            ]);
-        $response->assertStatus(200);
+                'model' => 'Galaxy S22',
+            ])
+            ->assertStatus(200);
 
-        // Delete
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->deleteJson("/api/device-model/{$modelId}");
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->deleteJson("/api/device-model/{$modelId}")
+            ->assertStatus(200);
     }
 
-    /** @test */
-    public function it_can_manage_devices()
+    #[Test]
+    public function it_can_manage_devices(): void
     {
         $type = DeviceType::create(['name' => 'Printer']);
         $model = DeviceModel::create([
             'device_type_id' => $type->id,
             'brand' => 'HP',
-            'model' => 'LaserJet'
+            'model' => 'LaserJet',
         ]);
 
-        // Index
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/devices');
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->getJson('/api/devices')
+            ->assertStatus(200);
 
-        // Store
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withToken($this->adminToken)
             ->postJson('/api/devices', [
                 'device_model_id' => $model->id,
                 'serial_number' => 'SN999888777',
-                'bad_asset' => false
+                'bad_asset' => false,
             ]);
         $response->assertStatus(201);
         $deviceId = $response->json('data.id');
 
-        // Show
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson("/api/devices/{$deviceId}");
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->getJson("/api/devices/{$deviceId}")
+            ->assertStatus(200);
 
-        // Update
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $this->withToken($this->adminToken)
             ->putJson("/api/devices/{$deviceId}", [
                 'serial_number' => 'SN111222333',
-                'bad_asset' => true
-            ]);
-        $response->assertStatus(200);
+                'bad_asset' => true,
+            ])
+            ->assertStatus(200);
 
-        // Delete
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->deleteJson("/api/devices/{$deviceId}");
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->deleteJson("/api/devices/{$deviceId}")
+            ->assertStatus(200);
     }
 
-    /** @test */
-    public function it_marks_device_bad_asset_when_service_request_status_is_bad_asset()
+    #[Test]
+    public function it_returns_allowed_transitions_for_the_authenticated_role(): void
+    {
+        $serviceRequest = ServiceRequest::create([
+            'user_id' => $this->requesterUser->id,
+            'operator_id' => $this->operatorUser->id,
+            'service_number' => 'SR-TEST-001',
+            'status_id' => Status::idForEntityCode('SERVICE_REQUEST', ServiceRequestStatusCode::REVIEW_IN_WORKSHOP),
+        ]);
+
+        $response = $this->withToken($this->operatorToken)
+            ->getJson("/api/service-requests/{$serviceRequest->id}/allowed-transitions");
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'service_request_id' => $serviceRequest->id,
+                ],
+            ]);
+
+        $this->assertTrue(
+            collect($response->json('data.transitions'))->contains(fn ($transition) => $transition['code'] === 'START_REPAIR_WORKSHOP')
+        );
+    }
+
+    #[Test]
+    public function it_allows_owner_create_and_admin_update_a_cancellation(): void
+    {
+        $serviceRequest = ServiceRequest::create([
+            'user_id' => $this->requesterUser->id,
+            'operator_id' => null,
+            'service_number' => 'SR-CANCEL-001',
+            'status_id' => Status::idForEntityCode('SERVICE_REQUEST', ServiceRequestStatusCode::REVIEW_IN_WORKSHOP),
+        ]);
+
+        $createResponse = $this->withToken($this->requesterToken)
+            ->postJson("/api/service-requests/{$serviceRequest->id}/cancellation", [
+                'reason' => 'No longer needed',
+            ]);
+
+        $createResponse->assertStatus(201)
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'service_request_id' => $serviceRequest->id,
+                    'reason' => 'No longer needed',
+                ],
+            ]);
+
+        $cancellationId = $createResponse->json('data.id');
+
+        Sanctum::actingAs($this->adminUser);
+
+        $this->putJson("/api/service-requests/{$serviceRequest->id}/cancellation/{$cancellationId}", [
+                'reason' => 'Approved cancellation',
+            ])
+            ->assertStatus(200)
+            ->assertJson([
+                'data' => [
+                    'id' => $cancellationId,
+                    'reason' => 'Approved cancellation',
+                ],
+            ]);
+    }
+
+    #[Test]
+    public function it_marks_device_bad_asset_when_service_request_status_is_bad_asset(): void
     {
         $type = DeviceType::create(['name' => 'Laptop']);
         $model = DeviceModel::create([
             'device_type_id' => $type->id,
             'brand' => 'Dell',
-            'model' => 'Latitude'
+            'model' => 'Latitude',
         ]);
 
         $device = Device::create([
             'device_model_id' => $model->id,
             'serial_number' => 'SNBADASSET001',
-            'bad_asset' => false
+            'bad_asset' => false,
         ]);
 
-        $serviceType = ServiceType::first();
-        $this->assertNotNull($serviceType);
-
-        $createResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $createResponse = $this->withToken($this->requesterToken)
             ->postJson('/api/service-requests', [
-                'admin_id' => $this->adminUser->id,
-                'request_date' => now()->toDateString(),
-                'status_code' => ServiceRequestStatusCode::REVIEW_IN_WORKSHOP->value,
                 'details' => [
                     [
-                        'service_type_id' => $serviceType->id,
                         'device_id' => $device->id,
-                        'complaint' => 'Cannot power on'
-                    ]
-                ]
+                        'device_type_id' => $type->id,
+                        'complaint' => 'Cannot power on',
+                    ],
+                ],
             ]);
 
         $createResponse->assertStatus(200);
         $serviceRequestId = $createResponse->json('data.id');
 
-        $updateResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->putJson("/api/service-requests/{$serviceRequestId}", [
+        Sanctum::actingAs($this->operatorUser);
+
+        $updateResponse = $this->putJson("/api/service-requests/{$serviceRequestId}", [
                 'status_code' => ServiceRequestStatusCode::BAD_ASSET->value,
-                'log_notes' => 'Not repairable'
+                'log_notes' => 'Not repairable',
             ]);
 
         $updateResponse->assertStatus(200);
@@ -265,8 +302,8 @@ class ApiEndpointTest extends TestCase
         $this->assertTrue($device->bad_asset);
     }
 
-    /** @test */
-    public function it_can_get_references()
+    #[Test]
+    public function it_can_get_references(): void
     {
         $endpoints = [
             '/api/references/service-types',
@@ -278,43 +315,74 @@ class ApiEndpointTest extends TestCase
         ];
 
         foreach ($endpoints as $endpoint) {
-            $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-                ->getJson($endpoint);
-            $response->assertStatus(200);
+            $this->withToken($this->adminToken)
+                ->getJson($endpoint)
+                ->assertStatus(200)
+                ->assertJson(['success' => true]);
         }
     }
 
-    /** @test */
-    public function it_can_manage_departments()
+    #[Test]
+    public function it_can_manage_departments(): void
     {
-        // Index
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/departments');
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->getJson('/api/departments')
+            ->assertStatus(200);
 
-        // Store
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withToken($this->adminToken)
             ->postJson('/api/departments', ['name' => 'Marketing', 'code' => 'MKT']);
         $response->assertStatus(201);
-        $deptId = $response->json('data.id');
+        $departmentId = $response->json('data.id');
 
-        // Update
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->putJson("/api/departments/{$deptId}", ['name' => 'Digital Marketing', 'code' => 'DMKT']);
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->putJson("/api/departments/{$departmentId}", ['name' => 'Digital Marketing'])
+            ->assertStatus(200);
 
-        // Delete
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->deleteJson("/api/departments/{$deptId}");
-        $response->assertStatus(200);
+        $this->withToken($this->adminToken)
+            ->deleteJson("/api/departments/{$departmentId}")
+            ->assertStatus(200);
     }
 
-    /** @test */
-    public function it_can_logout()
+    #[Test]
+    public function it_can_logout(): void
     {
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->postJson('/api/auth/logout');
+        $this->withToken($this->adminToken)
+            ->postJson('/api/auth/logout')
+            ->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'message' => 'Logout successful',
+            ]);
+    }
+
+    private function createUserWithRole(string $name, string $email, string $roleName): User
+    {
+        $role = Role::where('name', $roleName)->firstOrFail();
+        $department = Department::where('code', 'IT')->firstOrFail();
+
+        $user = User::create([
+            'name' => $name,
+            'email' => $email,
+            'password' => Hash::make('password'),
+            'pin' => '123456',
+            'is_active' => true,
+        ]);
+
+        $user->roles()->attach($role->id);
+        $user->departments()->attach($department->id);
+
+        return $user;
+    }
+
+    private function loginAndGetToken(string $email): string
+    {
+        $response = $this->postJson('/api/auth/login', [
+            'email' => $email,
+            'password' => 'password',
+        ]);
 
         $response->assertStatus(200);
+
+        return $response->json('data.token');
     }
 }

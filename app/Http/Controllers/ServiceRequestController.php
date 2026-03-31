@@ -7,6 +7,7 @@ use App\Helpers\APIResponse;
 use App\Http\Requests\ServiceRequest\StoreServiceRequest;
 use App\Domains\ServiceRequest\Services\UpdateServiceRequestWorkflow;
 use App\Domains\ServiceRequest\Services\CreateServiceRequestWorkflow;
+use App\Domains\ServiceRequest\Actions\GetAllowedTransitions;
 use App\Domains\ServiceRequest\Actions\GetServiceRequest;
 use App\Domains\ServiceRequest\Actions\DeleteServiceRequest;
 use App\Http\Requests\ServiceRequest\UpdateServiceRequest;
@@ -17,16 +18,19 @@ class ServiceRequestController extends Controller
     protected UpdateServiceRequestWorkflow $updateServiceRequestWorkFlow;
     protected CreateServiceRequestWorkflow $createServiceRequestWorkflow;
     protected GetServiceRequest $getServiceRequest;
+    protected GetAllowedTransitions $getAllowedTransitions;
 
     public function __construct(
         CreateServiceRequestWorkflow $createServiceRequestWorkflow,
         UpdateServiceRequestWorkflow $updateServiceRequestWorkFlow,
         GetServiceRequest $getServiceRequest,
+        GetAllowedTransitions $getAllowedTransitions,
         DeleteServiceRequest $deleteServiceRequest
     ){
         $this->getServiceRequest = $getServiceRequest;
         $this->updateServiceRequestWorkFlow = $updateServiceRequestWorkFlow;
         $this->createServiceRequestWorkflow = $createServiceRequestWorkflow;
+        $this->getAllowedTransitions = $getAllowedTransitions;
         $this->deleteServiceRequest = $deleteServiceRequest;
     }
 
@@ -71,7 +75,8 @@ class ServiceRequestController extends Controller
     }
 
     public function allowedTransitions($id) {
-
+        $transitions = $this->getAllowedTransitions->execute((int) $id);
+        return APIResponse::success($transitions);
     }
 
     public function stats() {
