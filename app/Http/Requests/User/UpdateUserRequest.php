@@ -24,6 +24,12 @@ class UpdateUserRequest extends FormRequest
     {
         return [
             'name' => 'sometimes|string|max:255',
+            'username' => [
+                'sometimes',
+                'string',
+                'max:255',
+                Rule::unique('users', 'username')->ignore($this->route('id'))
+            ],
             'email' => [
                 'sometimes',
                 'email',

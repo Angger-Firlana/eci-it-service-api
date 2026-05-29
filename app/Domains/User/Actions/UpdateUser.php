@@ -13,6 +13,7 @@ class UpdateUser
 
         $updateData = [
             'name' => $data['name'] ?? $user->name,
+            'username' => $data['username'] ?? $user->username,
             'email' => $data['email'] ?? $user->email,
         ];
 

@@ -64,7 +64,7 @@ class ReferenceDataController extends Controller
 
     public function getUsers()
     {
-        $users = User::select('id', 'name', 'email')->get();
+        $users = User::select('id', 'name', 'username', 'email')->get();
         return APIResponse::success($users);
     }
 

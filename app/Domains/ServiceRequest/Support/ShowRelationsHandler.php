@@ -118,9 +118,9 @@ class ShowRelationsHandler{
     public function showWith(): array
     {
         return [
-            'user:id,name,email',
+            'user:id,name,username,email',
             'user.departments:id,name',
-            'operator:id,name,email',
+            'operator:id,name,username,email',
             'operator.departments:id,name',
             'status:id,name,code',
             'service_request_details:id,service_request_id,device_id,device_type_id,complaint,solution',
@@ -131,8 +131,8 @@ class ShowRelationsHandler{
             'service_request_details.complaint_images:id,service_request_detail_id,image_path',
             'vendor_approvals:id,service_request_id,approver_id,assigned_by,assigned_at,approved_at,status_id,notes',
             'vendor_approvals.status:id,name,code',
-            'vendor_approvals.approver:id,name',
-            'vendor_approvals.assigned_by:id,name'
+            'vendor_approvals.approver:id,name,username',
+            'vendor_approvals.assigned_by:id,name,username'
         ];
     }
 
@@ -140,7 +140,7 @@ class ShowRelationsHandler{
     public function defaultWith(): array
     {
         return [
-            'user:id,name,email',
+            'user:id,name,username,email',
             'status:id,name,code',
             'service_request_details.device:id,device_model_id,serial_number,bad_asset'
         ];
@@ -149,8 +149,8 @@ class ShowRelationsHandler{
     public function summaryWith(): array
     {
         return [
-            'user:id,name',
-            'operator:id,name',
+            'user:id,name,username',
+            'operator:id,name,username',
             'status:id,name,code',
         ];
     }

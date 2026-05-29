@@ -12,7 +12,7 @@ class AuthService
     /**
      * Authenticate a user and generate an access token.
      *
-     * @param array $credentials The user login credentials, including 'email' and 'password'.
+     * @param array $credentials The user login credentials, including 'username' and 'password'.
      * @return array An associative array containing 'success', 'message', 'data' (user and token), and 'code'.
      */
     public function login(array $credentials): array{
@@ -20,7 +20,7 @@ class AuthService
             $this->logout();
         }
         
-        $user = User::where('email', $credentials['email'])
+        $user = User::where('username', $credentials['username'])
             ->with(['roles:id,name', 'departments:id,name,code'])
             ->first();
 
@@ -33,6 +33,7 @@ class AuthService
         return ['success' => true, 'message' => 'Login successful', 'data' => ['user' => [
             'id' => $user->id,
             'name' => $user->name,
+            'username' => $user->username,
             'email' => $user->email,
             'role' => $user->roles->first(),
             'department' => $user->departments->first(),
@@ -54,6 +55,7 @@ class AuthService
         return ['success' => true, 'message' => 'User found', 'data' => [
             'id' => $user->id,
             'name' => $user->name,
+            'username' => $user->username,
             'email' => $user->email,
             'role' => $user->roles->first(),
             'department' => $user->departments->first(),

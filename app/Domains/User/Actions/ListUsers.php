@@ -13,7 +13,13 @@ class ListUsers
         $users = User::query()->with('departments', 'roles:id,name');
 
         if ($request->has('search')) {
-            $users->where('name', 'like', "%{$request->search}%");
+            $search = $request->search;
+
+            $users->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('username', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
         }
 
         if ($request->has('role_id')) {

@@ -32,7 +32,7 @@ class ErrorEnvelopeTest extends TestCase
                 'message' => 'Validation Error',
             ])
             ->assertJsonStructure([
-                'errors' => ['email', 'password'],
+                'errors' => ['username', 'password'],
             ]);
     }
 

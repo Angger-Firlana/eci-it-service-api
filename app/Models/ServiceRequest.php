@@ -40,10 +40,10 @@ class ServiceRequest extends Model
 	{
 		return [
 			'user' => [
-				'user:id,name,email',
+				'user:id,name,username,email',
 			],
 			'operator' => [
-				'operator:id,name,email',
+				'operator:id,name,username,email',
 			],
 			'status' => [
 				'status:id,name,code',

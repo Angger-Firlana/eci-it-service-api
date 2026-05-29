@@ -43,7 +43,7 @@ class GetApproverByServiceRequestId
             ->whereHas('departments', fn ($q) =>
                 $q->where('departments.id', $itDepartmentId)
             )
-            ->select('name', 'email')
+            ->select('name', 'username', 'email')
             ->orderBy('id')
             ->get();
 

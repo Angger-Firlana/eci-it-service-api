@@ -51,20 +51,20 @@ class ApiEndpointTest extends TestCase
         $this->seed(ServiceTypeSeeder::class);
         $this->seed(CostTypeSeeder::class);
 
-        $this->adminUser = $this->createUserWithRole('Admin Test', 'admin@test.com', 'admin');
-        $this->operatorUser = $this->createUserWithRole('Operator Test', 'operator@test.com', 'operator');
-        $this->requesterUser = $this->createUserWithRole('Requester Test', 'requester@test.com', 'user');
+        $this->adminUser = $this->createUserWithRole('Admin Test', 'admin_test', 'admin@test.com', 'admin');
+        $this->operatorUser = $this->createUserWithRole('Operator Test', 'operator_test', 'operator@test.com', 'operator');
+        $this->requesterUser = $this->createUserWithRole('Requester Test', 'requester_test', 'requester@test.com', 'user');
 
-        $this->adminToken = $this->loginAndGetToken('admin@test.com');
-        $this->operatorToken = $this->loginAndGetToken('operator@test.com');
-        $this->requesterToken = $this->loginAndGetToken('requester@test.com');
+        $this->adminToken = $this->loginAndGetToken('admin_test');
+        $this->operatorToken = $this->loginAndGetToken('operator_test');
+        $this->requesterToken = $this->loginAndGetToken('requester_test');
     }
 
     #[Test]
     public function it_can_login(): void
     {
         $response = $this->postJson('/api/auth/login', [
-            'email' => 'admin@test.com',
+            'username' => 'admin_test',
             'password' => 'password',
         ]);
 
@@ -77,7 +77,7 @@ class ApiEndpointTest extends TestCase
             ->assertJsonStructure([
                 'data' => [
                     'token',
-                    'user' => ['id', 'email'],
+                    'user' => ['id', 'username', 'email'],
                 ],
             ]);
     }
@@ -92,6 +92,7 @@ class ApiEndpointTest extends TestCase
             ->assertJson([
                 'success' => true,
                 'data' => [
+                    'username' => 'admin_test',
                     'email' => 'admin@test.com',
                 ],
             ]);
@@ -355,13 +356,14 @@ class ApiEndpointTest extends TestCase
             ]);
     }
 
-    private function createUserWithRole(string $name, string $email, string $roleName): User
+    private function createUserWithRole(string $name, string $username, string $email, string $roleName): User
     {
         $role = Role::where('name', $roleName)->firstOrFail();
         $department = Department::where('code', 'IT')->firstOrFail();
 
         $user = User::create([
             'name' => $name,
+            'username' => $username,
             'email' => $email,
             'password' => Hash::make('password'),
             'pin' => '123456',
@@ -374,10 +376,10 @@ class ApiEndpointTest extends TestCase
         return $user;
     }
 
-    private function loginAndGetToken(string $email): string
+    private function loginAndGetToken(string $username): string
     {
         $response = $this->postJson('/api/auth/login', [
-            'email' => $email,
+            'username' => $username,
             'password' => 'password',
         ]);
 
