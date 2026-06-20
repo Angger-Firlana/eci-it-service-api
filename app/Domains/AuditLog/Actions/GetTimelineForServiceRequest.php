@@ -15,8 +15,9 @@ class GetTimelineForServiceRequest
                 : ($log->action === 'UPDATE_STATUS' ? 'Status diubah' : $log->action);
 
             $actorName = $log->actor->name ?? 'Unknown';
+            $actorDepartment = $log->actor?->departments?->first()?->name ?? '-';
             $description = $log->action === 'CREATE_REQUEST'
-                ? "Request dibuat oleh {$actorName}"
+                ? "Request dibuat oleh User {$actorName}, Departemen : {$actorDepartment}"
                 : $log->notes;
 
             return [

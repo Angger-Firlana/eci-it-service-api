@@ -8,6 +8,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -38,13 +39,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  */
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable, HasFactory;
-    
+    use HasApiTokens, Notifiable, HasFactory, SoftDeletes;
+
 	protected $table = 'users';
 
 	protected $casts = [
 		'email_verified_at' => 'datetime',
-		'is_active' => 'bool'
+		'is_active' => 'bool',
+		'deleted_at' => 'datetime'
 	];
 
 	protected $hidden = [

@@ -23,6 +23,7 @@ use App\Http\Controllers\CostTypeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ContactAdminController;
 use App\Http\Controllers\InboxApprovalController;
+use App\Http\Controllers\MailSettingController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
@@ -68,7 +69,7 @@ Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
     Route::get('/{id}', [ServiceRequestController::class, 'show'])->middleware('role:user,admin,operator,manager');
     Route::post('/', [ServiceRequestController::class, 'store'])->middleware('role:user');
     Route::put('/{id}', [ServiceRequestController::class, 'update'])->middleware('role:operator');
-    Route::delete('/{id}', [ServiceRequestController::class, 'destroy'])->middleware('role:admin');
+    Route::delete('/{id}', [ServiceRequestController::class, 'destroy'])->middleware('role:admin,operator,technician,supervisor,manager,senior manager,ceo');
     Route::get('/{id}/allowed-transitions', [ServiceRequestController::class, 'allowedTransitions'])->middleware('role:user,admin,operator,manager');
     Route::get('/{id}/download-invoice', [ExportInvoiceController::class, 'download'])->middleware('role:user,admin,operator,manager');
     Route::get('/{id}/preview-invoice', [ExportInvoiceController::class, 'downloadPreview'])->middleware('role:user,admin,operator,manager');
@@ -166,4 +167,10 @@ Route::prefix('inbox-approvals')->middleware('auth:sanctum')->group(function(){
         ->middleware('role:admin,operator,manager')
         ->middleware('throttle:60,1');
     Route::put('/{id}/read', [InboxApprovalController::class, 'readInbox'])->middleware('role:admin,operator,manager');
+});
+
+Route::prefix('mail-settings')->middleware(['auth:sanctum', 'role:admin'])->group(function(){
+    Route::get('/', [MailSettingController::class, 'show']);
+    Route::put('/', [MailSettingController::class, 'update']);
+    Route::post('/test', [MailSettingController::class, 'test']);
 });
