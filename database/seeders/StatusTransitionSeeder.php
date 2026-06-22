@@ -45,6 +45,7 @@ class StatusTransitionSeeder extends Seeder
         $reviewInWorkshop = $getStatus(ServiceRequestStatusCode::REVIEW_IN_WORKSHOP->value);
         $repairInWorkshop = $getStatus(ServiceRequestStatusCode::REPAIR_IN_WORKSHOP->value);
         $repairInVendor = $getStatus(ServiceRequestStatusCode::REPAIR_IN_VENDOR->value);
+        $waitingVendorQuote = $getStatus(ServiceRequestStatusCode::WAITING_VENDOR_QUOTE->value);
         $waitingApprovalAbove = $getStatus(ServiceRequestStatusCode::WAITING_APPROVAL_ABOVE->value);
         $completed = $getStatus(ServiceRequestStatusCode::COMPLETED->value);
         $badAsset = $getStatus(ServiceRequestStatusCode::BAD_ASSET->value);
@@ -140,6 +141,15 @@ class StatusTransitionSeeder extends Seeder
             ],
 
             // From REPAIR_IN_VENDOR
+            // Phase 1 of the vendor flow: IT assigns the vendor, then the request
+            // waits for the vendor's price quote before any cost/approval is set.
+            [
+                'from' => $repairInVendor->id,
+                'to' => $waitingVendorQuote->id,
+                'code' => 'SET_VENDOR',
+                'description' => 'Assign vendor, await price quote',
+                'roles' => [$admin->id, $operator->id]
+            ],
             [
                 'from' => $repairInVendor->id,
                 'to' => $waitingApprovalAbove->id,
@@ -156,6 +166,31 @@ class StatusTransitionSeeder extends Seeder
             ],
             [
                 'from' => $repairInVendor->id,
+                'to' => $badAsset->id,
+                'code' => 'MARK_BAD_ASSET',
+                'description' => 'IT marks asset as bad',
+                'roles' => [$admin->id, $operator->id]
+            ],
+
+            // From WAITING_VENDOR_QUOTE
+            // Phase 2 of the vendor flow: once the vendor's price arrives, IT sets the
+            // cost + approvers and submits it for the superior's approval.
+            [
+                'from' => $waitingVendorQuote->id,
+                'to' => $waitingApprovalAbove->id,
+                'code' => 'SUBMIT_VENDOR_COST',
+                'description' => 'Submit vendor cost for approval',
+                'roles' => [$admin->id, $operator->id]
+            ],
+            [
+                'from' => $waitingVendorQuote->id,
+                'to' => $repairInVendor->id,
+                'code' => 'RESET_VENDOR',
+                'description' => 'Re-assign a different vendor',
+                'roles' => [$admin->id, $operator->id]
+            ],
+            [
+                'from' => $waitingVendorQuote->id,
                 'to' => $badAsset->id,
                 'code' => 'MARK_BAD_ASSET',
                 'description' => 'IT marks asset as bad',

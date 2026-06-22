@@ -48,6 +48,10 @@ class ServiceRequest extends Model
 			'status' => [
 				'status:id,name,code',
 			],
+			'vendor_approvals' => [
+				'vendor_approvals:id,service_request_id,approver_id,status_id',
+				'vendor_approvals.status:id,name,code',
+			],
 			'locations' => [
 				'service_locations:id,service_request_id,vendor_id,location_type,address,phone_number,is_active',
 			],
