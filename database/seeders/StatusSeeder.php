@@ -36,6 +36,8 @@ class StatusSeeder extends Seeder
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::REPAIR_IN_WORKSHOP->value, 'name' => 'Repair in Workshop'],
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::REPAIR_IN_VENDOR->value, 'name' => 'Repair in Vendor'],
 
+            ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::WAITING_VENDOR_QUOTE->value, 'name' => 'Waiting Vendor Quote'],
+
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::WAITING_APPROVAL_ABOVE->value, 'name' => 'Waiting Approval Above'],
             
             ['entity_type_id' => $serviceRequestEntityType->id, 'code' => ServiceRequestStatusCode::COMPLETED->value, 'name' => 'Completed'],
