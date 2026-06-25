@@ -1,0 +1,1 @@
+import"./serviceRequest-XymChZXP.js";import"./FileViewerModal-ugzLs-II.js";import"./detail-BH7r1PkN.js";import"./useServiceRequestDetailView-DpvNYjly.js";import"./useInboxDetail-Di5SIV61.js";import{t as e}from"./InboxDetail-DCsQDWBm.js";export{e as default};

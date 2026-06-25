@@ -67,7 +67,7 @@ Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
         ->middleware('throttle:60,1');
     Route::get('/stats', [ServiceRequestController::class, 'stats'])->middleware('role:admin,operator,manager');
     Route::get('/{id}', [ServiceRequestController::class, 'show'])->middleware('role:user,admin,operator,manager');
-    Route::post('/', [ServiceRequestController::class, 'store'])->middleware('role:user');
+    Route::post('/', [ServiceRequestController::class, 'store'])->middleware('role:user,operator,admin,manager');
     Route::put('/{id}', [ServiceRequestController::class, 'update'])->middleware('role:operator');
     Route::delete('/{id}', [ServiceRequestController::class, 'destroy'])->middleware('role:admin,operator,technician,supervisor,manager,senior manager,ceo');
     Route::get('/{id}/allowed-transitions', [ServiceRequestController::class, 'allowedTransitions'])->middleware('role:user,admin,operator,manager');
