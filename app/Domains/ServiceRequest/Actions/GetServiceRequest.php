@@ -33,11 +33,19 @@ class GetServiceRequest{
     public function getAllServiceRequest(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         $perPage = $this->resolvePerPage($request);
+        $currentUser = auth()->user();
 
-        return ServiceRequest::with($this->showRelationsHandler->indexWith($request))
+        $serviceRequests = ServiceRequest::with($this->showRelationsHandler->indexWith($request))
             ->filter($request)
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+            ->orderBy('created_at', 'desc');
+
+        if ($currentUser->roles()->where('name', 'user')->exists()) {
+            $serviceRequests = $serviceRequests->where('user_id', $currentUser->id);
+        }
+
+        $serviceRequests = $serviceRequests->paginate($perPage);
+
+        return $serviceRequests;
     }
 
     public function getAllServiceRequestSummary(Request $request): \Illuminate\Contracts\Pagination\LengthAwarePaginator
