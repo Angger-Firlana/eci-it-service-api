@@ -3,35 +3,13 @@
 namespace App\Domains\ContactAdmin\Support;
 
 use App\Models\ServiceRequest;
-use RuntimeException;
 
 class ContactAdminContextResolver
 {
-    public function adminEmail(): string
-    {
-        $adminEmail = config('mail.admin_email');
-
-        if (!is_string($adminEmail) || trim($adminEmail) === '') {
-            throw new RuntimeException('ADMIN_MAIL is not configured.');
-        }
-
-        return $adminEmail;
-    }
-
-    public function managerEmail(): string
-    {
-        $managerEmail = config('mail.manager_email');
-
-        if (!is_string($managerEmail) || trim($managerEmail) === '') {
-            throw new RuntimeException('MANAGER_MAIL is not configured.');
-        }
-
-        return $managerEmail;
-    }
-
     /**
      * Get active IT email recipients from the set_email_it table.
-     * Falls back to ADMIN_MAIL from .env if no recipients are configured.
+     * Falls back to ADMIN_MAIL and MANAGER_MAIL from .env if no recipients
+     * are configured in the database.
      *
      * @return array<int, string>
      */
@@ -46,9 +24,10 @@ class ContactAdminContextResolver
             ->toArray();
 
         if (empty($emails)) {
-            $fallback = config('mail.admin_email');
-
-            return is_string($fallback) && trim($fallback) !== '' ? [$fallback] : [];
+            return array_values(array_filter([
+                config('mail.admin_email'),
+                config('mail.manager_email'),
+            ], fn ($v) => is_string($v) && trim($v) !== ''));
         }
 
         return $emails;

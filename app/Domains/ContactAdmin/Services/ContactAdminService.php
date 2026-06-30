@@ -27,11 +27,15 @@ class ContactAdminService
     public function sendAdminNotification(int $serviceRequestId, string $actorName, string $actorEmail): void
     {
         try {
+            $frontendUrl = rtrim((string) config('app.frontend_url', config('app.url')), '/');
+            $serviceRequestUrl = $frontendUrl !== '' ? $frontendUrl . '/service-requests/' . $serviceRequestId : null;
+
             $this->queue([
                 'name' => $actorName,
                 'email' => $actorEmail,
                 'message' => 'A new service request has been created and requires review.',
                 'service_request_id' => $serviceRequestId,
+                'service_request_url' => $serviceRequestUrl,
             ]);
         } catch (Throwable $e) {
             logger()->error('Failed to send admin notification email for service request.', [

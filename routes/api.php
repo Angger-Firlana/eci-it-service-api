@@ -24,6 +24,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ContactAdminController;
 use App\Http\Controllers\InboxApprovalController;
 use App\Http\Controllers\MailSettingController;
+use App\Http\Controllers\SetEmailItController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
