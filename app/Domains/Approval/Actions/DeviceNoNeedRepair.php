@@ -3,6 +3,7 @@
 namespace App\Domains\Approval\Actions;
 
 use App\Domains\Approval\Support\ApprovalStatusResolver;
+use App\Domains\Notification\Actions\QueueStatusChangeNotificationEmail;
 use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
 use App\Models\ServiceRequest;
 use App\Domains\AuditLog\Services\AuditLogService;
@@ -11,7 +12,8 @@ class DeviceNoNeedRepair
 {
     public function __construct(
         protected ApprovalStatusResolver $statusResolver,
-        protected AuditLogService $auditLogService
+        protected AuditLogService $auditLogService,
+        protected QueueStatusChangeNotificationEmail $queueStatusChangeNotificationEmail,
     ) {
     }
 
@@ -36,6 +38,12 @@ class DeviceNoNeedRepair
             'action' => 'UPDATE_STATUS',
             'notes' => $data['notes'] ?? 'Device tidak memerlukan service',
         ]);
+
+        $this->queueStatusChangeNotificationEmail->execute(
+            $serviceRequest,
+            ServiceRequestStatusCode::COMPLETED->value,
+            $data['notes'] ?? null
+        );
 
         return $serviceRequest->load(['status', 'user', 'operator', 'service_request_details']);
     }

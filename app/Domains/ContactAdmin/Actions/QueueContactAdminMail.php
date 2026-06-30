@@ -15,8 +15,6 @@ class QueueContactAdminMail
 
     public function execute(array $data): void
     {
-        $adminEmail = $this->contextResolver->adminEmail();
-        $managerEmail = $this->contextResolver->managerEmail();
         $attachmentPath = $this->contextResolver->attachmentPath($data);
 
         [
@@ -29,7 +27,7 @@ class QueueContactAdminMail
             $serviceRequestItems,
         ] = $this->contextResolver->serviceRequestContext($data);
 
-        $recipients = array_values(array_unique(array_filter([$adminEmail, $managerEmail])));
+        $recipients = $this->contextResolver->itEmails();
 
         foreach ($recipients as $recipientEmail) {
             Mail::to($recipientEmail)->queue(new UserContactAdmin(

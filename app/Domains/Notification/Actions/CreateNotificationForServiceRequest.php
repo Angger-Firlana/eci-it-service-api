@@ -30,6 +30,9 @@ class CreateNotificationForServiceRequest
         } elseif ($status->code === ServiceRequestStatusCode::CANCELLED->value) {
             $data['title'] = "Service Request #{$serviceRequest->service_number} Cancelled";
             $data['message'] = "Your service request #{$serviceRequest->service_number} has been cancelled. Please contact support for more information.";
+        } elseif ($status->code === ServiceRequestStatusCode::REJECTED_BY_ABOVE->value) {
+            $data['title'] = "Service Request #{$serviceRequest->service_number} Rejected";
+            $data['message'] = "Your service request #{$serviceRequest->service_number} has been rejected by the approver. Please contact support for more information.";
         }
 
         $this->createNotification->execute($data);
