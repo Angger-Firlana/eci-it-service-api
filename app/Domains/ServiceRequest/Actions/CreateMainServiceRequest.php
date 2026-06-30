@@ -2,7 +2,6 @@
 
 namespace App\Domains\ServiceRequest\Actions;
 
-use App\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use App\Models\ServiceRequest;
 use App\Domains\ServiceRequest\Enums\ServiceRequestStatusCode;
