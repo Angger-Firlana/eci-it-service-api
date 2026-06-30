@@ -29,6 +29,31 @@ class ContactAdminContextResolver
         return $managerEmail;
     }
 
+    /**
+     * Get active IT email recipients from the set_email_it table.
+     * Falls back to ADMIN_MAIL from .env if no recipients are configured.
+     *
+     * @return array<int, string>
+     */
+    public function itEmails(): array
+    {
+        $emails = \App\Models\SetEmailIt::with('user:id,email')
+            ->where('is_active', true)
+            ->get()
+            ->pluck('user.email')
+            ->filter()
+            ->values()
+            ->toArray();
+
+        if (empty($emails)) {
+            $fallback = config('mail.admin_email');
+
+            return is_string($fallback) && trim($fallback) !== '' ? [$fallback] : [];
+        }
+
+        return $emails;
+    }
+
     public function attachmentPath(array $data): ?string
     {
         $attachmentPath = $data['attachmentPath'] ?? null;

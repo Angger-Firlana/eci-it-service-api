@@ -173,4 +173,11 @@ Route::prefix('mail-settings')->middleware(['auth:sanctum', 'role:admin'])->grou
     Route::get('/', [MailSettingController::class, 'show']);
     Route::put('/', [MailSettingController::class, 'update']);
     Route::post('/test', [MailSettingController::class, 'test']);
+
+    Route::prefix('it-emails')->group(function(){
+        Route::get('/', [SetEmailItController::class, 'index']);
+        Route::post('/', [SetEmailItController::class, 'store']);
+        Route::put('/{id}', [SetEmailItController::class, 'update']);
+        Route::delete('/{id}', [SetEmailItController::class, 'destroy']);
+    });
 });

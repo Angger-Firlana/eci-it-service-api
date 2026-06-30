@@ -6,6 +6,7 @@ use App\Domains\ServiceRequest\Actions\UpdateServiceRequestOperator;
 use App\Domains\ServiceRequest\Actions\UpdateServiceRequestStatus;
 use App\Domains\ServiceRequest\Actions\MarkDeviceAsBadAsset;
 use App\Domains\Notification\Actions\CreateNotificationForServiceRequest;
+use App\Domains\Notification\Actions\QueueStatusChangeNotificationEmail;
 use App\Domains\ServiceRequest\Support\EnsureDeviceIsNotActiveInOtherRequest;
 use App\Domains\ServiceRequest\Support\LoadRelations;
 use App\Domains\ServiceRequest\Actions\WriteAuditLogs;
@@ -27,6 +28,7 @@ class UpdateServiceRequestWorkflow
     protected UpdateServiceRequestDetails $updateServiceRequestDetails;
     protected MarkDeviceAsBadAsset $markDeviceAsBadAsset;
     protected CreateNotificationForServiceRequest $createNotificationForServiceRequest;
+    protected QueueStatusChangeNotificationEmail $queueStatusChangeNotificationEmail;
 
     public function __construct(
         UpdateServiceRequestStatus $updateServiceRequestStatus,
@@ -36,7 +38,8 @@ class UpdateServiceRequestWorkflow
         WriteAuditLogs $writeAuditLogs,
         UpdateServiceRequestDetails $updateServiceRequestDetails,
         MarkDeviceAsBadAsset $markDeviceAsBadAsset,
-        CreateNotificationForServiceRequest $createNotificationForServiceRequest
+        CreateNotificationForServiceRequest $createNotificationForServiceRequest,
+        QueueStatusChangeNotificationEmail $queueStatusChangeNotificationEmail,
     ) {
         $this->updateServiceRequestStatus = $updateServiceRequestStatus;
         $this->updateServiceRequestOperator = $updateServiceRequestOperator;
@@ -46,6 +49,7 @@ class UpdateServiceRequestWorkflow
         $this->updateServiceRequestDetails = $updateServiceRequestDetails;
         $this->markDeviceAsBadAsset = $markDeviceAsBadAsset;
         $this->createNotificationForServiceRequest = $createNotificationForServiceRequest;
+        $this->queueStatusChangeNotificationEmail = $queueStatusChangeNotificationEmail;
     }
 
     public function execute($id, UpdateServiceRequestData $data): ServiceRequest
@@ -81,6 +85,12 @@ class UpdateServiceRequestWorkflow
             ], true)) {
                 $this->createNotificationForServiceRequest->execute($serviceRequest, $newStatus);
             }
+
+            $this->queueStatusChangeNotificationEmail->execute(
+                $serviceRequest,
+                $newStatus->code,
+                $logNotes
+            );
 
             return $this->loadRelations->execute($serviceRequest);
         });
