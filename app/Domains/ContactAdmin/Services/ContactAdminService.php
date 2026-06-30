@@ -27,7 +27,7 @@ class ContactAdminService
     public function sendAdminNotification(int $serviceRequestId, string $actorName, string $actorEmail): void
     {
         try {
-            $this->sendNow([
+            $this->queue([
                 'name' => $actorName,
                 'email' => $actorEmail,
                 'message' => 'A new service request has been created and requires review.',
