@@ -17,25 +17,14 @@ class CreateMainServiceRequest{
         $operatorId = null;
         $userId = null;
         $user = Auth::user();
-
-        $isOperator = $user->roles->contains('id', Role::OPERATOR);
-        $isUser = $user->roles->contains('id', Role::USER);
-
-        if ($isOperator) {
-            // Operators can create on behalf of another user.
-            $operatorId = $user->id;
-            $userId = isset($data['user_id']) ? (int) $data['user_id'] : null;
-        } elseif ($isUser) {
-            // Users can only create requests for themselves.
-            if (isset($data['user_id']) && (int) $data['user_id'] !== (int) $user->id) {
-                throw ApiException::forbidden('You can only create a service request for your own account.');
-            }
-
-            $userId = $user->id;
-        } else {
-            throw ApiException::forbidden('Your role is not allowed to create service requests.');
+      
+        // Users can only create requests for themselves.
+        if (isset($data['user_id']) && (int) $data['user_id'] !== (int) $user->id) {
+            throw ApiException::forbidden('You can only create a service request for your own account.');
         }
 
+        $userId = $user->id;
+        
         return ServiceRequest::create([
             'service_number'   => GenerateServiceNumber::execute(),
             'operator_id'         => $operatorId,

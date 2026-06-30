@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Mail\UserContactAdmin;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class ContactAdminTest extends TestCase
 {
+    use RefreshDatabase;
     public function test_contact_admin_queue_mode_returns_202_and_queues_mail(): void
     {
         Mail::fake();

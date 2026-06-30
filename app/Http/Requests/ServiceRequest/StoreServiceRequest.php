@@ -26,13 +26,10 @@ class StoreServiceRequest extends FormRequest
     public function rules(): array
     {
         $serviceRequestEntityTypeId = EntityType::where('code', 'SERVICE_REQUEST')->value('id');
-        $user = $this->user();
-        $isOperator = $user && $user->roles->contains('id', Role::OPERATOR);
-
         return [
             // Only operators can create on behalf of another user / assign an operator.
             'operator_id' => 'sometimes|exists:users,id',
-            'user_id' => $isOperator ? 'sometimes|exists:users,id' : 'prohibited',
+            'user_id' => 'sometimes|exists:users,id' ,
 
             // Request date is set by the backend if omitted.
             'request_date' => 'sometimes|date',
