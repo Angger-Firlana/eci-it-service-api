@@ -196,6 +196,56 @@ class StatusTransitionSeeder extends Seeder
                 'description' => 'IT marks asset as bad',
                 'roles' => [$admin->id, $operator->id]
             ],
+            // Reverse transitions — Rollback 1 Langkah (IT and Admin)
+            [
+                'from' => $repairInWorkshop->id,
+                'to' => $reviewInWorkshop->id,
+                'code' => 'ROLLBACK_FROM_WORKSHOP',
+                'description' => 'Rollback from workshop back to review',
+                'roles' => [$admin->id, $operator->id]
+            ],
+            [
+                'from' => $repairInVendor->id,
+                'to' => $repairInWorkshop->id,
+                'code' => 'ROLLBACK_FROM_VENDOR',
+                'description' => 'Rollback from vendor back to workshop',
+                'roles' => [$admin->id, $operator->id]
+            ],
+            [
+                'from' => $waitingVendorQuote->id,
+                'to' => $repairInVendor->id,
+                'code' => 'ROLLBACK_FROM_VENDOR_QUOTE',
+                'description' => 'Rollback from quote request back to vendor',
+                'roles' => [$admin->id, $operator->id]
+            ],
+            [
+                'from' => $waitingApprovalAbove->id,
+                'to' => $waitingVendorQuote->id,
+                'code' => 'ROLLBACK_FROM_APPROVAL_ABOVE',
+                'description' => 'Rollback from approval back to quote stage',
+                'roles' => [$admin->id, $operator->id]
+            ],
+            [
+                'from' => $completed->id,
+                'to' => $repairInWorkshop->id,
+                'code' => 'ROLLBACK_FROM_COMPLETED',
+                'description' => 'Rollback completed request to workshop',
+                'roles' => [$admin->id, $operator->id]
+            ],
+            [
+                'from' => $badAsset->id,
+                'to' => $reviewInWorkshop->id,
+                'code' => 'ROLLBACK_FROM_BAD_ASSET',
+                'description' => 'Rollback bad asset to review stage',
+                'roles' => [$admin->id, $operator->id]
+            ],
+            [
+                'from' => $cancelled->id,
+                'to' => $reviewInWorkshop->id,
+                'code' => 'ROLLBACK_FROM_CANCELLED',
+                'description' => 'Rollback cancelled request to review stage',
+                'roles' => [$admin->id, $operator->id]
+            ],
         ];
 
         foreach ($transitions as $t) {
