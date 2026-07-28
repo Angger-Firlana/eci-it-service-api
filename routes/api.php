@@ -69,9 +69,11 @@ Route::prefix('service-requests')->middleware('auth:sanctum')->group(function(){
     Route::get('/stats', [ServiceRequestController::class, 'stats'])->middleware('role:admin,operator,manager');
     Route::get('/{id}', [ServiceRequestController::class, 'show'])->middleware('role:user,admin,operator,manager');
     Route::post('/', [ServiceRequestController::class, 'store'])->middleware('role:user,operator,admin,manager');
-    Route::put('/{id}', [ServiceRequestController::class, 'update'])->middleware('role:operator');
+    Route::put('/{id}', [ServiceRequestController::class, 'update'])->middleware('role:operator,admin');
     Route::delete('/{id}', [ServiceRequestController::class, 'destroy'])->middleware('role:admin,operator,technician,supervisor,manager,senior manager,ceo');
-    Route::get('/{id}/allowed-transitions', [ServiceRequestController::class, 'allowedTransitions'])->middleware('role:user,admin,operator,manager');
+    Route::get('/{id}/allowed-transitions', [ServiceRequestController::class, 'allowedTransitions'])->middleware('role:user,admin,operator,manager,technician');
+    Route::put('/{id}/update-note', [ServiceRequestController::class, 'updateNote'])->middleware('role:operator,admin');
+    Route::put('/{id}/update-solution', [ServiceRequestController::class, 'updateSolution'])->middleware('role:operator,admin');
     Route::get('/{id}/download-invoice', [ExportInvoiceController::class, 'download'])->middleware('role:user,admin,operator,manager');
     Route::get('/{id}/preview-invoice', [ExportInvoiceController::class, 'downloadPreview'])->middleware('role:user,admin,operator,manager');
     Route::get('/{id}/can-print-invoice', [ExportInvoiceController::class, 'canPrint'])->middleware('role:user,admin,operator,manager');

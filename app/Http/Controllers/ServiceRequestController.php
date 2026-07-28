@@ -11,6 +11,9 @@ use App\Domains\ServiceRequest\Actions\GetAllowedTransitions;
 use App\Domains\ServiceRequest\Actions\GetServiceRequest;
 use App\Domains\ServiceRequest\Actions\DeleteServiceRequest;
 use App\Http\Requests\ServiceRequest\UpdateServiceRequest;
+use App\Http\Requests\ServiceRequest\UpdateServiceRequestNote;
+use App\Http\Requests\ServiceRequest\UpdateServiceRequestSolution;
+use App\Models\ServiceRequestDetail;
 
 class ServiceRequestController extends Controller
 {
@@ -72,6 +75,20 @@ class ServiceRequestController extends Controller
     public function destroy($id){
         $serviceRequests = $this->deleteServiceRequest->execute((int) $id);
         return APIResponse::success($serviceRequests);
+    }
+
+    public function updateNote(UpdateServiceRequestNote $request, $id) {
+        $detail = ServiceRequestDetail::where('service_request_id', $id)
+            ->findOrFail($request->input('detail_id'));
+        $detail->update(['complaint' => $request->input('note')]);
+        return APIResponse::success($detail, 200, 'Keterangan berhasil diupdate');
+    }
+
+    public function updateSolution(UpdateServiceRequestSolution $request, $id) {
+        $detail = ServiceRequestDetail::where('service_request_id', $id)
+            ->findOrFail($request->input('detail_id'));
+        $detail->update(['solution' => $request->input('solution')]);
+        return APIResponse::success($detail, 200, 'Solusi berhasil diupdate');
     }
 
     public function allowedTransitions($id) {
