@@ -9,7 +9,7 @@ class ListVendorApprovalsByServiceRequestId
 {
     public function execute(int $serviceRequestId): Collection
     {
-        return VendorApproval::with(['approver', 'assigned_by'])
+        return VendorApproval::with(['approver', 'assigned_by', 'status'])
             ->where('service_request_id', $serviceRequestId)
             ->get();
     }

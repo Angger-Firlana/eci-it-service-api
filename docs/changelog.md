@@ -187,6 +187,58 @@ Mengganti tombol "Pindah ke Vendor" menjadi "Cari Vendor" pada stage Workshop ag
 
 ---
 
+## 4. Service List & Detail Admin Disamakan dengan IT
+
+### Deskripsi
+Admin service list dan detail view disamakan dengan IT (enrichment lokasi, stage badge, layout detail).
+
+### File: `src/modules/service-request/admin/ServiceDetail.tsx`
+- Ganti import dari `AdminInboxDetail` → `ItInboxDetail`
+
+### File: `src/modules/service-request/admin/ServiceList.tsx`
+- Enrichment: fetch detail + locations per item via `mapWithConcurrency`
+- Derive workflow stage via `deriveItWorkflowStage`
+- Kolom: `location`, `phone`, `stageLabel` (Badge warna sesuai stage)
+- Column preset: `getItServiceListColumns`
+
+### File: `src/modules/service-request/admin/ServiceList.css`
+- Selector untuk class `.it-code`, `.it-actions`, `.it-detail-btn`, `.it-date-input`, `.it-status`
+
+---
+
+## 5. Setting Penerima Email
+
+### Deskripsi
+Menambahkan UI untuk mengelola daftar penerima email notifikasi (IT staff) di halaman Email Settings.
+
+### File: `src/modules/settings/EmailSettings.tsx`
+- State: `recipients`, `users`, `selectedUserId`, `addingRecipient`
+- Fetch data: `GET /mail-settings/it-emails` + `GET /users`
+- Section "Penerima Email": daftar recipient, toggle aktif/non-aktif (PUT), hapus (DELETE), tambah user (POST)
+
+### File: `src/modules/settings/EmailSettings.css`
+- Style: `.email-recipient-row`, `.email-recipient-toggle`, `.email-recipient-delete`, `.email-recipient-add`
+
+---
+
+## 6. Bugfix Atasan (Navigasi & Data Detail)
+
+### Deskripsi
+Atasan tidak bisa klik detail pending approval (redirect ke dashboard) dan data device/description tidak terbaca di dashboard.
+
+### File: `src/modules/inbox/atasan/Inbox.tsx`
+- `navigate('/inbox/${row.id}')` → `navigate('/services/${row.id}')`
+
+### File: `src/modules/dashboard/atasan/Dashboard.tsx`
+- `handleViewAllInbox`: `navigate('/inbox')` → `navigate('/services')`
+- `handleViewDetails`: hapus conditional routePrefix, langsung `/services/${request.id}`
+- `include` parameter: `service_request.status,service_request.details...` → `serviceRequest(user,status,details.device.deviceModel.deviceType)` (backend hanya parse format `serviceRequest(...)`)
+
+### File: `src/modules/dashboard/atasan/Dashboard.tsx`
+- `transformApprovalToRequest`: ganti akses `service?.service_request_details?.[0]` → `getServiceRequestComplaint(service)` (handle berbagai format data)
+
+---
+
 ## Ringkasan File yang Diubah
 
 ### Backend (6 file)
