@@ -172,6 +172,15 @@ Route::prefix('inbox-approvals')->middleware('auth:sanctum')->group(function(){
     Route::put('/{id}/read', [InboxApprovalController::class, 'readInbox'])->middleware('role:admin,operator,manager');
 });
 
+// Public route to serve uploaded images (no auth required)
+Route::get('/images/{path}', function (string $path) {
+    $fullPath = storage_path("app/public/images/{$path}");
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+    return response()->file($fullPath);
+})->where('path', '.*');
+
 Route::prefix('mail-settings')->middleware(['auth:sanctum', 'role:admin'])->group(function(){
     Route::get('/', [MailSettingController::class, 'show']);
     Route::put('/', [MailSettingController::class, 'update']);
